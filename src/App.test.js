@@ -14,12 +14,12 @@ test('renders the supplied UW PM hero artwork', () => {
   ).toBeInTheDocument();
   expect(
     screen.getByRole('heading', {
-      name: /fostering the creative product management community @ uwaterloo/i,
+      name: /fostering the creative product management community/i,
     }),
   ).toBeInTheDocument();
   expect(screen.getByRole('link', { name: /learn more/i })).toHaveAttribute(
     'href',
-    '#what-we-do',
+    '/events',
   );
   expect(screen.getByRole('link', { name: /join our team/i })).toHaveAttribute(
     'href',
