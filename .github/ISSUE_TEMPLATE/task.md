@@ -1,7 +1,7 @@
 ---
 name: Feature / Task Issue
 about: Create an issue for the UWPM website
-title: '[TASK]: '
+title: ''
 labels: ''
 assignees: ''
 ---
