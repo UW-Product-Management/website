@@ -12,15 +12,14 @@ Every pull request submitted to this repository represents the UWPM brand and en
 
 ## 2. PR Title Convention
 
-Follow the Conventional Commits format for PR titles:
-- `feat: <imperative summary>` — New features, components, or UI redesigns
-- `fix: <imperative summary>` — Bug fixes, responsive alignment corrections, broken links
-- `refactor: <imperative summary>` — Structural code improvements without visual or functional changes
-- `style: <imperative summary>` — CSS polish, spacing, typography adjustments
-- `chore: <imperative summary>` — Dependency upgrades, config updates, asset additions
-- `test: <imperative summary>` — Adding or updating unit tests
+Title every PR with its ticket ID: `WEB-<n>: <Imperative summary>`, usually matching the ticket title.
 
-*Example:* `feat: add interactive team member modal with paper texture card backing`
+*Example:* `WEB-20: Increase footer text weight and size`
+
+- The PR's branch is `WEB-<n>/<short-kebab-description>` and its commits are `type(WEB-<n>): imperative subject` (see `commit-policy.md`).
+- Link the ticket in the PR description (`WEB-<n>` is issue `#<n>`).
+- When squash-merging, edit the squash commit message to the `type(WEB-<n>): subject` format, since GitHub defaults it to the PR title.
+- Only PRs with no ticket (rare repo maintenance) use a plain Conventional Commits title such as `chore: update github actions versions`.
 
 ---
 
