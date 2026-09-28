@@ -1,6 +1,7 @@
 ## 💾 Implementation Notes and Changes
 
-- [Link to Ticket / Issue](https://github.com/UW-Product-Management/website/issues/)
+- [WEB-<n>](https://github.com/UW-Product-Management/website/issues/<n>) <!-- PR title: "WEB-<n>: Imperative summary" -->
+- Closes #<n>
 
 _Outline what is contained within the PR and how it relates to the ticket/issue._
 

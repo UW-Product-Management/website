@@ -16,11 +16,23 @@ Welcome to the **UWPM Website** (`website-v3.0`) codebase. This repository power
 ### Mandatory End-of-Task Commit Message
 At the conclusion of **every** task involving code or configuration changes, you **MUST** formulate and display the recommended commit message in Conventional Commits format, along with the proposed branch and PR title:
 
+#### Ticket IDs
+Issues are titled `WEB-<n>: <title>`, where `<n>` is the GitHub issue number. Use the ticket ID the work belongs to:
+
+| What | Format | Example |
+| :--- | :--- | :--- |
+| **Branch** | `WEB-<n>/<short-kebab-description>` | `WEB-20/footer-text-size` |
+| **Commit** | `type(WEB-<n>): imperative subject` | `style(WEB-20): increase footer text weight and size` |
+| **PR title** | `WEB-<n>: Imperative summary` | `WEB-20: Increase footer text weight and size` |
+
+- If the ticket ID isn't clear from the branch name or the user's request, ask for it rather than guessing.
+- Only changes with no ticket (rare repo maintenance) drop the scope: `chore: update github actions versions`.
+
 #### Format: Conventional Commits
-- **Format:** `type: imperative subject`
-  - Example: `feat: add animated team profile cards with modal bio preview`
-  - Example: `fix: correct mobile navbar hamburger overlay positioning`
-  - Example: `refactor: extract reusable event card component for v4 events`
+- **Format:** `type(WEB-<n>): imperative subject`
+  - Example: `feat(WEB-21): restore interactive hero bloom effect`
+  - Example: `fix(WEB-15): correct duplicated polaroid captions in what we do`
+  - Example: `refactor(WEB-16): consolidate club values content into shared data`
 - **Allowed Types (lowercase):** `feat`, `fix`, `refactor`, `style`, `chore`, `docs`, `test`, `perf`
 - **Rules:**
   - Lowercase first letter of subject
@@ -34,9 +46,9 @@ At the conclusion of **every** task involving code or configuration changes, you
 Always end your final response with:
 ```text
 Recommended Commit:
-  Branch:  <current-or-recommended-branch>
-  Message: <type>: <subject>
-  PR Title: <type>: <subject>
+  Branch:  WEB-<n>/<short-kebab-description>
+  Message: <type>(WEB-<n>): <subject>
+  PR Title: WEB-<n>: <Summary>
 ```
 
 ---
