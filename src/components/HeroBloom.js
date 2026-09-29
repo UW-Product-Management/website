@@ -4,8 +4,8 @@ import React, { useEffect, useRef } from 'react';
 const REST_A = { x: 42, y: 50 }; // leading
 const REST_B = { x: 58, y: 52 }; // trailing
 
-const CHASE_A = 1; // leading blob sits exactly under the cursor
-const CHASE_B = 0.85; // trailing blob follows most of the way
+const CHASE_A = 0.62;
+const CHASE_B = 0.34;
 
 export default function HeroBloom() {
   const ref = useRef(null);
@@ -13,10 +13,12 @@ export default function HeroBloom() {
   useEffect(() => {
     const el = ref.current;
     const hero = el.parentElement;
+    if (typeof window.matchMedia !== 'function') return undefined;
     const [elA, elB] = el.querySelectorAll('.hb-cluster');
 
-    const hoverQuery = window.matchMedia('(hover: hover)');
-    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const hoverQuery = window.matchMedia?.('(hover: hover)');
+    const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if (!hoverQuery || !motionQuery) return undefined;
 
     const mouse = { x: 50, y: 50 };
     const a = { ...REST_A };
