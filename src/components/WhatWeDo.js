@@ -1,23 +1,20 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { gsap, prefersReducedMotion } from './eventsV4/motion';
+import useWhatWeDoTrail from './useWhatWeDoTrail';
 import polaroidOne from '../images/what-we-do/polaroid-1.png';
 import polaroidTwo from '../images/what-we-do/polaroid-2.png';
 import polaroidThree from '../images/what-we-do/polaroid-3.png';
 import mascot from '../images/mascot.svg';
 
-const TRAIL_TO_PHOTO_TWO =
-  'M1032.64 424C1068.61 495.936 1350.22 688.056 1362.57 555.626C1365.19 527.63 1335.49 471.902 1299.59 491.774C1264.74 511.068 1249.76 576.389 1240.97 610.978C1216.32 707.969 1253.9 797.879 1350.37 832.389C1422.11 858.051 1506.18 860.308 1573.96 828.03';
-const TRAIL_TO_PHOTO_THREE =
-  'M1457.14 1104.99C1346.96 1215.17 1181.6 1247.33 1033.74 1277.67';
-const MASCOT_START = 'translate(1032.64, 424)';
-const MASCOT_RESTING = 'translate(1033.74, 1277.67)';
-// The mascot crosses behind the second polaroid between the two visible
-// trail segments, then keeps going past the trail's end until it is fully
-// tucked behind the last polaroid.
-const MASCOT_ROUTE = `${TRAIL_TO_PHOTO_TWO}L${TRAIL_TO_PHOTO_THREE.slice(
-  1,
-)}C940 1297 872 1380 872 1470`;
+const toTranslate = ({ x, y }) => `translate(${x}, ${y})`;
+
+function placeMascotOnRoute(marker, route, progress) {
+  marker.setAttribute(
+    'transform',
+    toTranslate(route.getPointAtLength(progress * route.getTotalLength())),
+  );
+}
 
 function Polaroid({ src, alt, caption, tilt }) {
   return (
@@ -39,30 +36,25 @@ export default function WhatWeDo() {
     fallbackInView: true,
   });
   const canvasRef = useRef(null);
+  const svgRef = useRef(null);
   const routeRef = useRef(null);
   const mascotRef = useRef(null);
+  const travelRef = useRef({ progress: 0 });
+  const trail = useWhatWeDoTrail(canvasRef, svgRef);
 
   useEffect(() => {
-    const route = routeRef.current;
-    const marker = mascotRef.current;
-    if (!route || !marker) return undefined;
-
-    if (prefersReducedMotion()) {
-      marker.setAttribute('transform', MASCOT_RESTING);
-      return undefined;
-    }
+    if (!canvasRef.current || prefersReducedMotion()) return undefined;
 
     const ctx = gsap.context(() => {
-      const travel = { progress: 0 };
-      gsap.to(travel, {
+      gsap.to(travelRef.current, {
         progress: 1,
         ease: 'none',
-        onUpdate: () => {
-          const { x, y } = route.getPointAtLength(
-            travel.progress * route.getTotalLength(),
-          );
-          marker.setAttribute('transform', `translate(${x}, ${y})`);
-        },
+        onUpdate: () =>
+          placeMascotOnRoute(
+            mascotRef.current,
+            routeRef.current,
+            travelRef.current.progress,
+          ),
         scrollTrigger: {
           trigger: canvasRef.current,
           start: 'top 75%',
@@ -74,6 +66,22 @@ export default function WhatWeDo() {
 
     return () => ctx.revert();
   }, []);
+
+  // Re-seats the mascot whenever the trail is re-measured, since scroll
+  // updates only fire while the user is actively scrolling.
+  useLayoutEffect(() => {
+    const marker = mascotRef.current;
+    if (!marker) return;
+
+    const { progress } = travelRef.current;
+    if (prefersReducedMotion()) {
+      marker.setAttribute('transform', toTranslate(trail.resting));
+    } else if (progress > 0) {
+      placeMascotOnRoute(marker, routeRef.current, progress);
+    } else {
+      marker.setAttribute('transform', toTranslate(trail.start));
+    }
+  }, [trail]);
 
   return (
     <section
@@ -88,6 +96,7 @@ export default function WhatWeDo() {
 
       <div ref={canvasRef} className="what-we-do__canvas">
         <svg
+          ref={svgRef}
           viewBox="300 120 1880 1760"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -121,15 +130,15 @@ export default function WhatWeDo() {
 
           <path d="M1914.78 1204.02L1915.95 1205.75L1917.23 1204.16L1933.52 1184.05L1927.91 1208.78L1927.43 1210.87L1929.61 1210.6L1955.86 1207.38L1933.61 1221.04L1931.77 1222.18L1933.55 1223.49L1954.57 1238.94L1928.51 1233.57L1926.46 1233.15L1926.73 1235.19L1930.15 1260.46L1915.66 1239.04L1914.5 1237.31L1913.21 1238.9L1896.92 1259.01L1902.54 1234.28L1903.01 1232.19L1900.83 1232.45L1874.58 1235.68L1896.83 1222.02L1898.68 1220.88L1896.89 1219.57L1875.87 1204.12L1901.93 1209.49L1903.99 1209.91L1903.71 1207.87L1900.29 1182.6L1914.78 1204.02Z" />
 
-          <path className="what-we-do__curve" d={TRAIL_TO_PHOTO_TWO} />
-          <path className="what-we-do__curve" d={TRAIL_TO_PHOTO_THREE} />
+          <path className="what-we-do__curve" d={trail.toPhotoTwo} />
+          <path className="what-we-do__curve" d={trail.toPhotoThree} />
           <path
             ref={routeRef}
             className="what-we-do__mascot-route"
-            d={MASCOT_ROUTE}
+            d={trail.mascotRoute}
           />
 
-          <g ref={mascotRef} transform={MASCOT_START}>
+          <g ref={mascotRef}>
             <g className="what-we-do__mascot-marker">
               <image
                 href={mascot}
