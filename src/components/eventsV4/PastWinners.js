@@ -227,7 +227,13 @@ export default function PastWinners() {
               <div className="pw__col" key={p.title}>
                 <div className="pw__box">
                   <div className="pw__img-wrap">
-                    <img src={p.src} alt={p.title} className="pw__img" />
+                    <img
+                      src={p.src}
+                      alt={p.title}
+                      className="pw__img"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
                   <span className="pw__award">{p.award}</span>
                   <h3 className="pw__title">{p.title}</h3>
