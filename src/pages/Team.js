@@ -141,6 +141,8 @@ export default function Team() {
                               src={member.image}
                               alt={member.name}
                               className="team-member-avatar"
+                              loading="lazy"
+                              decoding="async"
                             />
                           </a>
                         ) : (
@@ -148,6 +150,8 @@ export default function Team() {
                             src={member.image}
                             alt={member.name}
                             className="team-member-avatar"
+                            loading="lazy"
+                            decoding="async"
                           />
                         )}
                       </div>
