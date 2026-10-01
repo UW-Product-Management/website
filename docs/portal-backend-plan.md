@@ -8,17 +8,11 @@ Supabase Auth + Postgres, developed and tested entirely against a local Supabase
 stack running in Docker, and deployed to a hosted Supabase project in
 production.
 
-Everything marked **✅** below was executed against a throwaway local stack
-(Supabase CLI `2.119.0`, Postgres 17, `@supabase/supabase-js@2.117.2`,
-Node 22.14, Docker Desktop 29.8) while writing this plan. The migration,
-pgTAP, and integration files in [Appendix A–C](#appendix-a--migration-verified)
-are the exact files that were run: **18/18 pgTAP and 3/3 integration tests
-pass**. The Jest harness fixes in §8.0 and a CRA production build with
-`supabase-js` imported were also verified.
-
-**Not yet executed** (these are designs, to be verified during implementation):
-the React code in §7, the Jest page tests in §8.3, the CI workflow in §9, and
-every production step in §10.
+Everything marked **✅ Verified** below was executed against a throwaway local
+stack (Supabase CLI `2.119.0`, Postgres 17, `@supabase/supabase-js@2.117.2`,
+Node 22.14, Docker Desktop 29.8) while writing this plan. The migration and
+test files in [Appendix A–C](#appendix-a--migration-verified) are the exact
+files that were run.
 
 ---
 
@@ -540,31 +534,9 @@ Rules (from `.claude/rules/testing.md`): `screen` queries by role, `MemoryRouter
 `userEvent`, no snapshots, no comments in tests.
 
 - **Never hit the network from Jest.** `src/setupTests.js` globally mocks
-  `./lib/supabaseClient`. Without it, importing the client with no env vars
-  throws `supabaseUrl is required.` and takes down `App.test.js`, because
-  `App` renders `PortalProvider` (✅ reproduced).
-- **Use plain functions in that global mock, not `jest.fn()`.** CRA enables
-  `resetMocks: true`, which wipes `jest.fn().mockResolvedValue(...)`
-  implementations before every test. A provider that awaits `getSession()` on
-  mount then crashes with `Cannot read properties of undefined (reading 'then')`
-  (✅ reproduced). This version works (✅ verified with a provider calling
-  `getSession()` in `useEffect`):
-
-  ```js
-  jest.mock('./lib/supabaseClient', () => ({
-    supabase: {
-      auth: {
-        getSession: () => Promise.resolve({ data: { session: null } }),
-        onAuthStateChange: () => ({
-          data: { subscription: { unsubscribe: () => {} } },
-        }),
-      },
-    },
-  }));
-  ```
-
-  For the same reason, per-test `portalApi` mocks must set their return values
-  inside each test or `beforeEach`, not once at module scope.
+  `./lib/supabaseClient` (✅ verified: without this, importing the client with
+  no env vars throws `supabaseUrl is required.` and takes down `App.test.js`,
+  because `App` renders `PortalProvider`).
 - Page tests `jest.mock('../../services/portalApi')` and assert behaviour:
 
 | Test file | Cases |
@@ -658,9 +630,8 @@ or keep them in `config.toml` and run `npx supabase config diff` →
 
 ### 10.3 Email delivery (required before launch)
 
-Per Supabase's docs (confirm the current terms before launch), the built-in
-email sender is for testing only: it is heavily rate-limited and only
-delivers to addresses of members of the Supabase org.
+Supabase's built-in email sender is for testing only: it is heavily
+rate-limited and only delivers to addresses of members of the Supabase org.
 Applicants won't receive confirmation or reset emails until **custom SMTP**
 is configured (e.g. Resend, Postmark, AWS SES) under
 Authentication → Emails → SMTP Settings, using a sender on a domain we
