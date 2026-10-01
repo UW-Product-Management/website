@@ -7,6 +7,7 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.14.14",
     "@mui/material": "^5.14.14",
+    "@supabase/supabase-js": "^2.117.2",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -33,7 +34,13 @@
     "eject": "react-scripts eject",
     "lint": "eslint --ext js,jsx src && prettier --check src",
     "fix-code": "eslint --ext js,jsx src --fix",
-    "format-code": "prettier '**/*.{js,jsx,css}' --write"
+    "format-code": "prettier '**/*.{js,jsx,css}' --write",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:test": "supabase test db",
+    "db:env": "supabase status -o env --override-name api.url=REACT_APP_SUPABASE_URL --override-name auth.publishable_key=REACT_APP_SUPABASE_PUBLISHABLE_KEY",
+    "test:integration": "node --test \"tests/integration/*.test.mjs\""
   },
   "jest": {
     "resetMocks": false
@@ -62,6 +69,7 @@
     "@babel/preset-react": "^7.22.15",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.1",
-    "prettier": "^3.0.3"
+    "prettier": "^3.0.3",
+    "supabase": "^2.119.0"
   }
 }
