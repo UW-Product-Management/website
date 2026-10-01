@@ -10,6 +10,7 @@ import PortalLanding from './pages/portal/PortalLanding';
 import Signup from './pages/portal/Signup';
 import Login from './pages/portal/Login';
 import ResetPassword from './pages/portal/ResetPassword';
+import UpdatePassword from './pages/portal/UpdatePassword';
 import ApplyRegister from './pages/portal/ApplyRegister';
 import ApplyQuestions from './pages/portal/ApplyQuestions';
 import ApplyConsent from './pages/portal/ApplyConsent';
@@ -32,6 +33,7 @@ function App() {
           <Route path="/portal/signup" element={<Signup />} />
           <Route path="/portal/login" element={<Login />} />
           <Route path="/portal/reset-password" element={<ResetPassword />} />
+          <Route path="/portal/update-password" element={<UpdatePassword />} />
           <Route
             path="/portal/apply/register"
             element={

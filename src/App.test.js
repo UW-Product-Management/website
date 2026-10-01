@@ -46,3 +46,15 @@ test('redirects unauthenticated users trying to access protected portal routes t
     await screen.findByRole('heading', { name: /welcome back!/i }),
   ).toBeInTheDocument();
 });
+
+test('renders update password page for recovery flow without redirecting', async () => {
+  render(
+    <MemoryRouter initialEntries={['/portal/update-password']}>
+      <App />
+    </MemoryRouter>,
+  );
+
+  expect(
+    await screen.findByRole('heading', { name: /set new password/i }),
+  ).toBeInTheDocument();
+});
