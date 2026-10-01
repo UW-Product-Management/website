@@ -71,6 +71,42 @@
   line-height: 1.4;
 }
 
+.portal-auth__error p {
+  margin: 0 0 8px;
+}
+
+.portal-auth__error p:last-child {
+  margin-bottom: 0;
+}
+
+.portal-button--resend {
+  margin-top: 4px;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+  padding: 6px 14px;
+  background-color: #fff;
+  border-color: #991b1b;
+  color: #991b1b;
+}
+
+.portal-button--resend:hover:not(:disabled) {
+  background-color: #fee2e2;
+}
+
+.portal-auth__resend-success {
+  color: #166534;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.portal-auth__resend-error {
+  color: #991b1b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
 .portal-auth__confirmation {
   display: flex;
   flex-direction: column;
