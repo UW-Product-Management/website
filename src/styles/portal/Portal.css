@@ -43,6 +43,11 @@
   color: #111;
 }
 
+.portal-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* 1. Landing */
 .portal-landing__hero {
   text-align: left;
@@ -53,6 +58,23 @@
 .portal-auth__card {
   max-width: 420px;
   margin: 0 auto;
+}
+
+.portal-auth__error {
+  background-color: #fef2f2;
+  border: 1px solid #f87171;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.portal-auth__confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .portal-auth__card form,
