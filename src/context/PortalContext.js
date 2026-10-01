@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
-
-const STORAGE_KEY = 'uwpm-portal-state';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 const defaultState = {
   account: { fullName: '', email: '' },
@@ -13,58 +12,88 @@ const defaultState = {
   submittedAt: null,
 };
 
-function loadState() {
-  try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
-  } catch {
-    return defaultState;
-  }
-}
+export const PortalContext = createContext(null);
 
-const PortalContext = createContext(null);
+export function PortalProvider({ children, value: customValue }) {
+  const [session, setSession] = useState(null);
+  const [status, setStatus] = useState('loading');
+  const [state, setState] = useState(defaultState);
 
-export function PortalProvider({ children }) {
-  const [state, setState] = useState(loadState);
+  useEffect(() => {
+    let mounted = true;
 
-  const persist = (next) => {
-    setState(next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // localStorage unavailable, state stays in memory for this session
-    }
-  };
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (!mounted) return;
+        if (error) {
+          setSession(null);
+        } else {
+          setSession(data?.session ?? null);
+        }
+        setStatus('ready');
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setSession(null);
+        setStatus('ready');
+      });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!mounted) return;
+      setSession(nextSession ?? null);
+      setStatus('ready');
+    });
+
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe?.();
+    };
+  }, []);
 
   const updateAccount = (fields) => {
-    persist({ ...state, account: { ...state.account, ...fields } });
+    setState((prev) => ({
+      ...prev,
+      account: { ...prev.account, ...fields },
+    }));
   };
 
   const updateApplication = (fields) => {
-    persist({
-      ...state,
-      application: { ...state.application, ...fields },
-    });
+    setState((prev) => ({
+      ...prev,
+      application: { ...prev.application, ...fields },
+    }));
   };
 
   const submitApplication = () => {
-    persist({ ...state, submittedAt: new Date().toISOString() });
+    setState((prev) => ({
+      ...prev,
+      submittedAt: new Date().toISOString(),
+    }));
   };
 
-  const logOut = () => {
-    persist(defaultState);
+  const logOut = async () => {
+    setState(defaultState);
+    await supabase.auth.signOut();
+  };
+
+  const user = session?.user ?? null;
+
+  const contextValue = customValue || {
+    session,
+    user,
+    status,
+    state,
+    updateAccount,
+    updateApplication,
+    submitApplication,
+    logOut,
   };
 
   return (
-    <PortalContext.Provider
-      value={{
-        state,
-        updateAccount,
-        updateApplication,
-        submitApplication,
-        logOut,
-      }}
-    >
+    <PortalContext.Provider value={contextValue}>
       {children}
     </PortalContext.Provider>
   );

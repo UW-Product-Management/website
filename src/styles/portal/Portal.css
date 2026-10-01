@@ -227,6 +227,33 @@
   padding-bottom: 8px;
 }
 
+/* Loading & Spinner */
+.portal-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  gap: 16px;
+  font-size: 1rem;
+  color: #555;
+}
+
+.portal-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: portal-spin 0.8s linear infinite;
+}
+
+@keyframes portal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media screen and (max-width: 767px) {
   .portal-apply__body,
   .portal-dashboard__body {

@@ -18,6 +18,7 @@ import Confirmation from './pages/portal/Confirmation';
 import ConfirmationEmail from './pages/portal/ConfirmationEmail';
 import Dashboard from './pages/portal/Dashboard';
 import DashboardDetails from './pages/portal/DashboardDetails';
+import RequireAuth from './components/portal/RequireAuth';
 
 function App() {
   return (
@@ -31,19 +32,69 @@ function App() {
           <Route path="/portal/signup" element={<Signup />} />
           <Route path="/portal/login" element={<Login />} />
           <Route path="/portal/reset-password" element={<ResetPassword />} />
-          <Route path="/portal/apply/register" element={<ApplyRegister />} />
-          <Route path="/portal/apply/questions" element={<ApplyQuestions />} />
-          <Route path="/portal/apply/consent" element={<ApplyConsent />} />
-          <Route path="/portal/apply/submit" element={<ApplySubmit />} />
-          <Route path="/portal/apply/confirmation" element={<Confirmation />} />
+          <Route
+            path="/portal/apply/register"
+            element={
+              <RequireAuth>
+                <ApplyRegister />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/portal/apply/questions"
+            element={
+              <RequireAuth>
+                <ApplyQuestions />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/portal/apply/consent"
+            element={
+              <RequireAuth>
+                <ApplyConsent />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/portal/apply/submit"
+            element={
+              <RequireAuth>
+                <ApplySubmit />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/portal/apply/confirmation"
+            element={
+              <RequireAuth>
+                <Confirmation />
+              </RequireAuth>
+            }
+          />
           <Route
             path="/portal/apply/confirmation-email"
-            element={<ConfirmationEmail />}
+            element={
+              <RequireAuth>
+                <ConfirmationEmail />
+              </RequireAuth>
+            }
           />
-          <Route path="/portal/dashboard" element={<Dashboard />} />
+          <Route
+            path="/portal/dashboard"
+            element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
           <Route
             path="/portal/dashboard/details"
-            element={<DashboardDetails />}
+            element={
+              <RequireAuth>
+                <DashboardDetails />
+              </RequireAuth>
+            }
           />
           <Route path="*" element={<Home />} />
         </Routes>
