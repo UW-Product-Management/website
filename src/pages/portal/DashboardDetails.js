@@ -6,12 +6,38 @@ import { usePortal } from '../../context/PortalContext';
 import '../../styles/portal/Portal.css';
 
 export default function DashboardDetails() {
-  const { state } = usePortal();
-  const { account, application, submittedAt } = state;
+  const { session, profile, application, state } = usePortal();
+  const submittedAt = application?.submittedAt || state?.submittedAt;
 
-  if (!submittedAt) {
+  if (!submittedAt && application?.status !== 'submitted') {
     return <Navigate to="/portal/apply/register" replace />;
   }
+
+  const fullName = profile?.fullName || state?.account?.fullName || '';
+  const email = session?.user?.email || state?.account?.email || '';
+  const program = application?.program || state?.application?.program || '';
+  const yearOfStudy =
+    application?.yearOfStudy || state?.application?.yearOfStudy || '';
+  const productIdea =
+    application?.productIdea ||
+    application?.answers?.productIdea ||
+    state?.application?.answers?.productIdea ||
+    '';
+  const greatTeam =
+    application?.greatTeam ||
+    application?.answers?.greatTeam ||
+    state?.application?.answers?.greatTeam ||
+    '';
+  const dietaryRestrictions =
+    application?.dietaryRestrictions ||
+    application?.dietaryRestriction ||
+    application?.consent?.dietaryRestrictions ||
+    state?.application?.consent?.dietaryRestrictions ||
+    'None';
+
+  const formattedDate = submittedAt
+    ? new Date(submittedAt).toLocaleString()
+    : 'Recently';
 
   return (
     <main className="portal-page portal-dashboard">
@@ -20,24 +46,24 @@ export default function DashboardDetails() {
         <DashboardSidebar />
         <section className="portal-dashboard__content">
           <h1>Application Details</h1>
-          <p>Submitted on {new Date(submittedAt).toLocaleString()}</p>
+          <p>Submitted on {formattedDate}</p>
 
           <dl className="portal-apply__review">
             <div>
               <dt>Full name</dt>
-              <dd>{account.fullName}</dd>
+              <dd>{fullName || '—'}</dd>
             </div>
             <div>
               <dt>Email address</dt>
-              <dd>{account.email}</dd>
+              <dd>{email || '—'}</dd>
             </div>
             <div>
               <dt>Program</dt>
-              <dd>{application.program}</dd>
+              <dd>{program || '—'}</dd>
             </div>
             <div>
               <dt>Year of study</dt>
-              <dd>{application.yearOfStudy}</dd>
+              <dd>{yearOfStudy || '—'}</dd>
             </div>
           </dl>
 
@@ -45,11 +71,11 @@ export default function DashboardDetails() {
           <dl className="portal-apply__review">
             <div>
               <dt>1. What product or service do you wish existed, and why?</dt>
-              <dd>{application.answers.productIdea}</dd>
+              <dd>{productIdea || '—'}</dd>
             </div>
             <div>
               <dt>2. What makes a great product team?</dt>
-              <dd>{application.answers.greatTeam}</dd>
+              <dd>{greatTeam || '—'}</dd>
             </div>
           </dl>
 
@@ -57,7 +83,7 @@ export default function DashboardDetails() {
           <dl className="portal-apply__review">
             <div>
               <dt>Dietary restrictions</dt>
-              <dd>{application.consent.dietaryRestrictions || 'None'}</dd>
+              <dd>{dietaryRestrictions}</dd>
             </div>
           </dl>
 

@@ -1,27 +1,70 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import PortalHeader from '../../components/portal/PortalHeader';
 import ApplicationStepper from '../../components/portal/ApplicationStepper';
 import ApplySidebar from '../../components/portal/ApplySidebar';
 import { usePortal } from '../../context/PortalContext';
+import { PROGRAMS, YEARS } from '../../portal/applicationOptions';
 import '../../styles/portal/Portal.css';
-
-const PROGRAMS = ['Computer Science', 'Business', 'Engineering', 'Mathematics'];
-const YEARS = ['1st year', '2nd year', '3rd year', '4th year', '5th+ year'];
 
 export default function ApplyRegister() {
   const navigate = useNavigate();
-  const { state, updateAccount, updateApplication } = usePortal();
-  const [fullName, setFullName] = useState(state.account.fullName);
-  const [email, setEmail] = useState(state.account.email);
-  const [program, setProgram] = useState(state.application.program);
-  const [yearOfStudy, setYearOfStudy] = useState(state.application.yearOfStudy);
+  const { session, profile, application, state, updateProfile, saveDraft } =
+    usePortal();
 
-  const handleSubmit = (event) => {
+  const isSubmitted =
+    application?.status === 'submitted' || Boolean(state?.submittedAt);
+
+  const initialFullName = profile?.fullName || state?.account?.fullName || '';
+  const email = session?.user?.email || state?.account?.email || '';
+  const initialProgram =
+    application?.program || state?.application?.program || '';
+  const initialYear =
+    application?.yearOfStudy || state?.application?.yearOfStudy || '';
+
+  const [fullName, setFullName] = useState(initialFullName);
+  const [program, setProgram] = useState(initialProgram);
+  const [yearOfStudy, setYearOfStudy] = useState(initialYear);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  if (isSubmitted) {
+    return <Navigate to="/portal/dashboard" replace />;
+  }
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    updateAccount({ fullName, email });
-    updateApplication({ program, yearOfStudy });
-    navigate('/portal/apply/questions');
+    setIsSaving(true);
+    setErrorMessage('');
+
+    try {
+      const profileResult = await updateProfile({ fullName });
+      if (profileResult?.error) {
+        setErrorMessage(
+          profileResult.error.message || 'Failed to update profile.',
+        );
+        setIsSaving(false);
+        return;
+      }
+
+      const draftResult = await saveDraft({
+        program,
+        yearOfStudy,
+      });
+      if (draftResult?.error) {
+        setErrorMessage(
+          draftResult.error.message || 'Failed to save application draft.',
+        );
+        setIsSaving(false);
+        return;
+      }
+
+      navigate('/portal/apply/questions');
+    } catch (err) {
+      setErrorMessage(err.message || 'An unexpected error occurred.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -33,6 +76,13 @@ export default function ApplyRegister() {
         <section className="portal-apply__content">
           <h1>Register</h1>
           <p>Let&apos;s get to know you!</p>
+
+          {errorMessage && (
+            <div className="portal-apply__error" role="alert">
+              {errorMessage}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             <label htmlFor="register-name">Full name *</label>
             <input
@@ -50,8 +100,9 @@ export default function ApplyRegister() {
               type="email"
               placeholder="you@example.com"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
+              readOnly
+              disabled
+              className="portal-input--readonly"
             />
 
             <label htmlFor="register-program">Program *</label>
@@ -87,9 +138,10 @@ export default function ApplyRegister() {
             <div className="portal-apply__actions">
               <button
                 type="submit"
+                disabled={isSaving}
                 className="portal-button portal-button--primary"
               >
-                Next
+                {isSaving ? 'Saving...' : 'Next'}
               </button>
             </div>
           </form>

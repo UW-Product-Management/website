@@ -60,7 +60,8 @@
   margin: 0 auto;
 }
 
-.portal-auth__error {
+.portal-auth__error,
+.portal-apply__error {
   background-color: #fef2f2;
   border: 1px solid #f87171;
   color: #991b1b;
@@ -69,6 +70,12 @@
   margin-bottom: 16px;
   font-size: 0.95rem;
   line-height: 1.4;
+}
+
+.portal-input--readonly {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
 }
 
 .portal-auth__error p {

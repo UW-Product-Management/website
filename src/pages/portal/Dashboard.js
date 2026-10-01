@@ -13,14 +13,16 @@ const CHECKLIST = [
 ];
 
 export default function Dashboard() {
-  const { state } = usePortal();
-  const { submittedAt } = state;
+  const { application, state } = usePortal();
+  const submittedAt = application?.submittedAt || state?.submittedAt;
 
-  if (!submittedAt) {
+  if (!submittedAt && application?.status !== 'submitted') {
     return <Navigate to="/portal/apply/register" replace />;
   }
 
-  const completedOn = new Date(submittedAt).toLocaleDateString();
+  const completedOn = submittedAt
+    ? new Date(submittedAt).toLocaleDateString()
+    : 'Recently';
 
   return (
     <main className="portal-page portal-dashboard">

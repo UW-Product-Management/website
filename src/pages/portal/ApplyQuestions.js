@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import PortalHeader from '../../components/portal/PortalHeader';
 import ApplicationStepper from '../../components/portal/ApplicationStepper';
 import ApplySidebar from '../../components/portal/ApplySidebar';
@@ -10,18 +10,51 @@ const MAX_LENGTH = 200;
 
 export default function ApplyQuestions() {
   const navigate = useNavigate();
-  const { state, updateApplication } = usePortal();
-  const [productIdea, setProductIdea] = useState(
-    state.application.answers.productIdea,
-  );
-  const [greatTeam, setGreatTeam] = useState(
-    state.application.answers.greatTeam,
-  );
+  const { application, state, saveDraft } = usePortal();
 
-  const handleSubmit = (event) => {
+  const isSubmitted =
+    application?.status === 'submitted' || Boolean(state?.submittedAt);
+
+  const initialProductIdea =
+    application?.productIdea ||
+    application?.answers?.productIdea ||
+    state?.application?.answers?.productIdea ||
+    '';
+  const initialGreatTeam =
+    application?.greatTeam ||
+    application?.answers?.greatTeam ||
+    state?.application?.answers?.greatTeam ||
+    '';
+
+  const [productIdea, setProductIdea] = useState(initialProductIdea);
+  const [greatTeam, setGreatTeam] = useState(initialGreatTeam);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  if (isSubmitted) {
+    return <Navigate to="/portal/dashboard" replace />;
+  }
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    updateApplication({ answers: { productIdea, greatTeam } });
-    navigate('/portal/apply/consent');
+    setIsSaving(true);
+    setErrorMessage('');
+
+    try {
+      const result = await saveDraft({ productIdea, greatTeam });
+      if (result?.error) {
+        setErrorMessage(
+          result.error.message || 'Failed to save question responses.',
+        );
+        setIsSaving(false);
+        return;
+      }
+      navigate('/portal/apply/consent');
+    } catch (err) {
+      setErrorMessage(err.message || 'An unexpected error occurred.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -36,6 +69,13 @@ export default function ApplyQuestions() {
             Show us your creativity! Answer the following questions (200
             characters max each).
           </p>
+
+          {errorMessage && (
+            <div className="portal-apply__error" role="alert">
+              {errorMessage}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             <label htmlFor="question-product">
               1. What product or service do you wish existed, and why?
@@ -77,9 +117,10 @@ export default function ApplyQuestions() {
               </button>
               <button
                 type="submit"
+                disabled={isSaving}
                 className="portal-button portal-button--primary"
               >
-                Next
+                {isSaving ? 'Saving...' : 'Next'}
               </button>
             </div>
           </form>

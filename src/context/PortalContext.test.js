@@ -169,4 +169,232 @@ describe('PortalContext', () => {
     getItemSpy.mockRestore();
     setItemSpy.mockRestore();
   });
+
+  it('updates profile state when updateProfile succeeds', async () => {
+    supabase.auth.getSession.mockResolvedValueOnce({
+      data: { session: { user: { id: 'usr-1' } } },
+      error: null,
+    });
+
+    const mockProfileRow = {
+      id: 'usr-1',
+      full_name: 'Updated Name',
+      created_at: '2026-10-01',
+      updated_at: '2026-10-01',
+    };
+
+    supabase.from.mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest
+        .fn()
+        .mockResolvedValue({ data: mockProfileRow, error: null }),
+      maybeSingle: jest
+        .fn()
+        .mockResolvedValue({ data: mockProfileRow, error: null }),
+    });
+
+    function Consumer() {
+      const { profile, updateProfile } = usePortal();
+      return (
+        <div>
+          <span data-testid="profile-name">{profile?.fullName || 'empty'}</span>
+          <button
+            onClick={() => updateProfile({ fullName: 'Updated Name' })}
+            data-testid="btn"
+          >
+            Update
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <PortalProvider>
+        <Consumer />
+      </PortalProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('profile-name')).toHaveTextContent(
+        'Updated Name',
+      );
+    });
+  });
+
+  it('updates application state when saveDraft succeeds', async () => {
+    supabase.auth.getSession.mockResolvedValueOnce({
+      data: { session: { user: { id: 'usr-1' } } },
+      error: null,
+    });
+
+    const mockDraftRow = {
+      id: 'app-1',
+      user_id: 'usr-1',
+      event_id: 'evt-1',
+      program: 'Computer Science',
+      year_of_study: '2nd year',
+      status: 'draft',
+      submitted_at: null,
+    };
+
+    supabase.from.mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: mockDraftRow, error: null }),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: { id: 'evt-1', slug: 'prodcon-local' },
+        error: null,
+      }),
+    });
+
+    function Consumer() {
+      const { application, saveDraft, status } = usePortal();
+      return (
+        <div>
+          <span data-testid="status">{status}</span>
+          <span data-testid="program">{application?.program || 'none'}</span>
+          <button
+            onClick={() =>
+              saveDraft({
+                program: 'Computer Science',
+                yearOfStudy: '2nd year',
+              })
+            }
+            data-testid="btn-save"
+          >
+            Save
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <PortalProvider>
+        <Consumer />
+      </PortalProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('status')).toHaveTextContent('ready');
+    });
+
+    await act(async () => {
+      screen.getByTestId('btn-save').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('program')).toHaveTextContent(
+        'Computer Science',
+      );
+    });
+  });
+
+  it('updates application state and submittedAt when submitApplication succeeds', async () => {
+    supabase.auth.getSession.mockResolvedValueOnce({
+      data: { session: { user: { id: 'usr-1' } } },
+      error: null,
+    });
+
+    supabase.from.mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: {
+          id: 'app-1',
+          status: 'draft',
+          submitted_at: null,
+        },
+        error: null,
+      }),
+    });
+
+    supabase.rpc.mockResolvedValueOnce({
+      data: {
+        id: 'app-1',
+        status: 'submitted',
+        submitted_at: '2026-10-01T16:00:00Z',
+      },
+      error: null,
+    });
+
+    function Consumer() {
+      const { application, submitApplication, status } = usePortal();
+      return (
+        <div>
+          <span data-testid="status">{status}</span>
+          <span data-testid="app-status">{application?.status || 'none'}</span>
+          <button onClick={() => submitApplication()} data-testid="btn-submit">
+            Submit
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <PortalProvider>
+        <Consumer />
+      </PortalProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('status')).toHaveTextContent('ready');
+    });
+
+    await act(async () => {
+      screen.getByTestId('btn-submit').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('app-status')).toHaveTextContent('submitted');
+    });
+  });
+
+  it('clears profile and application and signs out on logOut', async () => {
+    supabase.auth.getSession.mockResolvedValueOnce({
+      data: { session: { user: { id: 'usr-1' } } },
+      error: null,
+    });
+
+    function Consumer() {
+      const { profile, application, logOut, status } = usePortal();
+      return (
+        <div>
+          <span data-testid="status">{status}</span>
+          <span data-testid="profile">
+            {profile ? 'has-profile' : 'no-profile'}
+          </span>
+          <span data-testid="app">{application ? 'has-app' : 'no-app'}</span>
+          <button onClick={() => logOut()} data-testid="btn-logout">
+            Log Out
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <PortalProvider>
+        <Consumer />
+      </PortalProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('status')).toHaveTextContent('ready');
+    });
+
+    await act(async () => {
+      screen.getByTestId('btn-logout').click();
+    });
+
+    expect(screen.getByTestId('profile')).toHaveTextContent('no-profile');
+    expect(screen.getByTestId('app')).toHaveTextContent('no-app');
+    expect(supabase.auth.signOut).toHaveBeenCalled();
+  });
 });

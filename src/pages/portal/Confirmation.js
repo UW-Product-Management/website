@@ -5,12 +5,21 @@ import { usePortal } from '../../context/PortalContext';
 import '../../styles/portal/Portal.css';
 
 export default function Confirmation() {
-  const { state } = usePortal();
-  const { account, application, submittedAt } = state;
+  const { session, profile, application, state } = usePortal();
+  const submittedAt = application?.submittedAt || state?.submittedAt;
 
-  if (!submittedAt) {
+  if (!submittedAt && application?.status !== 'submitted') {
     return <Navigate to="/portal/apply/register" replace />;
   }
+
+  const fullName = profile?.fullName || state?.account?.fullName || '';
+  const email = session?.user?.email || state?.account?.email || '';
+  const program = application?.program || state?.application?.program || '';
+  const yearOfStudy =
+    application?.yearOfStudy || state?.application?.yearOfStudy || '';
+  const formattedDate = submittedAt
+    ? new Date(submittedAt).toLocaleString()
+    : 'Recently';
 
   return (
     <main className="portal-page portal-confirmation">
@@ -23,23 +32,23 @@ export default function Confirmation() {
         <dl className="portal-apply__review">
           <div>
             <dt>Name</dt>
-            <dd>{account.fullName}</dd>
+            <dd>{fullName}</dd>
           </div>
           <div>
             <dt>Email</dt>
-            <dd>{account.email}</dd>
+            <dd>{email}</dd>
           </div>
           <div>
             <dt>Program</dt>
-            <dd>{application.program}</dd>
+            <dd>{program}</dd>
           </div>
           <div>
             <dt>Year</dt>
-            <dd>{application.yearOfStudy}</dd>
+            <dd>{yearOfStudy}</dd>
           </div>
           <div>
             <dt>Submitted on</dt>
-            <dd>{new Date(submittedAt).toLocaleString()}</dd>
+            <dd>{formattedDate}</dd>
           </div>
         </dl>
 

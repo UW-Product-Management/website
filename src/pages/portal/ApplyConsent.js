@@ -1,30 +1,73 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import PortalHeader from '../../components/portal/PortalHeader';
 import ApplicationStepper from '../../components/portal/ApplicationStepper';
 import ApplySidebar from '../../components/portal/ApplySidebar';
 import { usePortal } from '../../context/PortalContext';
+import { DIETARY_OPTIONS } from '../../portal/applicationOptions';
 import '../../styles/portal/Portal.css';
-
-const DIETARY_OPTIONS = ['None', 'Vegetarian', 'Vegan', 'Halal', 'Gluten-free'];
 
 export default function ApplyConsent() {
   const navigate = useNavigate();
-  const { state, updateApplication } = usePortal();
-  const [mediaConsent, setMediaConsent] = useState(
-    state.application.consent.mediaConsent,
-  );
-  const [dietaryRestrictions, setDietaryRestrictions] = useState(
-    state.application.consent.dietaryRestrictions,
-  );
-  const [specify, setSpecify] = useState(state.application.consent.specify);
+  const { application, state, saveDraft } = usePortal();
 
-  const handleSubmit = (event) => {
+  const isSubmitted =
+    application?.status === 'submitted' || Boolean(state?.submittedAt);
+
+  const initialMediaConsent =
+    application?.mediaConsent ??
+    application?.consent?.mediaConsent ??
+    state?.application?.consent?.mediaConsent ??
+    false;
+  const initialDietaryRestrictions =
+    application?.dietaryRestrictions ||
+    application?.dietaryRestriction ||
+    application?.consent?.dietaryRestrictions ||
+    state?.application?.consent?.dietaryRestrictions ||
+    '';
+  const initialSpecify =
+    application?.specify ||
+    application?.dietaryDetails ||
+    application?.consent?.specify ||
+    state?.application?.consent?.specify ||
+    '';
+
+  const [mediaConsent, setMediaConsent] = useState(initialMediaConsent);
+  const [dietaryRestrictions, setDietaryRestrictions] = useState(
+    initialDietaryRestrictions,
+  );
+  const [specify, setSpecify] = useState(initialSpecify);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  if (isSubmitted) {
+    return <Navigate to="/portal/dashboard" replace />;
+  }
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    updateApplication({
-      consent: { mediaConsent, dietaryRestrictions, specify },
-    });
-    navigate('/portal/apply/submit');
+    setIsSaving(true);
+    setErrorMessage('');
+
+    try {
+      const result = await saveDraft({
+        mediaConsent,
+        dietaryRestrictions,
+        specify,
+      });
+      if (result?.error) {
+        setErrorMessage(
+          result.error.message || 'Failed to save consent and logistics.',
+        );
+        setIsSaving(false);
+        return;
+      }
+      navigate('/portal/apply/submit');
+    } catch (err) {
+      setErrorMessage(err.message || 'An unexpected error occurred.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -36,6 +79,13 @@ export default function ApplyConsent() {
         <section className="portal-apply__content">
           <h1>Consent &amp; Logistics</h1>
           <p>Please review and complete the following.</p>
+
+          {errorMessage && (
+            <div className="portal-apply__error" role="alert">
+              {errorMessage}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             <h2>Media Consent</h2>
             <label
@@ -88,9 +138,10 @@ export default function ApplyConsent() {
               </button>
               <button
                 type="submit"
+                disabled={isSaving}
                 className="portal-button portal-button--primary"
               >
-                Next
+                {isSaving ? 'Saving...' : 'Next'}
               </button>
             </div>
           </form>

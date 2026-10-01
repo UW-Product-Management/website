@@ -1,15 +1,38 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { supabase } from '../lib/supabaseClient';
+import {
+  getEvent,
+  getProfile,
+  updateProfile as apiUpdateProfile,
+  getMyApplication,
+  saveApplicationDraft as apiSaveApplicationDraft,
+  submitApplication as apiSubmitApplication,
+} from '../services/portalApi';
 
-const defaultState = {
-  account: { fullName: '', email: '' },
-  application: {
-    program: '',
-    yearOfStudy: '',
-    answers: { productIdea: '', greatTeam: '' },
-    consent: { mediaConsent: false, dietaryRestrictions: '', specify: '' },
-  },
+const DEFAULT_EVENT_SLUG =
+  process.env.REACT_APP_PORTAL_EVENT_SLUG || 'prodcon-local';
+
+const defaultApplication = {
+  id: null,
+  program: '',
+  yearOfStudy: '',
+  productIdea: '',
+  greatTeam: '',
+  mediaConsent: false,
+  dietaryRestriction: '',
+  dietaryRestrictions: '',
+  dietaryDetails: '',
+  specify: '',
+  status: 'draft',
   submittedAt: null,
+  answers: { productIdea: '', greatTeam: '' },
+  consent: { mediaConsent: false, dietaryRestrictions: '', specify: '' },
 };
 
 export const PortalContext = createContext(null);
@@ -17,27 +40,63 @@ export const PortalContext = createContext(null);
 export function PortalProvider({ children, value: customValue }) {
   const [session, setSession] = useState(null);
   const [status, setStatus] = useState('loading');
-  const [state, setState] = useState(defaultState);
+  const [profile, setProfile] = useState(null);
+  const [application, setApplication] = useState(null);
+  const [event, setEvent] = useState(null);
 
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth
-      .getSession()
-      .then(({ data, error }) => {
+    async function initializePortal() {
+      try {
+        const { data, error } = await supabase.auth.getSession();
         if (!mounted) return;
-        if (error) {
-          setSession(null);
-        } else {
-          setSession(data?.session ?? null);
+
+        const currentSession = error ? null : data?.session ?? null;
+        setSession(currentSession);
+
+        if (currentSession?.user) {
+          let loadedEvent = null;
+          const { data: eventData } = await getEvent(DEFAULT_EVENT_SLUG);
+          if (mounted && eventData) {
+            loadedEvent = eventData;
+            setEvent(eventData);
+          }
+
+          const { data: profileData } = await getProfile();
+          if (mounted) {
+            setProfile(
+              profileData || {
+                id: currentSession.user.id,
+                fullName: currentSession.user.user_metadata?.full_name || '',
+              },
+            );
+          }
+
+          if (loadedEvent?.id) {
+            const { data: appData } = await getMyApplication(loadedEvent.id);
+            if (mounted) {
+              setApplication(appData ?? null);
+            }
+          }
+        } else if (mounted) {
+          setProfile(null);
+          setApplication(null);
         }
-        setStatus('ready');
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setSession(null);
-        setStatus('ready');
-      });
+      } catch {
+        if (mounted) {
+          setSession(null);
+          setProfile(null);
+          setApplication(null);
+        }
+      } finally {
+        if (mounted) {
+          setStatus('ready');
+        }
+      }
+    }
+
+    initializePortal();
 
     const {
       data: { subscription },
@@ -45,6 +104,25 @@ export function PortalProvider({ children, value: customValue }) {
       if (!mounted) return;
       setSession(nextSession ?? null);
       setStatus('ready');
+
+      if (nextSession?.user) {
+        getProfile()
+          .then(({ data: profileData }) => {
+            if (mounted && profileData) setProfile(profileData);
+          })
+          .catch(() => {});
+
+        if (event?.id) {
+          getMyApplication(event.id)
+            .then(({ data: appData }) => {
+              if (mounted && appData) setApplication(appData);
+            })
+            .catch(() => {});
+        }
+      } else {
+        setProfile(null);
+        setApplication(null);
+      }
     });
 
     return () => {
@@ -53,44 +131,207 @@ export function PortalProvider({ children, value: customValue }) {
     };
   }, []);
 
-  const updateAccount = (fields) => {
-    setState((prev) => ({
-      ...prev,
-      account: { ...prev.account, ...fields },
-    }));
-  };
+  const saveDraft = useCallback(
+    async (fields) => {
+      let currentEvent = event;
+      if (!currentEvent?.id) {
+        const { data: eventData } = await getEvent(DEFAULT_EVENT_SLUG);
+        if (eventData) {
+          currentEvent = eventData;
+          setEvent(eventData);
+        }
+      }
 
-  const updateApplication = (fields) => {
-    setState((prev) => ({
-      ...prev,
-      application: { ...prev.application, ...fields },
-    }));
-  };
+      const result = await apiSaveApplicationDraft({
+        applicationId: application?.id,
+        eventId: currentEvent?.id,
+        fields,
+      });
 
-  const submitApplication = () => {
-    setState((prev) => ({
-      ...prev,
-      submittedAt: new Date().toISOString(),
-    }));
-  };
+      if (!result.error && result.data) {
+        setApplication(result.data);
+      }
+      return result;
+    },
+    [application?.id, event],
+  );
 
-  const logOut = async () => {
-    setState(defaultState);
+  const handleUpdateProfile = useCallback(async ({ fullName }) => {
+    const result = await apiUpdateProfile({ fullName });
+    if (!result.error && result.data) {
+      setProfile(result.data);
+    }
+    return result;
+  }, []);
+
+  const handleSubmitApplication = useCallback(async () => {
+    const appId = application?.id;
+    if (!appId) {
+      return {
+        data: null,
+        error: { message: 'No application found to submit' },
+      };
+    }
+
+    const result = await apiSubmitApplication(appId);
+    if (!result.error && result.data) {
+      setApplication(result.data);
+    }
+    return result;
+  }, [application?.id]);
+
+  const refreshPortalData = useCallback(async () => {
+    if (!session?.user) return;
+    try {
+      const { data: profileData } = await getProfile();
+      if (profileData) setProfile(profileData);
+
+      let currentEvent = event;
+      if (!currentEvent?.id) {
+        const { data: eventData } = await getEvent(DEFAULT_EVENT_SLUG);
+        if (eventData) {
+          currentEvent = eventData;
+          setEvent(eventData);
+        }
+      }
+
+      if (currentEvent?.id) {
+        const { data: appData } = await getMyApplication(currentEvent.id);
+        setApplication(appData ?? null);
+      }
+    } catch {
+      // ignore
+    }
+  }, [session?.user, event]);
+
+  const logOut = useCallback(async () => {
+    setProfile(null);
+    setApplication(null);
     await supabase.auth.signOut();
+  }, []);
+
+  const updateAccount = useCallback((fields) => {
+    if (fields.fullName !== undefined) {
+      setProfile((prev) => ({
+        ...(prev || {}),
+        fullName: fields.fullName,
+      }));
+    }
+  }, []);
+
+  const updateApplication = useCallback((fields) => {
+    setApplication((prev) => {
+      const current = prev || defaultApplication;
+      const merged = { ...current, ...fields };
+      if (fields.answers) {
+        merged.answers = { ...current.answers, ...fields.answers };
+        if (fields.answers.productIdea !== undefined) {
+          merged.productIdea = fields.answers.productIdea;
+        }
+        if (fields.answers.greatTeam !== undefined) {
+          merged.greatTeam = fields.answers.greatTeam;
+        }
+      }
+      if (fields.consent) {
+        merged.consent = { ...current.consent, ...fields.consent };
+        if (fields.consent.mediaConsent !== undefined) {
+          merged.mediaConsent = fields.consent.mediaConsent;
+        }
+        if (fields.consent.dietaryRestrictions !== undefined) {
+          merged.dietaryRestrictions = fields.consent.dietaryRestrictions;
+          merged.dietaryRestriction = fields.consent.dietaryRestrictions;
+        }
+        if (fields.consent.specify !== undefined) {
+          merged.specify = fields.consent.specify;
+          merged.dietaryDetails = fields.consent.specify;
+        }
+      }
+      return merged;
+    });
+  }, []);
+
+  const appState = application
+    ? {
+        ...defaultApplication,
+        ...application,
+        answers: {
+          ...defaultApplication.answers,
+          ...(application.answers || {}),
+          productIdea:
+            application.productIdea || application.answers?.productIdea || '',
+          greatTeam:
+            application.greatTeam || application.answers?.greatTeam || '',
+        },
+        consent: {
+          ...defaultApplication.consent,
+          ...(application.consent || {}),
+          mediaConsent:
+            application.mediaConsent ??
+            application.consent?.mediaConsent ??
+            false,
+          dietaryRestrictions:
+            application.dietaryRestrictions ||
+            application.dietaryRestriction ||
+            application.consent?.dietaryRestrictions ||
+            '',
+          specify:
+            application.specify ||
+            application.dietaryDetails ||
+            application.consent?.specify ||
+            '',
+        },
+      }
+    : defaultApplication;
+
+  const state = {
+    account: {
+      fullName:
+        profile?.fullName || session?.user?.user_metadata?.full_name || '',
+      email: session?.user?.email || '',
+    },
+    application: appState,
+    submittedAt: application?.submittedAt || null,
   };
 
   const user = session?.user ?? null;
 
-  const contextValue = customValue || {
+  const defaultContextValue = {
     session,
     user,
     status,
+    profile,
+    application,
+    event,
     state,
+    saveDraft,
+    updateProfile: handleUpdateProfile,
+    submitApplication: handleSubmitApplication,
     updateAccount,
     updateApplication,
-    submitApplication,
+    refreshPortalData,
     logOut,
   };
+
+  const contextValue = customValue
+    ? {
+        ...defaultContextValue,
+        ...customValue,
+        state: customValue.state
+          ? {
+              ...state,
+              ...customValue.state,
+              account: {
+                ...state.account,
+                ...(customValue.state.account || {}),
+              },
+              application: {
+                ...state.application,
+                ...(customValue.state.application || {}),
+              },
+            }
+          : defaultContextValue.state,
+      }
+    : defaultContextValue;
 
   return (
     <PortalContext.Provider value={contextValue}>
