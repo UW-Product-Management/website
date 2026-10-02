@@ -136,8 +136,8 @@
   }
 
   .site-footer__mark {
-  font-size: clamp(5.5rem, 28vw, 8rem);
-  transform: translateX(-50%) scaleX(1.04) scaleY(0.95);
+    font-size: clamp(5.5rem, 28vw, 8rem);
+    transform: translateX(-50%) scaleX(1.04) scaleY(0.95);
   }
 
   .site-footer__content {
