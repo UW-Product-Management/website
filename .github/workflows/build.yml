@@ -30,3 +30,20 @@ jobs:
       - run: npm run lint
       - run: npm test -- --watchAll=false
       - run: npm run build
+
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "npm"
+          cache-dependency-path: "./package-lock.json"
+      - run: npm ci
+      - run: npx supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor,postgres-meta
+      - run: npx supabase test db
+      - run: |
+          export SUPABASE_PUBLISHABLE_KEY=$(npx supabase status -o json | jq -r .PUBLISHABLE_KEY)
+          npm run test:integration
+

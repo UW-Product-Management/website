@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import PortalHeader from '../../components/portal/PortalHeader';
 import ApplicationStepper from '../../components/portal/ApplicationStepper';
@@ -39,6 +39,19 @@ export default function ApplyConsent() {
   const [specify, setSpecify] = useState(initialSpecify);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (initialMediaConsent !== undefined) setMediaConsent(initialMediaConsent);
+  }, [initialMediaConsent]);
+
+  useEffect(() => {
+    if (initialDietaryRestrictions)
+      setDietaryRestrictions(initialDietaryRestrictions);
+  }, [initialDietaryRestrictions]);
+
+  useEffect(() => {
+    if (initialSpecify) setSpecify(initialSpecify);
+  }, [initialSpecify]);
 
   if (isSubmitted) {
     return <Navigate to="/portal/dashboard" replace />;

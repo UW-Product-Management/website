@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import PortalHeader from '../../components/portal/PortalHeader';
 import ApplicationStepper from '../../components/portal/ApplicationStepper';
@@ -30,6 +30,14 @@ export default function ApplyQuestions() {
   const [greatTeam, setGreatTeam] = useState(initialGreatTeam);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (initialProductIdea) setProductIdea(initialProductIdea);
+  }, [initialProductIdea]);
+
+  useEffect(() => {
+    if (initialGreatTeam) setGreatTeam(initialGreatTeam);
+  }, [initialGreatTeam]);
 
   if (isSubmitted) {
     return <Navigate to="/portal/dashboard" replace />;

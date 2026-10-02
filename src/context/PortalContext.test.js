@@ -118,13 +118,15 @@ describe('PortalContext', () => {
       user: { id: 'usr-2', email: 'updated@example.com' },
     };
 
-    act(() => {
+    await act(async () => {
       authChangeCallback('SIGNED_IN', newSession);
     });
 
-    expect(screen.getByTestId('session')).toHaveTextContent(
-      'updated@example.com',
-    );
+    await waitFor(() => {
+      expect(screen.getByTestId('session')).toHaveTextContent(
+        'updated@example.com',
+      );
+    });
     expect(screen.getByTestId('user')).toHaveTextContent('usr-2');
   });
 

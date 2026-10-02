@@ -103,25 +103,34 @@ export function PortalProvider({ children, value: customValue }) {
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted) return;
       setSession(nextSession ?? null);
-      setStatus('ready');
 
       if (nextSession?.user) {
-        getProfile()
-          .then(({ data: profileData }) => {
-            if (mounted && profileData) setProfile(profileData);
-          })
-          .catch(() => {});
-
-        if (event?.id) {
-          getMyApplication(event.id)
-            .then(({ data: appData }) => {
-              if (mounted && appData) setApplication(appData);
-            })
-            .catch(() => {});
-        }
+        (async () => {
+          let eventId = event?.id;
+          if (!eventId) {
+            const { data: eventData } = await getEvent(DEFAULT_EVENT_SLUG);
+            if (mounted && eventData) {
+              setEvent(eventData);
+              eventId = eventData.id;
+            }
+          }
+          const [profileRes, appRes] = await Promise.all([
+            getProfile(),
+            eventId
+              ? getMyApplication(eventId)
+              : Promise.resolve({ data: null }),
+          ]);
+          if (!mounted) return;
+          if (profileRes?.data) setProfile(profileRes.data);
+          if (appRes?.data) setApplication(appRes.data);
+          setStatus('ready');
+        })().catch(() => {
+          if (mounted) setStatus('ready');
+        });
       } else {
         setProfile(null);
         setApplication(null);
+        setStatus('ready');
       }
     });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import PortalHeader from '../../components/portal/PortalHeader';
 import ApplicationStepper from '../../components/portal/ApplicationStepper';
@@ -27,6 +27,18 @@ export default function ApplyRegister() {
   const [yearOfStudy, setYearOfStudy] = useState(initialYear);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (initialFullName) setFullName(initialFullName);
+  }, [initialFullName]);
+
+  useEffect(() => {
+    if (initialProgram) setProgram(initialProgram);
+  }, [initialProgram]);
+
+  useEffect(() => {
+    if (initialYear) setYearOfStudy(initialYear);
+  }, [initialYear]);
 
   if (isSubmitted) {
     return <Navigate to="/portal/dashboard" replace />;
