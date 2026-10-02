@@ -519,6 +519,10 @@
   }
 }
 
+#home .home-hero--compact {
+  background: transparent;
+}
+
 .what-we-do {
   --wwd-paper: #f2efef;
   --wwd-card: #ffffff;
