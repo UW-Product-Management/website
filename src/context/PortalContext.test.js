@@ -357,6 +357,65 @@ describe('PortalContext', () => {
     await waitFor(() => {
       expect(screen.getByTestId('app-status')).toHaveTextContent('submitted');
     });
+    expect(supabase.functions.invoke).toHaveBeenCalledWith(
+      'send-application-received',
+    );
+  });
+
+  it('keeps the application submitted when the received email fails to send', async () => {
+    supabase.auth.getSession.mockResolvedValueOnce({
+      data: { session: { user: { id: 'usr-1' } } },
+      error: null,
+    });
+    supabase.from.mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: { id: 'app-1', status: 'draft', submitted_at: null },
+        error: null,
+      }),
+    });
+    supabase.rpc.mockResolvedValueOnce({
+      data: {
+        id: 'app-1',
+        status: 'submitted',
+        submitted_at: '2026-10-01T16:00:00Z',
+      },
+      error: null,
+    });
+    supabase.functions.invoke.mockRejectedValueOnce(new Error('offline'));
+
+    function Consumer() {
+      const { application, submitApplication, status } = usePortal();
+      return (
+        <div>
+          <span data-testid="status">{status}</span>
+          <span data-testid="app-status">{application?.status || 'none'}</span>
+          <button onClick={() => submitApplication()} data-testid="btn-submit">
+            Submit
+          </button>
+        </div>
+      );
+    }
+
+    render(
+      <PortalProvider>
+        <Consumer />
+      </PortalProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('status')).toHaveTextContent('ready');
+    });
+
+    await act(async () => {
+      screen.getByTestId('btn-submit').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('app-status')).toHaveTextContent('submitted');
+    });
   });
 
   it('clears profile and application and signs out on logOut', async () => {

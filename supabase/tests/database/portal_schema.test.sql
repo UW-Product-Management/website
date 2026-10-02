@@ -1,5 +1,5 @@
 begin;
-select plan(18);
+select plan(19);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('11111111-1111-1111-1111-111111111111', 'alex@test.local', '{"full_name":"Alex Chen"}'),
@@ -101,6 +101,12 @@ select throws_ok(
 select is_empty(
   $$ update public.applications set program = 'Engineering' returning id $$,
   'submitted applications are read-only'
+);
+
+select throws_ok(
+  $$ update public.applications set confirmation_email_sent_at = now() $$,
+  '42501', null,
+  'cannot set confirmation_email_sent_at directly'
 );
 
 set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';

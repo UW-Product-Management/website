@@ -127,6 +127,9 @@ jest.mock('./lib/supabaseClient', () => {
       maybeSingle: jest.fn(() => Promise.resolve({ data: null, error: null })),
     })),
     rpc: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    functions: {
+      invoke: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    },
   };
 
   return {

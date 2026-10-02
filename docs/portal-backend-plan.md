@@ -683,8 +683,8 @@ Each phase is a separate PR and must leave `npm run lint`, `npm test`,
 | **1. Local Supabase + schema** | `supabase` devDep, `config.toml` edits, migration (Appendix A), `seed.sql`, pgTAP tests (Appendix B), npm scripts, `.env.example`, README section | `npm run db:reset && npm run db:test` → 18/18 pass on a fresh machine |
 | **2. Auth wiring** | `supabaseClient`, `portalApi` auth functions, Signup/Login/Reset/UpdatePassword, `RequireAuth`, PortalContext session handling, Jest tests | Sign-up → Mailpit confirm → login works in the browser; Jest page tests pass |
 | **3. Application persistence** | `portalApi` application functions, wizard saves drafts, submit via RPC, dashboard reads DB; remove `localStorage`; integration tests (Appendix C); CI `database` job | Manual QA checklist §8.4 passes; `npm run test:integration` passes locally and in CI |
-| **4. Production** | Create project, `db push`, auth URLs, custom SMTP, templates, host env vars, real event row | End-to-end signup + submit on the production URL with a real inbox |
-| **5. (Optional) Confirmation email** | Edge Function triggered after submit (or Database Webhook on `applications` update) that sends the "application received" email via the SMTP provider's API | Email arrives locally (Mailpit / provider sandbox) and in prod; covered by an integration test |
+| **4. Production** (repo side done; hosted steps in [portal-production-runbook.md](portal-production-runbook.md)) | Create project, `db push`, auth URLs, custom SMTP, templates, host env vars, real event row | End-to-end signup + submit on the production URL with a real inbox |
+| **5. (Optional) Confirmation email** (✅ implemented) | Edge Function `send-application-received`, invoked by the client after a successful submit and made idempotent by `applications.confirmation_email_sent_at` that sends the "application received" email via the SMTP provider's API | Email arrives locally (Mailpit / provider sandbox) and in prod; covered by an integration test |
 
 ---
 

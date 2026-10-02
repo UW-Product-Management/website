@@ -307,3 +307,7 @@ export async function submitApplication(applicationId) {
     error: null,
   };
 }
+
+export async function sendApplicationReceivedEmail() {
+  return supabase.functions.invoke('send-application-received');
+}

@@ -41,7 +41,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: "./package-lock.json"
       - run: npm ci
-      - run: npx supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,supavisor,postgres-meta
+      - run: npx supabase start -x studio,imgproxy,storage-api,realtime,logflare,vector,supavisor,postgres-meta
       - run: npx supabase test db
       - run: |
           export SUPABASE_PUBLISHABLE_KEY=$(npx supabase status -o json | jq -r .PUBLISHABLE_KEY)

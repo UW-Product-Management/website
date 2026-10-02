@@ -13,6 +13,7 @@ import {
   getMyApplication,
   saveApplicationDraft as apiSaveApplicationDraft,
   submitApplication as apiSubmitApplication,
+  sendApplicationReceivedEmail,
 } from '../services/portalApi';
 
 const DEFAULT_EVENT_SLUG =
@@ -185,6 +186,8 @@ export function PortalProvider({ children, value: customValue }) {
     const result = await apiSubmitApplication(appId);
     if (!result.error && result.data) {
       setApplication(result.data);
+      // The application is already submitted; a failed email must not undo that.
+      sendApplicationReceivedEmail().catch(() => {});
     }
     return result;
   }, [application?.id]);
