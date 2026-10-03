@@ -70,19 +70,30 @@ When planning tasks, features, or bugs, create an issue using the [Issue Templat
 - **Development Notes:** Implementation details, Figma links, or affected components.
 - **Testing Notes:** Verification scenarios, test data, and responsive viewport checks.
 
-### 2. Branching & Commits
-- Branch from `main` (or active development branch) with a descriptive name:
-  - `feat/<feature-name>`
-  - `fix/<bug-description>`
-  - `<your-name>/<task-name>`
-- Follow the **Conventional Commits** format (`type: imperative subject`):
-  - `feat: add interactive team profile cards`
-  - `fix: correct mobile navbar hamburger alignment`
-  - `style: update button hover transition`
+### 2. Ticket IDs
+Every issue is automatically titled `WEB-<number>: <title>`, where `<number>` is its GitHub issue number (e.g. issue #20 is `WEB-20`). Use that ticket ID in your branch, commits, and PR title so work can be traced back to its ticket.
 
-### 3. Pull Requests
+| What | Format | Example |
+| :--- | :--- | :--- |
+| **Branch** | `WEB-<n>/<short-kebab-description>` | `WEB-20/footer-text-size` |
+| **Commit** | `type(WEB-<n>): imperative subject` | `style(WEB-20): increase footer text weight and size` |
+| **PR title** | `WEB-<n>: Imperative summary` | `WEB-20: Increase footer text weight and size` |
+
+### 3. Branching & Commits
+- Branch from `main` (or the active development branch) using the ticket ID: `WEB-<n>/<short-kebab-description>`.
+- Follow the **Conventional Commits** format with the ticket ID as the scope (`type(WEB-<n>): imperative subject`):
+  - `feat(WEB-21): restore interactive hero bloom effect`
+  - `fix(WEB-15): correct duplicated polaroid captions in what we do`
+  - `style(WEB-20): increase footer text weight and size`
+- Allowed types: `feat`, `fix`, `refactor`, `style`, `chore`, `docs`, `test`, `perf`.
+- Subject: lowercase first letter, imperative mood, no trailing period, max 100 characters for the whole line.
+- Rare changes with no ticket (e.g. small repo maintenance) drop the scope: `chore: update github actions versions`. When in doubt, create a ticket first.
+
+### 4. Pull Requests
+- Title the PR `WEB-<n>: Imperative summary`, usually the ticket title (e.g. `WEB-20: Increase footer text weight and size`).
 - Open a PR using the [Pull Request Template](.github/pull-request-template.md).
-- Link the corresponding issue/ticket.
+- Link the corresponding ticket (`WEB-<n>` → `#<n>`).
+- When squash-merging, edit the squash commit message to the `type(WEB-<n>): subject` format, since GitHub defaults it to the PR title.
 - Provide verification steps and visual proof (screenshots or screen recordings) across responsive viewports:
   - **Desktop:** `> 1024px`
   - **Tablet:** `768px – 1024px`

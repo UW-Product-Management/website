@@ -35,6 +35,9 @@
     "fix-code": "eslint '**/*.{js,jsx}' --fix",
     "format-code": "prettier '**/*.{js,jsx,css}' --write"
   },
+  "jest": {
+    "resetMocks": false
+  },
   "eslintConfig": {
     "extends": [
       "react-app",

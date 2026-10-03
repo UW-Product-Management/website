@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { useInView } from 'react-intersection-observer';
+import { gsap, prefersReducedMotion } from './eventsV4/motion';
+import useWhatWeDoTrail from './useWhatWeDoTrail';
 import polaroidOne from '../images/what-we-do/polaroid-1.png';
 import polaroidTwo from '../images/what-we-do/polaroid-2.png';
 import polaroidThree from '../images/what-we-do/polaroid-3.png';
 import mascot from '../images/mascot.svg';
+
+const toTranslate = ({ x, y }) => `translate(${x}, ${y})`;
+
+function placeMascotOnRoute(marker, route, progress) {
+  marker.setAttribute(
+    'transform',
+    toTranslate(route.getPointAtLength(progress * route.getTotalLength())),
+  );
+}
 
 function Polaroid({ src, alt, caption, tilt }) {
   return (
@@ -24,6 +35,53 @@ export default function WhatWeDo() {
     rootMargin: '0px 0px -18% 0px',
     fallbackInView: true,
   });
+  const canvasRef = useRef(null);
+  const svgRef = useRef(null);
+  const routeRef = useRef(null);
+  const mascotRef = useRef(null);
+  const travelRef = useRef({ progress: 0 });
+  const trail = useWhatWeDoTrail(canvasRef, svgRef);
+
+  useEffect(() => {
+    if (!canvasRef.current || prefersReducedMotion()) return undefined;
+
+    const ctx = gsap.context(() => {
+      gsap.to(travelRef.current, {
+        progress: 1,
+        ease: 'none',
+        onUpdate: () =>
+          placeMascotOnRoute(
+            mascotRef.current,
+            routeRef.current,
+            travelRef.current.progress,
+          ),
+        scrollTrigger: {
+          trigger: canvasRef.current,
+          start: 'top 75%',
+          end: 'bottom 75%',
+          scrub: 0.6,
+        },
+      });
+    }, canvasRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  // Re-seats the mascot whenever the trail is re-measured, since scroll
+  // updates only fire while the user is actively scrolling.
+  useLayoutEffect(() => {
+    const marker = mascotRef.current;
+    if (!marker) return;
+
+    const { progress } = travelRef.current;
+    if (prefersReducedMotion()) {
+      marker.setAttribute('transform', toTranslate(trail.resting));
+    } else if (progress > 0) {
+      placeMascotOnRoute(marker, routeRef.current, progress);
+    } else {
+      marker.setAttribute('transform', toTranslate(trail.start));
+    }
+  }, [trail]);
 
   return (
     <section
@@ -36,8 +94,9 @@ export default function WhatWeDo() {
         What We Do
       </h2>
 
-      <div className="what-we-do__canvas">
+      <div ref={canvasRef} className="what-we-do__canvas">
         <svg
+          ref={svgRef}
           viewBox="300 120 1880 1760"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -71,27 +130,25 @@ export default function WhatWeDo() {
 
           <path d="M1914.78 1204.02L1915.95 1205.75L1917.23 1204.16L1933.52 1184.05L1927.91 1208.78L1927.43 1210.87L1929.61 1210.6L1955.86 1207.38L1933.61 1221.04L1931.77 1222.18L1933.55 1223.49L1954.57 1238.94L1928.51 1233.57L1926.46 1233.15L1926.73 1235.19L1930.15 1260.46L1915.66 1239.04L1914.5 1237.31L1913.21 1238.9L1896.92 1259.01L1902.54 1234.28L1903.01 1232.19L1900.83 1232.45L1874.58 1235.68L1896.83 1222.02L1898.68 1220.88L1896.89 1219.57L1875.87 1204.12L1901.93 1209.49L1903.99 1209.91L1903.71 1207.87L1900.29 1182.6L1914.78 1204.02Z" />
 
+          <path className="what-we-do__curve" d={trail.toPhotoTwo} />
+          <path className="what-we-do__curve" d={trail.toPhotoThree} />
           <path
-            className="what-we-do__curve"
-            d="M1032.64 424C1068.61 495.936 1350.22 688.056 1362.57 555.626C1365.19 527.63 1335.49 471.902 1299.59 491.774C1264.74 511.068 1249.76 576.389 1240.97 610.978C1216.32 707.969 1253.9 797.879 1350.37 832.389C1422.11 858.051 1506.18 860.308 1573.96 828.03"
-          />
-          <path
-            className="what-we-do__curve"
-            d="M1457.14 1104.99C1346.96 1215.17 1181.6 1247.33 1033.74 1277.67C920 1305 850 1420 875 1550C898.637 1630 943.129 1696.33 997.996 1725.12C1110.37 1784.07 1238.47 1806.31 1359.14 1790"
+            ref={routeRef}
+            className="what-we-do__mascot-route"
+            d={trail.mascotRoute}
           />
 
-          <g
-            className="what-we-do__mascot-marker"
-            transform="translate(1420, 1770)"
-          >
-            <image
-              href={mascot}
-              x="-125"
-              y="-125"
-              width="250"
-              height="250"
-              className="what-we-do__mascot-img"
-            />
+          <g ref={mascotRef}>
+            <g className="what-we-do__mascot-marker">
+              <image
+                href={mascot}
+                x="-125"
+                y="-125"
+                width="250"
+                height="250"
+                className="what-we-do__mascot-img"
+              />
+            </g>
           </g>
         </svg>
 

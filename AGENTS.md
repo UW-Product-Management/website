@@ -18,12 +18,13 @@ At the end of **every** coding or configuration task, you **MUST** present the r
 
 ```text
 Recommended Commit:
-  Branch:  <current-or-feature-branch>
-  Message: <type>: <subject>
-  PR Title: <type>: <subject>
+  Branch:  WEB-<n>/<short-kebab-description>
+  Message: <type>(WEB-<n>): <subject>
+  PR Title: WEB-<n>: <Summary>
 ```
 
-- **Format:** `type: imperative subject` (e.g. `feat: implement responsive team profile modal`)
+- **Ticket IDs:** Issues are titled `WEB-<n>: <title>`, where `<n>` is the GitHub issue number. Use that ID in the branch, commit scope, and PR title (e.g. branch `WEB-20/footer-text-size`, commit `style(WEB-20): increase footer text weight and size`, PR title `WEB-20: Increase footer text weight and size`). If the ticket ID isn't clear from the branch or request, ask rather than guess. Only changes with no ticket drop the scope (`chore: subject`).
+- **Format:** `type(WEB-<n>): imperative subject` (e.g. `feat(WEB-21): restore interactive hero bloom effect`)
 - **Allowed types:** `feat`, `fix`, `refactor`, `style`, `chore`, `docs`, `test`, `perf`
 - **Rules:** Lowercase subject, imperative mood, max 100 characters, no emoji, no trailing period.
 - **Attribution:** Never add AI co-authorship tags (`Co-authored-by: ...`).

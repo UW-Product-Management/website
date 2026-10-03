@@ -19,6 +19,12 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
+global.ResizeObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 jest.mock('gsap', () => ({
   gsap: {
     registerPlugin: jest.fn(),
