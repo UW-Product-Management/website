@@ -64,11 +64,6 @@ export default function Confirmation() {
             Back to home
           </Link>
         </div>
-        <p>
-          <Link to="/portal/apply/confirmation-email">
-            View confirmation email (example)
-          </Link>
-        </p>
       </section>
     </main>
   );

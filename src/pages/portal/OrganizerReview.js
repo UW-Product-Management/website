@@ -13,7 +13,7 @@ import '../../styles/portal/Portal.css';
 import '../../styles/portal/PortalReview.css';
 
 export default function OrganizerReview() {
-  const { event } = usePortal();
+  const { event, status } = usePortal();
   const eventId = event?.id;
   const [applications, setApplications] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -22,18 +22,23 @@ export default function OrganizerReview() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!eventId) return undefined;
+    if (!eventId) {
+      if (status === 'ready') {
+        setIsLoading(false);
+      }
+      return undefined;
+    }
     let mounted = true;
     listApplicationsForReview(eventId).then(({ data, error }) => {
       if (!mounted) return;
       if (error) setErrorMessage(error.message);
-      setApplications(data);
+      setApplications(data || []);
       setIsLoading(false);
     });
     return () => {
       mounted = false;
     };
-  }, [eventId]);
+  }, [eventId, status]);
 
   const visibleApplications = useMemo(
     () =>
@@ -116,8 +121,13 @@ export default function OrganizerReview() {
           </button>
         </div>
 
-        {isLoading && eventId ? (
+        {isLoading ? (
           <p role="status">Loading applications...</p>
+        ) : !eventId ? (
+          <p role="alert">
+            Unable to load event details. Please verify the configured event
+            slug.
+          </p>
         ) : visibleApplications.length === 0 ? (
           <p>No applications to show.</p>
         ) : (

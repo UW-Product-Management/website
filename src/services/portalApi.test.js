@@ -328,12 +328,14 @@ describe('portalApi row & form mappings', () => {
     const row = {
       id: 'prof-1',
       full_name: 'Alex Chen',
+      email: 'alex@example.com',
       created_at: '2026-10-01T00:00:00Z',
       updated_at: '2026-10-01T01:00:00Z',
     };
     expect(mapProfileFromRow(row)).toEqual({
       id: 'prof-1',
       fullName: 'Alex Chen',
+      email: 'alex@example.com',
       createdAt: '2026-10-01T00:00:00Z',
       updatedAt: '2026-10-01T01:00:00Z',
     });
@@ -487,6 +489,7 @@ describe('portalApi application service', () => {
         data: {
           id: 'user-1',
           full_name: 'Alex Chen',
+          email: 'alex@example.com',
           created_at: '2026-10-01',
           updated_at: '2026-10-01',
         },
@@ -498,6 +501,7 @@ describe('portalApi application service', () => {
       expect(result.data).toEqual({
         id: 'user-1',
         fullName: 'Alex Chen',
+        email: 'alex@example.com',
         createdAt: '2026-10-01',
         updatedAt: '2026-10-01',
       });

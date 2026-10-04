@@ -139,6 +139,7 @@ export default function ApplyConsent() {
               placeholder="Type here..."
               value={specify}
               onChange={(event) => setSpecify(event.target.value)}
+              maxLength={500}
             />
 
             <div className="portal-apply__actions">

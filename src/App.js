@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Outlet, Route, Routes } from 'react-router-dom';
 import './App.css';
 import Home from './pages/Home';
 import Events from './pages/Events';
@@ -16,21 +16,28 @@ import ApplyQuestions from './pages/portal/ApplyQuestions';
 import ApplyConsent from './pages/portal/ApplyConsent';
 import ApplySubmit from './pages/portal/ApplySubmit';
 import Confirmation from './pages/portal/Confirmation';
-import ConfirmationEmail from './pages/portal/ConfirmationEmail';
 import Dashboard from './pages/portal/Dashboard';
 import DashboardDetails from './pages/portal/DashboardDetails';
 import RequireAuth from './components/portal/RequireAuth';
 import RequireOrganizer from './components/portal/RequireOrganizer';
 import OrganizerReview from './pages/portal/OrganizerReview';
 
+function PortalLayout() {
+  return (
+    <PortalProvider>
+      <Outlet />
+    </PortalProvider>
+  );
+}
+
 function App() {
   return (
     <main className="App">
-      <PortalProvider>
-        <Routes>
-          <Route path="/events" element={<Events />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/team" element={<Team />} />
+      <Routes>
+        <Route path="/events" element={<Events />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/team" element={<Team />} />
+        <Route element={<PortalLayout />}>
           <Route path="/portal" element={<PortalLanding />} />
           <Route path="/portal/signup" element={<Signup />} />
           <Route path="/portal/login" element={<Login />} />
@@ -77,14 +84,6 @@ function App() {
             }
           />
           <Route
-            path="/portal/apply/confirmation-email"
-            element={
-              <RequireAuth>
-                <ConfirmationEmail />
-              </RequireAuth>
-            }
-          />
-          <Route
             path="/portal/dashboard"
             element={
               <RequireAuth>
@@ -110,9 +109,9 @@ function App() {
               </RequireAuth>
             }
           />
-          <Route path="*" element={<Home />} />
-        </Routes>
-      </PortalProvider>
+        </Route>
+        <Route path="*" element={<Home />} />
+      </Routes>
     </main>
   );
 }

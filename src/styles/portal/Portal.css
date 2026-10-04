@@ -133,7 +133,15 @@
 .portal-apply__content textarea {
   padding: 10px;
   border-radius: 4px;
-  border: 1px solid;
+  border: 1px solid #d1d5db;
+}
+
+.portal-auth__card input:focus,
+.portal-apply__content input:focus,
+.portal-apply__content select:focus,
+.portal-apply__content textarea:focus {
+  outline: none;
+  border-color: #111;
 }
 
 /* 5-8. Application wizard */
@@ -153,7 +161,7 @@
 }
 
 .application-stepper__number {
-  border: 1px solid;
+  border: 1px solid #d1d5db;
   border-radius: 50%;
   width: 24px;
   height: 24px;
@@ -186,7 +194,7 @@
 }
 
 .apply-sidebar__number {
-  border: 1px solid;
+  border: 1px solid #d1d5db;
   border-radius: 50%;
   width: 20px;
   height: 20px;
@@ -288,7 +296,7 @@
 .portal-dashboard__checklist li {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid;
+  border-bottom: 1px solid #e5e7eb;
   padding-bottom: 8px;
 }
 
@@ -316,6 +324,25 @@
 @keyframes portal-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .portal-page {
+    padding: 24px 20px 48px;
+  }
+
+  .portal-apply__body,
+  .portal-dashboard__body {
+    gap: 24px;
+  }
+
+  .apply-sidebar {
+    flex: 0 0 180px;
+  }
+
+  .dashboard-sidebar {
+    flex: 0 0 150px;
   }
 }
 

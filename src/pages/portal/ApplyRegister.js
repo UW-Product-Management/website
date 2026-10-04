@@ -50,7 +50,7 @@ export default function ApplyRegister() {
     setErrorMessage('');
 
     try {
-      const profileResult = await updateProfile({ fullName });
+      const profileResult = await updateProfile({ fullName: fullName.trim() });
       if (profileResult?.error) {
         setErrorMessage(
           profileResult.error.message || 'Failed to update profile.',
@@ -103,6 +103,7 @@ export default function ApplyRegister() {
               placeholder="e.g. Alex Chen"
               value={fullName}
               onChange={(event) => setFullName(event.target.value)}
+              maxLength={120}
               required
             />
 

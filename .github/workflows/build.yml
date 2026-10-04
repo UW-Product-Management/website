@@ -2,9 +2,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "v4-dev"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "v4-dev"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

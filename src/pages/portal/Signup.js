@@ -99,6 +99,7 @@ export default function Signup() {
                 placeholder="e.g. Alex Chen"
                 value={fullName}
                 onChange={(event) => setFullName(event.target.value)}
+                maxLength={120}
                 required
                 disabled={isSubmitting}
               />

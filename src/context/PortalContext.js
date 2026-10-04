@@ -211,9 +211,7 @@ export function PortalProvider({ children, value: customValue }) {
         const { data: appData } = await getMyApplication(currentEvent.id);
         setApplication(appData ?? null);
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [session?.user, event]);
 
   const logOut = useCallback(async () => {

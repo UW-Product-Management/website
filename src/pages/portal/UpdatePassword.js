@@ -103,7 +103,14 @@ export default function UpdatePassword() {
 
         {errorMessage && (
           <div className="portal-auth__error" role="alert">
-            {errorMessage}
+            <p>{errorMessage}</p>
+            {/expired|invalid|request a new/i.test(errorMessage) && (
+              <p>
+                <Link to="/portal/reset-password">
+                  Request a new reset link
+                </Link>
+              </p>
+            )}
           </div>
         )}
 

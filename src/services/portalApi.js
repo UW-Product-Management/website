@@ -28,6 +28,7 @@ export function mapProfileFromRow(row) {
   return {
     id: row.id,
     fullName: row.full_name,
+    email: row.email || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -209,7 +210,7 @@ export async function getEvent(slug) {
 export async function getProfile() {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, created_at, updated_at')
+    .select('id, full_name, email, created_at, updated_at')
     .maybeSingle();
 
   if (error) return { data: null, error };
