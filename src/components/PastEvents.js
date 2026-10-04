@@ -60,7 +60,12 @@ export default function PastEvents() {
       const colComponents = rowImages.map(([imageUrl, instagramUrl], index) => (
         <Col key={index} xs={6} md={4} className="p-4">
           <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
-            <Image src={imageUrl} alt={`Image ${index + 1}`} fluid />
+            <Image
+              src={imageUrl}
+              alt={`Image ${index + 1}`}
+              fluid
+              loading="lazy"
+            />
           </a>
         </Col>
       ));
