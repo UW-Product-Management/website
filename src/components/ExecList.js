@@ -37,7 +37,6 @@ import Lalithya from '../images/about/exec-profiles/Lalithya.jpg';
 import Naysha from '../images/about/exec-profiles/Naysha.jpeg';
 import Shreya from '../images/about/exec-profiles/Shreya.jpeg';
 import Samuel from '../images/about/exec-profiles/Samuel.jpg';
-import KrishFinance from '../images/about/exec-profiles/Krish.jpg';
 
 export const ExecList = {
   Muktha: {
@@ -272,6 +271,6 @@ export const ExecList = {
     name: 'Krish Suryavanshi',
     role: 'VP Finance',
     link: 'https://www.linkedin.com/in/krish-suryavanshi/',
-    image: KrishFinance,
+    image: Krish,
   },
 };
