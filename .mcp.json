@@ -2,7 +2,7 @@
   "mcpServers": {
     "supabase": {
       "type": "http",
-      "url": "https://supabase.com"
+      "url": "https://mcp.supabase.com/mcp"
     }
   }
 }

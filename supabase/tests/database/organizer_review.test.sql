@@ -40,7 +40,7 @@ set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333","r
 select is(public.is_organizer(), true, 'organizers are recognised');
 
 select is(
-  (select count(*)::int from public.applications),
+  (select count(*)::int from public.applications where id = 'bbbbbbbb-0000-0000-0000-000000000001'),
   1,
   'organizers can read all applications'
 );

@@ -11,7 +11,7 @@ so they are run by a person, in order.
 | # | Decision | Why it blocks |
 | :--- | :--- | :--- |
 | 3 | Final `PROGRAMS` list | Hard-coded in the `applications.program` CHECK constraint; changing it after launch needs a new migration. |
-| 9 | Where uwaterloopm.com is hosted | Needed for build-time env vars and the auth redirect URLs. |
+| 9 | Where uwproduct.com is hosted | Needed for build-time env vars and the auth redirect URLs. |
 | 10 | Supabase plan (free pauses when idle) | A paused project fails every applicant request. |
 | — | SMTP / email provider and sender domain | Built-in Supabase email only reaches org members. Phase 5 assumes Resend. |
 
@@ -35,7 +35,7 @@ Studio → SQL editor:
 
 ```sql
 insert into public.events (slug, name, applications_open_at, applications_close_at)
-values ('prodcon-2027', 'ProdCon 2027', '2026-11-01 00:00-05', '2027-01-15 23:59-05');
+values ('prodcon-2026', 'ProdCon 2027', '2026-11-01 00:00-05', '2027-01-15 23:59-05');
 ```
 
 ## 3. Auth configuration (dashboard)
@@ -44,8 +44,8 @@ Set these in the dashboard under Authentication → URL Configuration and Email.
 Do **not** run `supabase config push` from this repo: `config.toml` carries
 local values (`site_url = http://localhost:3000`) that would break production.
 
-- Site URL: `https://uwaterloopm.com`
-- Redirect URLs: `https://uwaterloopm.com/portal/**`, `https://www.uwaterloopm.com/portal/**`
+- Site URL: `https://uwproduct.com`
+- Redirect URLs: `https://uwproduct.com/portal/**`, `https://www.uwproduct.com/portal/**`
 - Confirm email: on
 - Minimum password length: 8
 - Email templates: paste `supabase/templates/confirmation.html` into "Confirm signup" and `recovery.html` into "Reset password", using the subjects from `config.toml`.
@@ -56,8 +56,8 @@ Supabase Auth emails (confirm signup, reset password) go out over SMTP; the
 "application received" email goes through Resend's HTTP API. One Resend account
 serves both.
 
-1. Resend → Domains → add `uwaterloopm.com` (or a subdomain such as
-   `mail.uwaterloopm.com`). Add the SPF, DKIM and (recommended) DMARC DNS records
+1. Resend → Domains → add `uwproduct.com` (or a subdomain such as
+   `mail.uwproduct.com`). Add the SPF, DKIM and (recommended) DMARC DNS records
    Resend shows, and wait until the domain reads **Verified**. Unverified
    domains can only send to your own address.
 2. Resend → API Keys → create one key with "Sending access" restricted to that
@@ -65,7 +65,7 @@ serves both.
 3. Supabase → Authentication → Emails → SMTP Settings → enable custom SMTP:
    - Host `smtp.resend.com`, port `465` (or `587`)
    - Username `resend`, password = the API key
-   - Sender email `portal@uwaterloopm.com`, sender name `UWPM`
+   - Sender email `portal@uwproduct.com`, sender name `UWPM`
 4. Raise "emails per hour" (Authentication → Rate Limits). The default of 2 per
    hour applies once custom SMTP is on and will block signups.
 5. Send yourself a signup confirmation and a password reset to check
@@ -74,7 +74,7 @@ serves both.
 ## 5. Deploy the "application received" function
 
 ```bash
-npx supabase secrets set RESEND_API_KEY=<key> EMAIL_FROM="UWPM <portal@uwaterloopm.com>"
+npx supabase secrets set RESEND_API_KEY=<key> EMAIL_FROM="UWPM <portal@uwproduct.com>"
 npx supabase functions deploy send-application-received
 ```
 
@@ -98,7 +98,7 @@ insert into public.organizers (user_id)
 select id from auth.users where email in ('organizer1@uwaterloo.ca', 'organizer2@uwaterloo.ca');
 ```
 
-They review at `https://uwaterloopm.com/portal/admin`: filter by status, open an
+They review at `https://uwproduct.com/portal/admin`: filter by status, open an
 applicant's answers, choose Accepted / Waitlisted / Not selected, or export a
 CSV. Applicants see the result on their dashboard. To revoke access, delete the
 row from `public.organizers`. Applicants are **not** emailed when a decision is
@@ -111,7 +111,7 @@ Set in the hosting provider's build settings (CRA inlines them at build time):
 ```bash
 REACT_APP_SUPABASE_URL=https://<project-ref>.supabase.co
 REACT_APP_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-REACT_APP_PORTAL_EVENT_SLUG=prodcon-2027
+REACT_APP_PORTAL_EVENT_SLUG=prodcon-2026
 ```
 
 Never put the secret / `service_role` key in the frontend or in git.

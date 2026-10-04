@@ -1,8 +1,13 @@
 export const PROGRAMS = [
   'Computer Science',
-  'Business',
   'Engineering',
+  'Business',
   'Mathematics',
+  'Science',
+  'Arts',
+  'Environment',
+  'Health',
+  'Other',
 ];
 
 export const YEARS = [

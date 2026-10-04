@@ -30,7 +30,7 @@ interface Message {
 // no provider key exists.
 async function deliver(message: Message) {
   const resendKey = Deno.env.get('RESEND_API_KEY');
-  const from = Deno.env.get('EMAIL_FROM') ?? 'UWPM <portal@uwaterloopm.com>';
+  const from = Deno.env.get('EMAIL_FROM') ?? 'UWPM <portal@uwproduct.com>';
 
   if (resendKey) {
     const res = await fetch('https://api.resend.com/emails', {

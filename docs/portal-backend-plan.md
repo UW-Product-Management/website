@@ -495,8 +495,9 @@ Cases (all 18 ✅ passing, full file in [Appendix B](#appendix-b--pgtap-tests-ve
 - users cannot submit other users' applications (`application_not_found`)
 - anonymous visitors cannot read applications (`42501`)
 
-To add when implemented: editing a draft after the event closes is rejected;
-`submit_application` after close raises `applications_closed`.
+Window cases live in `application_window.test.sql` (✅ passing): editing a
+draft after the event closes is rejected (`42501`); `submit_application` after
+close raises `applications_closed`; the draft is left unchanged.
 
 ### 8.2 Layer 2 — API integration (Node, no browser)
 
@@ -614,7 +615,7 @@ don't want Studio.)
 3. Insert the real event in the Studio SQL editor:
    ```sql
    insert into public.events (slug, name, applications_open_at, applications_close_at)
-   values ('prodcon-2027', 'ProdCon 2027', '2026-11-01 00:00-05', '2027-01-15 23:59-05');
+   values ('prodcon-2026', 'ProdCon 2027', '2026-11-01 00:00-05', '2027-01-15 23:59-05');
    ```
 
 ### 10.2 Auth configuration
@@ -623,8 +624,8 @@ Either set these in the dashboard (Authentication → URL Configuration / Email)
 or keep them in `config.toml` and run `npx supabase config diff` →
 `npx supabase config push`:
 
-- Site URL: `https://uwaterloopm.com`
-- Redirect URLs: `https://uwaterloopm.com/portal/**` (+ `https://www.uwaterloopm.com/portal/**`, + preview-deploy URLs if the host has them)
+- Site URL: `https://uwproduct.com`
+- Redirect URLs: `https://uwproduct.com/portal/**` (+ `https://www.uwproduct.com/portal/**`, + preview-deploy URLs if the host has them)
 - Confirm email: **on** (hosted default)
 - Minimum password length: 8
 
@@ -635,7 +636,7 @@ rate-limited and only delivers to addresses of members of the Supabase org.
 Applicants won't receive confirmation or reset emails until **custom SMTP**
 is configured (e.g. Resend, Postmark, AWS SES) under
 Authentication → Emails → SMTP Settings, using a sender on a domain we
-control (e.g. `portal@uwaterloopm.com`, with SPF/DKIM set up). After enabling
+control (e.g. `portal@uwproduct.com`, with SPF/DKIM set up). After enabling
 SMTP, raise the "emails per hour" rate limit to fit launch-day volume.
 
 Customize the confirm-signup and reset-password templates with UWPM branding.
@@ -651,11 +652,11 @@ provider's build settings (not at runtime):
 ```bash
 REACT_APP_SUPABASE_URL=https://<project-ref>.supabase.co
 REACT_APP_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-REACT_APP_PORTAL_EVENT_SLUG=prodcon-2027
+REACT_APP_PORTAL_EVENT_SLUG=prodcon-2026
 ```
 
 The hosting provider isn't recorded in the repo — confirm where
-uwaterloopm.com is deployed (§12).
+uwproduct.com is deployed (§12).
 
 ### 10.5 Operational notes
 
@@ -679,10 +680,10 @@ Each phase is a separate PR and must leave `npm run lint`, `npm test`,
 
 | Phase | Scope | Done when |
 | :--- | :--- | :--- |
-| **0. Fix test harness** | §8.0 Jest config, `matchMedia` stub, update stale `App.test.js`; CI Node → 22 + run Jest | `npm test -- --watchAll=false` passes on a clean checkout and in CI |
-| **1. Local Supabase + schema** | `supabase` devDep, `config.toml` edits, migration (Appendix A), `seed.sql`, pgTAP tests (Appendix B), npm scripts, `.env.example`, README section | `npm run db:reset && npm run db:test` → 18/18 pass on a fresh machine |
-| **2. Auth wiring** | `supabaseClient`, `portalApi` auth functions, Signup/Login/Reset/UpdatePassword, `RequireAuth`, PortalContext session handling, Jest tests | Sign-up → Mailpit confirm → login works in the browser; Jest page tests pass |
-| **3. Application persistence** | `portalApi` application functions, wizard saves drafts, submit via RPC, dashboard reads DB; remove `localStorage`; integration tests (Appendix C); CI `database` job | Manual QA checklist §8.4 passes; `npm run test:integration` passes locally and in CI |
+| **0. Fix test harness** (✅ implemented) | §8.0 Jest config, `matchMedia` stub, update stale `App.test.js`; CI Node → 22 + run Jest | `npm test -- --watchAll=false` passes on a clean checkout and in CI |
+| **1. Local Supabase + schema** (✅ implemented) | `supabase` devDep, `config.toml` edits, migration (Appendix A), `seed.sql`, pgTAP tests (Appendix B), npm scripts, `.env.example`, README section | `npm run db:reset && npm run db:test` → all pgTAP tests pass on a fresh machine |
+| **2. Auth wiring** (✅ implemented) | `supabaseClient`, `portalApi` auth functions, Signup/Login/Reset/UpdatePassword, `RequireAuth`, PortalContext session handling, Jest tests | Sign-up → Mailpit confirm → login works in the browser; Jest page tests pass |
+| **3. Application persistence** (✅ implemented) | `portalApi` application functions, wizard saves drafts, submit via RPC, dashboard reads DB; remove `localStorage`; integration tests (Appendix C); CI `database` job | Manual QA checklist §8.4 passes; `npm run test:integration` passes locally and in CI |
 | **4. Production** (repo side done; hosted steps in [portal-production-runbook.md](portal-production-runbook.md)) | Create project, `db push`, auth URLs, custom SMTP, templates, host env vars, real event row | End-to-end signup + submit on the production URL with a real inbox |
 | **5. (Optional) Confirmation email** (✅ implemented) | Edge Function `send-application-received`, invoked by the client after a successful submit and made idempotent by `applications.confirmation_email_sent_at` that sends the "application received" email via the SMTP provider's API | Email arrives locally (Mailpit / provider sandbox) and in prod; covered by an integration test |
 | **6. Organizer access & decisions** (✅ implemented) | Migration `20261003000000_add_organizer_review.sql`: `organizers` table, `is_organizer()`, `review_application()` RPC, `accepted`/`waitlisted`/`rejected` statuses, `reviewed_at`/`reviewed_by`, organizer read policies, `profiles.email`; pgTAP `organizer_review.test.sql` (13 cases) | `npm run db:test` passes; applicants cannot call `review_application`, organizers cannot write `status` directly |
@@ -713,7 +714,7 @@ Each phase is a separate PR and must leave `npm run lint`, `npm test`,
 | 12 | Email applicants when a decision is recorded? | Not built. Decisions are visible on the dashboard only. The `send-application-received` pattern (Edge Function + idempotency stamp) can be reused. |
 | 7 | Can applicants edit after submitting? | **No** (enforced). Change = relax the UPDATE policy until the close date. |
 | 8 | "Application received" email | Defer to Phase 5; the Auth confirmation email covers launch. |
-| 9 | Where is uwaterloopm.com hosted? | Needed for §10.4 and redirect URLs. |
+| 9 | Where is uwproduct.com hosted? | Needed for §10.4 and redirect URLs. |
 | 10 | Supabase plan (free vs Pro) during the application window | See §10.5 (pausing, backups). |
 | 11 | Data retention period for applicant data | Organizer/exec decision. |
 
