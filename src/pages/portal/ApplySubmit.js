@@ -4,6 +4,7 @@ import PortalHeader from '../../components/portal/PortalHeader';
 import ApplicationStepper from '../../components/portal/ApplicationStepper';
 import ApplySidebar from '../../components/portal/ApplySidebar';
 import { usePortal } from '../../context/PortalContext';
+import { hasSubmitted } from '../../portal/applicationStatus';
 import '../../styles/portal/Portal.css';
 
 export default function ApplySubmit() {
@@ -14,8 +15,7 @@ export default function ApplySubmit() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const isSubmitted =
-    application?.status === 'submitted' || Boolean(state?.submittedAt);
+  const isSubmitted = hasSubmitted(application) || Boolean(state?.submittedAt);
 
   if (isSubmitted) {
     return <Navigate to="/portal/dashboard" replace />;

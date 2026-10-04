@@ -4,6 +4,7 @@ import PortalHeader from '../../components/portal/PortalHeader';
 import ApplicationStepper from '../../components/portal/ApplicationStepper';
 import ApplySidebar from '../../components/portal/ApplySidebar';
 import { usePortal } from '../../context/PortalContext';
+import { hasSubmitted } from '../../portal/applicationStatus';
 import { DIETARY_OPTIONS } from '../../portal/applicationOptions';
 import '../../styles/portal/Portal.css';
 
@@ -11,8 +12,7 @@ export default function ApplyConsent() {
   const navigate = useNavigate();
   const { application, state, saveDraft } = usePortal();
 
-  const isSubmitted =
-    application?.status === 'submitted' || Boolean(state?.submittedAt);
+  const isSubmitted = hasSubmitted(application) || Boolean(state?.submittedAt);
 
   const initialMediaConsent =
     application?.mediaConsent ??

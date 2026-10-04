@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
     .from('applications')
     .update({ confirmation_email_sent_at: new Date().toISOString() })
     .eq('user_id', user.id)
-    .eq('status', 'submitted')
+    .neq('status', 'draft')
     .is('confirmation_email_sent_at', null)
     .select('id, program, year_of_study, events(name)')
     .maybeSingle();

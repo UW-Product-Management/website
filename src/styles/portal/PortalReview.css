@@ -1,0 +1,67 @@
+.portal-review__content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.portal-review__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin: 16px 0;
+}
+
+.portal-review__toolbar select {
+  display: block;
+  min-height: 44px;
+  margin-top: 4px;
+}
+
+.portal-review__table-wrapper {
+  overflow-x: auto;
+}
+
+.portal-review__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.portal-review__table th,
+.portal-review__table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  vertical-align: top;
+}
+
+.portal-review__email {
+  display: block;
+  font-weight: 400;
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.portal-review__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.portal-review__actions .portal-button {
+  min-height: 44px;
+}
+
+.portal-review__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.portal-dashboard__decision {
+  font-weight: 600;
+}

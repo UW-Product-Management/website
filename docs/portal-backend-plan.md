@@ -685,8 +685,20 @@ Each phase is a separate PR and must leave `npm run lint`, `npm test`,
 | **3. Application persistence** | `portalApi` application functions, wizard saves drafts, submit via RPC, dashboard reads DB; remove `localStorage`; integration tests (Appendix C); CI `database` job | Manual QA checklist §8.4 passes; `npm run test:integration` passes locally and in CI |
 | **4. Production** (repo side done; hosted steps in [portal-production-runbook.md](portal-production-runbook.md)) | Create project, `db push`, auth URLs, custom SMTP, templates, host env vars, real event row | End-to-end signup + submit on the production URL with a real inbox |
 | **5. (Optional) Confirmation email** (✅ implemented) | Edge Function `send-application-received`, invoked by the client after a successful submit and made idempotent by `applications.confirmation_email_sent_at` that sends the "application received" email via the SMTP provider's API | Email arrives locally (Mailpit / provider sandbox) and in prod; covered by an integration test |
+| **6. Organizer access & decisions** (✅ implemented) | Migration `20261003000000_add_organizer_review.sql`: `organizers` table, `is_organizer()`, `review_application()` RPC, `accepted`/`waitlisted`/`rejected` statuses, `reviewed_at`/`reviewed_by`, organizer read policies, `profiles.email`; pgTAP `organizer_review.test.sql` (13 cases) | `npm run db:test` passes; applicants cannot call `review_application`, organizers cannot write `status` directly |
+| **7. Organizer review UI** (✅ implemented) | `/portal/admin` (`RequireOrganizer`, `OrganizerReview`, `ReviewTable`): list, filter by status, record decisions, CSV export; applicant dashboard shows the decision; integration test `organizer-review.test.mjs` | Jest + integration tests pass; an organizer can decide an application and the applicant sees it on the dashboard |
 
 ---
+
+### 11.1 Phases 6–7 design notes
+
+- **Statuses:** `draft` → `submitted` → `accepted` | `waitlisted` | `rejected`. The `status = 'draft'` ⇔ `submitted_at is null` check still holds. The UI treats any status other than `draft` as "submitted" (`hasSubmitted` in `src/portal/applicationStatus.js`), so decided applications keep redirecting out of the wizard.
+- **Who is an organizer:** a row in `public.organizers`. No browser grant lets anyone insert into it; add rows from the Studio SQL editor (see the runbook).
+- **Writes go through `review_application(uuid, text)`**, a `security definer` function that checks `is_organizer()`, validates the decision, refuses drafts, and stamps `reviewed_at` / `reviewed_by`. Organizers have no UPDATE grant on `status`.
+- **Reads:** organizers get extra SELECT policies on `applications` and `profiles`. `profiles.email` (copied from `auth.users` by the signup trigger and backfilled) and a foreign key `applications.user_id → profiles.id` let PostgREST embed `profiles(full_name, email)` in one query.
+- **Decisions can be changed** by an organizer at any time after submission (the same RPC); the audit trail is only the latest `reviewed_by` / `reviewed_at`.
+- **CSV export** neutralises cells that start with `= + - @` so applicant text cannot run as a spreadsheet formula.
+- **Known limits:** no pagination (fine for hundreds of rows), no organizer management UI, no decision email, and no link to `/portal/admin` in the UI: organizers go to the URL directly.
 
 ## 12. Open decisions
 
@@ -697,7 +709,8 @@ Each phase is a separate PR and must leave `npm run lint`, `npm test`,
 | 3 | Final `PROGRAMS` list (currently 4 placeholders) and whether to add "Other" | Needs organizer input before Phase 1 ships to prod. |
 | 4 | Email editable on Register? | **Read-only.** |
 | 5 | Per-step "Completed on" timestamps on Dashboard? | **Not in Phase 1** (show submission date for all, as today). Add `*_completed_at` columns later if wanted. |
-| 6 | How do organizers review/accept applications? | Studio + CSV export for this cycle. Later: `organizers` table + RLS policy + admin page, and add `accepted`/`waitlisted`/`rejected` to `status`. |
+| 6 | How do organizers review/accept applications? | **Resolved in Phases 6–7:** `organizers` table + RLS, `/portal/admin` page, `accepted`/`waitlisted`/`rejected` statuses, CSV export. Organizers are added by SQL (no UI). |
+| 12 | Email applicants when a decision is recorded? | Not built. Decisions are visible on the dashboard only. The `send-application-received` pattern (Edge Function + idempotency stamp) can be reused. |
 | 7 | Can applicants edit after submitting? | **No** (enforced). Change = relax the UPDATE policy until the close date. |
 | 8 | "Application received" email | Defer to Phase 5; the Auth confirmation email covers launch. |
 | 9 | Where is uwaterloopm.com hosted? | Needed for §10.4 and redirect URLs. |

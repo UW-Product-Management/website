@@ -17,6 +17,10 @@ export const SUBMISSION_ERRORS = {
   application_already_submitted: 'This application has already been submitted.',
   applications_closed: 'Applications for this event are now closed.',
   application_not_found: 'Application could not be found.',
+  not_organizer: 'Only organizers can review applications.',
+  invalid_decision: 'That decision is not recognised.',
+  application_not_reviewable:
+    'Only submitted applications can be given a decision.',
 };
 
 export function mapProfileFromRow(row) {
@@ -46,6 +50,7 @@ export function mapApplicationFromRow(row) {
     specify: row.dietary_details || '',
     status: row.status,
     submittedAt: row.submitted_at,
+    reviewedAt: row.reviewed_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     answers: {
@@ -310,4 +315,49 @@ export async function submitApplication(applicationId) {
 
 export async function sendApplicationReceivedEmail() {
   return supabase.functions.invoke('send-application-received');
+}
+
+function mapReviewRow(row) {
+  return {
+    ...mapApplicationFromRow(row),
+    fullName: row.profiles?.full_name || '',
+    email: row.profiles?.email || '',
+  };
+}
+
+export async function getIsOrganizer() {
+  const { data, error } = await supabase.rpc('is_organizer');
+  if (error) return { data: false, error };
+  return { data: data === true, error: null };
+}
+
+export async function listApplicationsForReview(eventId) {
+  const { data, error } = await supabase
+    .from('applications')
+    .select('*, profiles(full_name, email)')
+    .eq('event_id', eventId)
+    .neq('status', 'draft')
+    .order('submitted_at', { ascending: true });
+
+  if (error) return { data: [], error };
+  return { data: (data || []).map(mapReviewRow), error: null };
+}
+
+export async function reviewApplication(applicationId, decision) {
+  const { data, error } = await supabase.rpc('review_application', {
+    target_application_id: applicationId,
+    decision,
+  });
+
+  if (error) {
+    return {
+      data: null,
+      error: {
+        ...error,
+        code: error.message,
+        message: SUBMISSION_ERRORS[error.message] || error.message,
+      },
+    };
+  }
+  return { data: data ? mapApplicationFromRow(data) : null, error: null };
 }

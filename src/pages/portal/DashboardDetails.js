@@ -3,13 +3,14 @@ import { Navigate } from 'react-router-dom';
 import PortalHeader from '../../components/portal/PortalHeader';
 import DashboardSidebar from '../../components/portal/DashboardSidebar';
 import { usePortal } from '../../context/PortalContext';
+import { hasSubmitted } from '../../portal/applicationStatus';
 import '../../styles/portal/Portal.css';
 
 export default function DashboardDetails() {
   const { session, profile, application, state } = usePortal();
   const submittedAt = application?.submittedAt || state?.submittedAt;
 
-  if (!submittedAt && application?.status !== 'submitted') {
+  if (!submittedAt && !hasSubmitted(application)) {
     return <Navigate to="/portal/apply/register" replace />;
   }
 

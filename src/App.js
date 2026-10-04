@@ -20,6 +20,8 @@ import ConfirmationEmail from './pages/portal/ConfirmationEmail';
 import Dashboard from './pages/portal/Dashboard';
 import DashboardDetails from './pages/portal/DashboardDetails';
 import RequireAuth from './components/portal/RequireAuth';
+import RequireOrganizer from './components/portal/RequireOrganizer';
+import OrganizerReview from './pages/portal/OrganizerReview';
 
 function App() {
   return (
@@ -95,6 +97,16 @@ function App() {
             element={
               <RequireAuth>
                 <DashboardDetails />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/portal/admin"
+            element={
+              <RequireAuth>
+                <RequireOrganizer>
+                  <OrganizerReview />
+                </RequireOrganizer>
               </RequireAuth>
             }
           />

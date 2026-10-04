@@ -4,6 +4,7 @@ import PortalHeader from '../../components/portal/PortalHeader';
 import ApplicationStepper from '../../components/portal/ApplicationStepper';
 import ApplySidebar from '../../components/portal/ApplySidebar';
 import { usePortal } from '../../context/PortalContext';
+import { hasSubmitted } from '../../portal/applicationStatus';
 import '../../styles/portal/Portal.css';
 
 const MAX_LENGTH = 200;
@@ -12,8 +13,7 @@ export default function ApplyQuestions() {
   const navigate = useNavigate();
   const { application, state, saveDraft } = usePortal();
 
-  const isSubmitted =
-    application?.status === 'submitted' || Boolean(state?.submittedAt);
+  const isSubmitted = hasSubmitted(application) || Boolean(state?.submittedAt);
 
   const initialProductIdea =
     application?.productIdea ||

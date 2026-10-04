@@ -4,6 +4,7 @@ import PortalHeader from '../../components/portal/PortalHeader';
 import ApplicationStepper from '../../components/portal/ApplicationStepper';
 import ApplySidebar from '../../components/portal/ApplySidebar';
 import { usePortal } from '../../context/PortalContext';
+import { hasSubmitted } from '../../portal/applicationStatus';
 import { PROGRAMS, YEARS } from '../../portal/applicationOptions';
 import '../../styles/portal/Portal.css';
 
@@ -12,8 +13,7 @@ export default function ApplyRegister() {
   const { session, profile, application, state, updateProfile, saveDraft } =
     usePortal();
 
-  const isSubmitted =
-    application?.status === 'submitted' || Boolean(state?.submittedAt);
+  const isSubmitted = hasSubmitted(application) || Boolean(state?.submittedAt);
 
   const initialFullName = profile?.fullName || state?.account?.fullName || '';
   const email = session?.user?.email || state?.account?.email || '';

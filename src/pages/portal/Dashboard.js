@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import PortalHeader from '../../components/portal/PortalHeader';
 import DashboardSidebar from '../../components/portal/DashboardSidebar';
 import { usePortal } from '../../context/PortalContext';
+import { hasSubmitted, STATUS_LABELS } from '../../portal/applicationStatus';
 import '../../styles/portal/Portal.css';
 
 const CHECKLIST = [
@@ -16,7 +17,7 @@ export default function Dashboard() {
   const { application, state } = usePortal();
   const submittedAt = application?.submittedAt || state?.submittedAt;
 
-  if (!submittedAt && application?.status !== 'submitted') {
+  if (!submittedAt && !hasSubmitted(application)) {
     return <Navigate to="/portal/apply/register" replace />;
   }
 
@@ -32,6 +33,11 @@ export default function Dashboard() {
         <section className="portal-dashboard__content">
           <h1>My Application</h1>
           <p>Application Submitted!</p>
+          {application?.status && application.status !== 'submitted' && (
+            <p className="portal-dashboard__decision">
+              Status: {STATUS_LABELS[application.status]}
+            </p>
+          )}
           <p>
             You&apos;re all set. We&apos;ll be in touch with next steps via
             email.

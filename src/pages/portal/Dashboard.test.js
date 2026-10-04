@@ -66,4 +66,16 @@ describe('Dashboard', () => {
 
     expect(screen.getByText('Register Page')).toBeInTheDocument();
   });
+
+  it('shows the organizer decision once one is recorded', () => {
+    renderDashboard({
+      application: {
+        id: 'app-1',
+        status: 'accepted',
+        submittedAt: '2026-10-01T14:30:00.000Z',
+      },
+    });
+
+    expect(screen.getByText('Status: Accepted')).toBeInTheDocument();
+  });
 });
