@@ -83,3 +83,58 @@ jest.mock(
 );
 
 jest.mock('swiper/css', () => ({}), { virtual: true });
+
+jest.mock('./lib/supabaseClient', () => {
+  const mockAuth = {
+    signUp: jest.fn(() =>
+      Promise.resolve({ data: { user: null, session: null }, error: null }),
+    ),
+    signInWithPassword: jest.fn(() =>
+      Promise.resolve({ data: { user: null, session: null }, error: null }),
+    ),
+    signOut: jest.fn(() => Promise.resolve({ error: null })),
+    resend: jest.fn(() => Promise.resolve({ data: {}, error: null })),
+    resetPasswordForEmail: jest.fn(() =>
+      Promise.resolve({ data: {}, error: null }),
+    ),
+    updateUser: jest.fn(() =>
+      Promise.resolve({ data: { user: null }, error: null }),
+    ),
+    getSession: jest.fn(() =>
+      Promise.resolve({ data: { session: null }, error: null }),
+    ),
+    getUser: jest.fn(() =>
+      Promise.resolve({ data: { user: null }, error: null }),
+    ),
+    onAuthStateChange: jest.fn(() => ({
+      data: {
+        subscription: {
+          unsubscribe: jest.fn(),
+        },
+      },
+    })),
+  };
+
+  const client = {
+    auth: mockAuth,
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      update: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn(() => Promise.resolve({ data: null, error: null })),
+      maybeSingle: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    })),
+    rpc: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    functions: {
+      invoke: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    },
+  };
+
+  return {
+    __esModule: true,
+    supabase: client,
+    default: client,
+  };
+});
