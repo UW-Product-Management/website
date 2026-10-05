@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import { supabase } from '../lib/supabaseClient';
@@ -44,6 +45,11 @@ export function PortalProvider({ children, value: customValue }) {
   const [profile, setProfile] = useState(null);
   const [application, setApplication] = useState(null);
   const [event, setEvent] = useState(null);
+  const eventRef = useRef(event);
+
+  useEffect(() => {
+    eventRef.current = event;
+  }, [event]);
 
   useEffect(() => {
     let mounted = true;
@@ -107,7 +113,7 @@ export function PortalProvider({ children, value: customValue }) {
 
       if (nextSession?.user) {
         (async () => {
-          let eventId = event?.id;
+          let eventId = eventRef.current?.id;
           if (!eventId) {
             const { data: eventData } = await getEvent(DEFAULT_EVENT_SLUG);
             if (mounted && eventData) {

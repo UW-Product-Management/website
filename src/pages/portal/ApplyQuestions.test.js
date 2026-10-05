@@ -78,11 +78,11 @@ describe('ApplyQuestions', () => {
     fireEvent.click(screen.getByRole('button', { name: /next/i }));
 
     await waitFor(() => {
-      expect(context.saveDraft).toHaveBeenCalledWith({
-        productIdea: 'Autonomous food delivery',
-        greatTeam: 'Cross-functional trust',
-      });
       expect(screen.getByText('Consent Page')).toBeInTheDocument();
+    });
+    expect(context.saveDraft).toHaveBeenCalledWith({
+      productIdea: 'Autonomous food delivery',
+      greatTeam: 'Cross-functional trust',
     });
   });
 

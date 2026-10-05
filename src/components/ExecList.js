@@ -1,4 +1,3 @@
-import PMHeadshot from '../images/about/exec-profiles/UWPMHeadshot.png';
 import Muktha from '../images/about/exec-profiles/Muktha2.jpg';
 import Khushi from '../images/about/exec-profiles/Khushi.JPG';
 import EvelynT from '../images/about/exec-profiles/Evelyn.jpg';

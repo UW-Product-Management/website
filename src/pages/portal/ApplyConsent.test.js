@@ -65,12 +65,12 @@ describe('ApplyConsent', () => {
     fireEvent.click(screen.getByRole('button', { name: /next/i }));
 
     await waitFor(() => {
-      expect(context.saveDraft).toHaveBeenCalledWith({
-        mediaConsent: true,
-        dietaryRestrictions: 'Halal',
-        specify: 'Nut allergy',
-      });
       expect(screen.getByText('Submit Page')).toBeInTheDocument();
+    });
+    expect(context.saveDraft).toHaveBeenCalledWith({
+      mediaConsent: true,
+      dietaryRestrictions: 'Halal',
+      specify: 'Nut allergy',
     });
   });
 

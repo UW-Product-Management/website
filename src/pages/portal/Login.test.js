@@ -409,9 +409,9 @@ describe('Login page', () => {
     fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
     await waitFor(() => {
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
       expect(screen.getByText('Register Page Content')).toBeInTheDocument();
     });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   describe('utility helpers', () => {
