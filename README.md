@@ -36,7 +36,8 @@ Follow these steps to set up your local development environment:
 | **Routing** | React Router v6 | Page routing & URL management |
 | **UI Components** | React-Bootstrap & Material UI (`@mui/material`) | Base layout and UI elements |
 | **Animations** | GSAP 3 (`ScrollTrigger`) & Swiper | Scroll-triggered animations and carousels |
-| **Testing** | Jest & React Testing Library | Unit and component testing |
+| **Backend & Database** | Supabase (Postgres 17 + GoTrue Auth) | Hacker Portal database, RLS policies, and authentication |
+| **Testing** | Jest, React Testing Library & pgTAP | Unit, component, and database tests |
 | **Code Quality** | ESLint & Prettier | Code linting and style formatting |
 
 ---
@@ -52,6 +53,64 @@ Follow these steps to set up your local development environment:
 | `npm run lint` | Runs ESLint and Prettier checks on `src/` |
 | `npm run format-code` | Auto-formats code with Prettier |
 | `npm run fix-code` | Automatically fixes autofixable ESLint issues |
+| `npm run db:start` | Starts the local Supabase stack in Docker (Postgres, Auth, Studio, Mailpit) |
+| `npm run db:stop` | Stops the local Supabase Docker containers |
+| `npm run db:reset` | Resets the local database, re-applies migrations, and loads `seed.sql` |
+| `npm run db:test` | Runs pgTAP database security & constraint tests |
+| `npm run db:env` | Outputs local Supabase environment variables for `.env.local` |
+| `npm run test:integration` | Runs end-to-end integration tests against the local Supabase stack |
+
+---
+
+## 🗄️ Local Database Workflow (Hacker Portal)
+
+The Hacker Portal uses Supabase (Postgres 17, GoTrue Auth, and PostgREST) running locally in Docker for development and testing.
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) must be installed and running.
+- Node.js 22+.
+
+### 1. Start the Database
+Start all local Supabase containers:
+```bash
+npm run db:start
+```
+> Note: The first run downloads the required Docker images (~1-2 minutes).
+
+Once running, the following local services are available:
+- **API URL (REST + Auth):** `http://127.0.0.1:54321`
+- **Postgres Database:** `postgresql://postgres:postgres@127.0.0.1:54322/postgres`
+- **Supabase Studio:** `http://127.0.0.1:54323` (web dashboard to inspect tables and run SQL)
+- **Mailpit:** `http://127.0.0.1:54324` (inbox capturing all local auth confirmation and password reset emails)
+
+### 2. Configure Environment Variables
+Copy `.env.example` to `.env.local` (or run `npm run db:env` to print local keys):
+```bash
+cp .env.example .env.local
+```
+Update `.env.local` with the values printed by `npm run db:env`:
+```bash
+REACT_APP_SUPABASE_URL=http://127.0.0.1:54321
+REACT_APP_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+REACT_APP_PORTAL_EVENT_SLUG=prodcon-local
+```
+
+### 3. Reset and Run Tests
+To reset the database, re-run all migrations, and populate `seed.sql`:
+```bash
+npm run db:reset
+```
+
+To run the pgTAP database security and constraint test suite:
+```bash
+npm run db:test
+```
+
+### 4. Stop the Database
+When finished, stop the local containers:
+```bash
+npm run db:stop
+```
 
 ---
 
