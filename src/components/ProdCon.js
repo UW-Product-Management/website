@@ -116,7 +116,7 @@ export default function ProdConCarousel() {
               <div>
                 <img
                   src={item}
-                  alt={`Image ${index + 1}`}
+                  alt={`ProdCon highlight ${index + 1}`}
                   className="resized-image"
                   onClick={() => {
                     if (modalIsOpen[index]) {
@@ -143,7 +143,7 @@ export default function ProdConCarousel() {
                     </button>
                     <img
                       src={items[currentImageIndex]}
-                      alt={`Image ${currentImageIndex + 1}`}
+                      alt={`ProdCon highlight ${currentImageIndex + 1}`}
                       className="resized-image"
                     />
                   </div>

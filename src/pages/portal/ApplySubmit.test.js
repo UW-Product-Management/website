@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ApplySubmit from './ApplySubmit';
 import { PortalContext } from '../../context/PortalContext';
@@ -100,9 +99,9 @@ describe('ApplySubmit', () => {
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
 
     await waitFor(() => {
-      expect(context.submitApplication).toHaveBeenCalledTimes(1);
       expect(screen.getByText('Confirmation Page')).toBeInTheDocument();
     });
+    expect(context.submitApplication).toHaveBeenCalledTimes(1);
   });
 
   it('displays user-friendly copy when submission is rejected', async () => {

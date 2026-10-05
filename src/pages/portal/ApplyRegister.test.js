@@ -80,14 +80,14 @@ describe('ApplyRegister', () => {
     fireEvent.click(screen.getByRole('button', { name: /next/i }));
 
     await waitFor(() => {
-      expect(context.updateProfile).toHaveBeenCalledWith({
-        fullName: 'Alex Chen',
-      });
-      expect(context.saveDraft).toHaveBeenCalledWith({
-        program: 'Computer Science',
-        yearOfStudy: '2nd year',
-      });
       expect(screen.getByText('Questions Page')).toBeInTheDocument();
+    });
+    expect(context.updateProfile).toHaveBeenCalledWith({
+      fullName: 'Alex Chen',
+    });
+    expect(context.saveDraft).toHaveBeenCalledWith({
+      program: 'Computer Science',
+      yearOfStudy: '2nd year',
     });
   });
 
