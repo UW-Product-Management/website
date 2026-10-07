@@ -24,19 +24,20 @@ owner.
 
 ## Current State Audit
 
-| Area | Current setup |
-| --- | --- |
-| Build tool | `react-scripts` 5.0.1 (unejected, no CRACO/webpack overrides) |
-| React | 18.2, `react-router-dom` 6.x |
-| Test runner | Jest via `react-scripts test` (CRA's bundled config; no custom `jest` config beyond `resetMocks: false`) |
-| Lint | ESLint via `eslint-config-react-app` (fixed to actually run in WEB-11) |
-| Env vars | `REACT_APP_*` prefix, read via `process.env.REACT_APP_X` (3 vars: `REACT_APP_SUPABASE_URL`, `REACT_APP_SUPABASE_PUBLISHABLE_KEY`, `REACT_APP_PORTAL_EVENT_SLUG`), used in `src/context/PortalContext.js` and `src/lib/supabaseClient.js` |
-| HTML entry | `public/index.html` uses CRA's `%PUBLIC_URL%` templating |
-| Static assets | `public/manifest.json`, `pmlogo.ico`, `logo192.png`, etc., referenced via `%PUBLIC_URL%` |
-| SVG handling | All `.svg` imports are plain URL imports (`import x from './x.svg'`); **no** `import { ReactComponent } from './x.svg'` (CRA's SVGR feature) usage anywhere — this is good, it means no extra Vite plugin is required for SVGs |
-| CSS | Plain `.css` files imported directly into components, no CSS Modules, no Sass/Less |
-| Deployment | Vercel, `vercel.json` hardcodes `"framework": "create-react-app"` and `"outputDirectory": "build"` |
-| CI | GitHub Actions `Node.js CI` workflow runs `npm ci && npm run lint && npm test -- --watchAll=false && npm run build` on Node 22.x, plus a separate `database` job for Supabase integration tests |
+| Area               | Current setup                                                                                                                                                                                                                                                              |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Build tool         | `react-scripts` 5.0.1 (unejected, no CRACO/webpack overrides)                                                                                                                                                                                                              |
+| React              | 18.2, `react-router-dom` 6.x                                                                                                                                                                                                                                               |
+| JS / JSX handling  | All 81 source files use `.js` extension with JSX syntax; CRA's Babel parser compiles JSX in `.js` automatically                                                                                                                                                            |
+| Test runner        | Jest via `react-scripts test` (CRA's bundled config; no custom `jest` config beyond `resetMocks: false`)                                                                                                                                                                   |
+| Lint               | ESLint via `eslint-config-react-app` (fixed to actually run in WEB-11)                                                                                                                                                                                                     |
+| Env vars           | `REACT_APP_*` prefix, read via `process.env.REACT_APP_X` (3 vars: `REACT_APP_SUPABASE_URL`, `REACT_APP_SUPABASE_PUBLISHABLE_KEY`, `REACT_APP_PORTAL_EVENT_SLUG`), used in `src/context/PortalContext.js` and `src/lib/supabaseClient.js`                                   |
+| HTML entry         | `public/index.html` uses CRA's `%PUBLIC_URL%` templating (in Vite, this must move to the project root `./index.html`)                                                                                                                                                      |
+| Static assets      | `public/manifest.json`, `pmlogo.ico`, `logo192.png`, etc., referenced via `%PUBLIC_URL%`                                                                                                                                                                                   |
+| SVG handling       | All `.svg` imports are plain URL imports (`import x from './x.svg'`); **no** `import { ReactComponent } from './x.svg'` (CRA's SVGR feature) usage anywhere — this is good, it means no extra Vite plugin is required for SVGs                                             |
+| CSS                | Plain `.css` files imported directly into components, no CSS Modules, no Sass/Less                                                                                                                                                                                         |
+| Deployment         | Vercel, `vercel.json` hardcodes `"framework": "create-react-app"` and `"outputDirectory": "build"`                                                                                                                                                                         |
+| CI                 | GitHub Actions `Node.js CI` workflow runs `npm ci && npm run lint && npm test -- --watchAll=false && npm run build` on Node 22.x, plus a separate `database` job for Supabase integration tests                                                                            |
 | Known CRA papercut | `src/setupTests.js` has to manually `jest.mock('gsap', ...)` and `jest.mock('gsap/ScrollTrigger', ...)` because CRA's Jest transform chokes on those packages' ESM output — Vitest (Vite-native) handles ESM natively and would likely remove the need for this workaround |
 
 ### `npm audit` breakdown
@@ -65,11 +66,21 @@ build`/`npm test`. A handful of unrelated packages also show up
 3. **CSS/asset imports** — No change needed for plain CSS or image imports;
    Vite supports both natively with the same import syntax CRA uses. No SVGR
    usage to replace.
-4. **`public/index.html`** — Strip all `%PUBLIC_URL%/` prefixes (Vite serves
-   `public/` at the site root directly, no templating). Move the `<script>`
-   mount point handling to Vite's convention (`<script type="module"
-   src="/src/index.js">` in the HTML instead of CRA's injected bundle).
-5. **Test runner** — Two options:
+4. **JSX in `.js` files** — CRA's Babel setup compiles JSX inside `.js` files
+   by default. Vite's default esbuild parser only parses JSX inside `.jsx` or
+   `.tsx` files and throws a syntax error on `.js` files containing JSX.
+   Because all 81 component/page files currently use `.js`, the team must
+   either:
+   - Mass-rename all JSX-containing `.js` files to `.jsx`, or
+   - Configure `esbuild: { loader: { '.js': 'jsx' } }` in `vite.config.js` to
+     allow JSX in `.js` without renaming every file.
+5. **`index.html` entry point** — Move `public/index.html` to the project root
+   (`./index.html`), as Vite treats the root HTML file as the entry module
+   rather than a static asset in `public/`. Strip all `%PUBLIC_URL%/` prefixes
+   (Vite serves `public/` at the site root directly, no templating). Add the
+   module entry point script (`<script type="module" src="/src/index.js"></script>`)
+   before `</body>` instead of CRA's runtime script injection.
+6. **Test runner** — Two options:
    - **Vitest** (recommended if migrating): Vite-native, faster, handles ESM
      packages (gsap, swiper) without the manual mocks currently needed.
      Requires swapping `@testing-library/jest-dom` setup imports, and
@@ -80,14 +91,14 @@ build`/`npm test`. A handful of unrelated packages also show up
      with `babel-jest`, decoupled from `react-scripts`. Avoids touching test
      files, but keeps the ESM-mocking papercut and doesn't reduce the
      Jest-related slice of the audit vulnerability count.
-6. **Build/CI scripts** — `npm run build`/`npm start`/`npm test` script
-   *names* stay the same in `package.json` (just repoint to `vite build`,
+7. **Build/CI scripts** — `npm run build`/`npm start`/`npm test` script
+   _names_ stay the same in `package.json` (just repoint to `vite build`,
    `vite`, `vitest run` under the hood), so the GitHub Actions workflow
    (`build.yml`) needs no structural changes, just confirmation the new
    commands exit with the same semantics.
-7. **Vercel config** — Update `vercel.json`: `"framework": "vite"`,
+8. **Vercel config** — Update `vercel.json`: `"framework": "vite"`,
    `"outputDirectory": "dist"` (Vite's default, vs. CRA's `build`).
-8. **ESLint** — `eslint-config-react-app` (just wired up correctly in
+9. **ESLint** — `eslint-config-react-app` (just wired up correctly in
    WEB-11) is CRA-specific. A Vite project would typically move to
    `eslint-plugin-react`/`eslint-plugin-react-hooks` directly, or
    `@vitejs/plugin-react`'s recommended lint setup. This is a second full
@@ -97,6 +108,7 @@ build`/`npm test`. A handful of unrelated packages also show up
 ## Risk/Benefit
 
 **Benefits:**
+
 - Meaningfully faster local dev server start and HMR (Vite's native ESM dev
   server vs. webpack-dev-server bundling).
 - Removes the two manual ESM mocks in `setupTests.js` if moving to Vitest.
@@ -105,6 +117,9 @@ build`/`npm test`. A handful of unrelated packages also show up
   production runtime risk, since none of those packages ship to users).
 
 **Risks/Costs:**
+
+- Requires resolving JSX syntax handling in all 81 `.js` files (bulk file
+  renaming or esbuild config workaround).
 - Touches every test file's mocking syntax if moving to Vitest (18 files).
 - Touches CI, Vercel config, env var names across local/CI/Vercel dashboards
   simultaneously — a misconfigured env var rename could silently break the
@@ -134,8 +149,9 @@ If the team later decides to proceed anyway (e.g. after WEB-6–WEB-13 land
 and someone has a dedicated multi-day window), break it into the following
 follow-up issues rather than one large PR:
 
-- **Sub-issue A**: Scaffold Vite config + `index.html` changes + asset path
-  fixes, keep CRA installed in parallel until parity is confirmed first.
+- **Sub-issue A**: Scaffold Vite config (including JSX-in-`.js` handling or
+  `.jsx` file renames) + move `index.html` to the project root + asset path
+  fixes, keeping CRA installed in parallel until parity is confirmed first.
 - **Sub-issue B**: Migrate test suite to Vitest (or wire up `vite-jest`),
   file by file.
 - **Sub-issue C**: Rename env vars (`REACT_APP_*` → `VITE_*`) across code,
