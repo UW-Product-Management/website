@@ -26,13 +26,16 @@ interface Message {
   text: string;
 }
 
-// Resend in hosted environments; Mailpit's send API in the local stack, where
-// no provider key exists.
+// The local stack always injects MAILPIT_URL, so a developer's Resend key can
+// never send real email from a local run unless ALLOW_REAL_EMAIL=true is set
+// deliberately. Hosted projects have no Mailpit and use Resend.
 async function deliver(message: Message) {
   const resendKey = Deno.env.get('RESEND_API_KEY');
+  const mailpitUrl = Deno.env.get('MAILPIT_URL');
+  const allowRealEmail = Deno.env.get('ALLOW_REAL_EMAIL') === 'true';
   const from = Deno.env.get('EMAIL_FROM') ?? 'UWPM <portal@uwproduct.com>';
 
-  if (resendKey) {
+  if (resendKey && (!mailpitUrl || allowRealEmail)) {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -45,7 +48,6 @@ async function deliver(message: Message) {
     return;
   }
 
-  const mailpitUrl = Deno.env.get('MAILPIT_URL');
   if (!mailpitUrl) throw new Error('no_email_transport_configured');
 
   const address = /<(.+)>/.exec(from)?.[1] ?? from;

@@ -18,6 +18,7 @@ import ApplySubmit from './pages/portal/ApplySubmit';
 import Confirmation from './pages/portal/Confirmation';
 import Dashboard from './pages/portal/Dashboard';
 import DashboardDetails from './pages/portal/DashboardDetails';
+import PortalEnvironmentBanner from './components/portal/PortalEnvironmentBanner';
 import RequireAuth from './components/portal/RequireAuth';
 import RequireOrganizer from './components/portal/RequireOrganizer';
 import OrganizerReview from './pages/portal/OrganizerReview';
@@ -25,6 +26,7 @@ import OrganizerReview from './pages/portal/OrganizerReview';
 function PortalLayout() {
   return (
     <PortalProvider>
+      <PortalEnvironmentBanner />
       <Outlet />
     </PortalProvider>
   );

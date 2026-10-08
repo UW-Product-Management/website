@@ -2,7 +2,9 @@ import React from 'react';
 import PortalHeader from './PortalHeader';
 import PortalSidebar from './PortalSidebar';
 import ApplicationStepper from './ApplicationStepper';
-import { PORTAL_MASCOTS, PORTAL_TIPS } from '../../data/portalContent';
+import { usePortal } from '../../context/PortalContext';
+import { getWindowNotice } from '../../portal/applicationWindow';
+import { PORTAL_MASCOTS, getPortalTip } from '../../data/portalContent';
 import '../../styles/portal/PortalShell.css';
 
 export default function PortalShell({
@@ -10,7 +12,9 @@ export default function PortalShell({
   step,
   children,
 }) {
+  const { event } = usePortal();
   const isApplication = variant === 'application';
+  const windowNotice = isApplication ? getWindowNotice(event) : '';
   const mascot = PORTAL_MASCOTS.pink;
 
   return (
@@ -18,7 +22,7 @@ export default function PortalShell({
       <div className="portal-shell__aside">
         <PortalHeader />
         <PortalSidebar
-          tip={isApplication ? PORTAL_TIPS[step] : ''}
+          tip={isApplication ? getPortalTip(step, event) : ''}
           showDecor={!isApplication}
         />
       </div>
@@ -27,6 +31,11 @@ export default function PortalShell({
         {isApplication ? (
           <section className="portal-shell__card portal-apply__content">
             <ApplicationStepper currentStep={step} />
+            {windowNotice && (
+              <p className="portal-apply__notice" role="status">
+                {windowNotice}
+              </p>
+            )}
             {children}
           </section>
         ) : (

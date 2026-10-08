@@ -16,6 +16,7 @@ import {
   mapApplicationFromRow,
   mapApplicationFormToRow,
   SUBMISSION_ERRORS,
+  DRAFT_ERRORS,
 } from './portalApi';
 
 describe('portalApi auth service', () => {
@@ -484,6 +485,26 @@ describe('portalApi application service', () => {
   });
 
   describe('getProfile', () => {
+    beforeEach(() => {
+      supabase.auth.getSession.mockResolvedValue({
+        data: { session: { user: { id: 'user-1' } } },
+      });
+    });
+
+    it('scopes the query to the signed-in user so organizers get their own row', async () => {
+      await getProfile();
+      expect(mockChain.eq).toHaveBeenCalledWith('id', 'user-1');
+    });
+
+    it('returns no profile without querying when signed out', async () => {
+      supabase.auth.getSession.mockResolvedValue({ data: { session: null } });
+      supabase.auth.getUser.mockResolvedValue({ data: { user: null } });
+
+      const result = await getProfile();
+      expect(result).toEqual({ data: null, error: null });
+      expect(supabase.from).not.toHaveBeenCalled();
+    });
+
     it('queries profiles table and maps row to camelCase', async () => {
       mockChain.maybeSingle.mockResolvedValueOnce({
         data: {
@@ -583,6 +604,26 @@ describe('portalApi application service', () => {
   });
 
   describe('getMyApplication', () => {
+    beforeEach(() => {
+      supabase.auth.getSession.mockResolvedValue({
+        data: { session: { user: { id: 'usr-1' } } },
+      });
+    });
+
+    it('scopes the query to the signed-in user so organizers get their own row', async () => {
+      await getMyApplication('evt-1');
+      expect(mockChain.eq).toHaveBeenCalledWith('user_id', 'usr-1');
+    });
+
+    it('returns no application without querying when signed out', async () => {
+      supabase.auth.getSession.mockResolvedValue({ data: { session: null } });
+      supabase.auth.getUser.mockResolvedValue({ data: { user: null } });
+
+      const result = await getMyApplication('evt-1');
+      expect(result).toEqual({ data: null, error: null });
+      expect(supabase.from).not.toHaveBeenCalled();
+    });
+
     it('fetches application matching eventId and maps row', async () => {
       mockChain.maybeSingle.mockResolvedValueOnce({
         data: {
@@ -611,12 +652,49 @@ describe('portalApi application service', () => {
       });
 
       const result = await getMyApplication();
-      expect(mockChain.eq).not.toHaveBeenCalled();
+      expect(mockChain.eq).not.toHaveBeenCalledWith(
+        'event_id',
+        expect.anything(),
+      );
       expect(result.data).toBeNull();
     });
   });
 
   describe('saveApplicationDraft', () => {
+    it('explains a closed or not-yet-open window when the insert violates RLS', async () => {
+      mockChain.single.mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: '42501',
+          message:
+            'new row violates row-level security policy for table "applications"',
+        },
+      });
+
+      const result = await saveApplicationDraft({
+        eventId: 'evt-1',
+        fields: { program: 'Business' },
+      });
+      expect(result.error.message).toBe(DRAFT_ERRORS.closed);
+      expect(result.error.code).toBe('42501');
+    });
+
+    it('explains a locked application when the update matches no rows', async () => {
+      mockChain.single.mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: 'PGRST116',
+          message: 'Cannot coerce the result to a single JSON object',
+        },
+      });
+
+      const result = await saveApplicationDraft({
+        applicationId: 'app-1',
+        fields: { program: 'Business' },
+      });
+      expect(result.error.message).toBe(DRAFT_ERRORS.locked);
+    });
+
     it('inserts a new draft application when applicationId is not provided', async () => {
       mockChain.single.mockResolvedValueOnce({
         data: {

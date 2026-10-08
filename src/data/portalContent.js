@@ -1,3 +1,4 @@
+import { formatDeadline } from '../portal/applicationWindow';
 import mascotYellow from '../images/mascot-yellow.svg';
 import mascotBlue from '../images/mascot.svg';
 import mascotPink from '../images/mascot-pink.svg';
@@ -15,10 +16,20 @@ const GOOD_PRODUCTS_TIP =
 
 export const PORTAL_TIPS = {
   1: 'Did you know... UWPM hosts many exciting events other than ProdCon? Check them out here:',
-  2: "ProdCon application deadline is November 2nd @ 11:59PM, don't forget!!",
   3: GOOD_PRODUCTS_TIP,
   4: GOOD_PRODUCTS_TIP,
 };
+
+export function getPortalTip(step, event) {
+  if (step === 2) {
+    return event?.applications_close_at
+      ? `ProdCon application deadline is ${formatDeadline(
+          event.applications_close_at,
+        )}, don't forget!!`
+      : "Keep an eye on the ProdCon application deadline, don't forget!!";
+  }
+  return PORTAL_TIPS[step];
+}
 
 export const PORTAL_MASCOTS = {
   yellow: { src: mascotYellow, width: 210, height: 210 },

@@ -64,7 +64,9 @@ export function PortalProvider({ children, value: customValue }) {
             setEvent(eventData);
           }
 
-          const { data: profileData } = await getProfile();
+          const { data: profileData } = await getProfile(
+            currentSession.user.id,
+          );
           if (mounted) {
             setProfile(
               profileData || {
@@ -75,7 +77,10 @@ export function PortalProvider({ children, value: customValue }) {
           }
 
           if (loadedEvent?.id) {
-            const { data: appData } = await getMyApplication(loadedEvent.id);
+            const { data: appData } = await getMyApplication(
+              loadedEvent.id,
+              currentSession.user.id,
+            );
             if (mounted) {
               setApplication(appData ?? null);
             }
@@ -116,9 +121,9 @@ export function PortalProvider({ children, value: customValue }) {
             }
           }
           const [profileRes, appRes] = await Promise.all([
-            getProfile(),
+            getProfile(nextSession.user.id),
             eventId
-              ? getMyApplication(eventId)
+              ? getMyApplication(eventId, nextSession.user.id)
               : Promise.resolve({ data: null }),
           ]);
           if (!mounted) return;
@@ -195,7 +200,7 @@ export function PortalProvider({ children, value: customValue }) {
   const refreshPortalData = useCallback(async () => {
     if (!session?.user) return;
     try {
-      const { data: profileData } = await getProfile();
+      const { data: profileData } = await getProfile(session.user.id);
       if (profileData) setProfile(profileData);
 
       let currentEvent = event;
@@ -208,7 +213,10 @@ export function PortalProvider({ children, value: customValue }) {
       }
 
       if (currentEvent?.id) {
-        const { data: appData } = await getMyApplication(currentEvent.id);
+        const { data: appData } = await getMyApplication(
+          currentEvent.id,
+          session.user.id,
+        );
         setApplication(appData ?? null);
       }
     } catch {}
