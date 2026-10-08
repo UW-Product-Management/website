@@ -7,7 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import Signup from './Signup';
+import Signup, { getAuthErrorMessage } from './Signup';
 import * as portalApi from '../../services/portalApi';
 
 jest.mock('../../services/portalApi');
@@ -276,5 +276,66 @@ describe('Signup page', () => {
     expect(
       screen.queryByRole('heading', { name: /create your account/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('displays error toast when signUp returns User already registered error', async () => {
+    portalApi.signUp.mockResolvedValueOnce({
+      data: { user: null, session: null },
+      error: {
+        code: 'user_already_exists',
+        message: 'User already registered',
+      },
+    });
+
+    renderSignup();
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    const toast = await screen.findByRole('alert');
+    expect(toast).toHaveTextContent('User already registered');
+    expect(toast).toHaveClass('portal-toast--error');
+  });
+
+  it('dismisses error toast when toast animation completes', async () => {
+    portalApi.signUp.mockResolvedValueOnce({
+      data: { user: null, session: null },
+      error: {
+        message: 'User already registered',
+      },
+    });
+
+    renderSignup();
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    const toast = await screen.findByRole('alert');
+    expect(toast).toHaveTextContent('User already registered');
+
+    fireEvent.animationEnd(toast);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  describe('getAuthErrorMessage', () => {
+    it('returns empty string when error is null or undefined', () => {
+      expect(getAuthErrorMessage(null)).toBe('');
+      expect(getAuthErrorMessage(undefined)).toBe('');
+    });
+
+    it('returns string error directly', () => {
+      expect(getAuthErrorMessage('Direct error')).toBe('Direct error');
+    });
+
+    it('returns User already registered for user_already_exists error code or message', () => {
+      expect(
+        getAuthErrorMessage({
+          code: 'user_already_exists',
+        }),
+      ).toBe('User already registered');
+      expect(
+        getAuthErrorMessage({
+          message: 'User already registered',
+        }),
+      ).toBe('User already registered');
+    });
   });
 });

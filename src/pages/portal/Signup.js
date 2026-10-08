@@ -5,8 +5,10 @@ import {
   PasswordField,
   PortalField,
 } from '../../components/portal/PortalField';
+import PortalToast from '../../components/portal/PortalToast';
 import * as portalApi from '../../services/portalApi';
 import '../../styles/portal/Portal.css';
+import '../../styles/portal/PortalToast.css';
 
 export function getAuthErrorMessage(error) {
   if (!error) return '';
@@ -33,6 +35,13 @@ export function getAuthErrorMessage(error) {
     );
   }
 
+  if (
+    code === 'user_already_exists' ||
+    /already registered|already exists/i.test(message)
+  ) {
+    return message || 'User already registered';
+  }
+
   return message || 'Unable to create account. Please try again.';
 }
 
@@ -47,6 +56,7 @@ export default function Signup() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage(null);
 
     try {
       const { error } = await portalApi.signUp({
@@ -86,11 +96,6 @@ export default function Signup() {
         <>
           <h1>Create your account</h1>
           <p>Get started with your email and password.</p>
-          {errorMessage && (
-            <div className="portal-auth__error" role="alert">
-              {errorMessage}
-            </div>
-          )}
           <form onSubmit={handleSubmit}>
             <PortalField
               id="signup-name"
@@ -137,6 +142,13 @@ export default function Signup() {
             Already have an account? <Link to="/portal/login">Log in</Link>
           </p>
         </>
+      )}
+      {errorMessage && (
+        <PortalToast
+          variant="error"
+          title={errorMessage}
+          onDone={() => setErrorMessage(null)}
+        />
       )}
     </AuthLayout>
   );

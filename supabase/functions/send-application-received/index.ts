@@ -65,6 +65,24 @@ async function deliver(message: Message) {
   if (!res.ok) throw new Error(`mailpit ${res.status}: ${await res.text()}`);
 }
 
+const SITE_URL = (Deno.env.get('SITE_URL') ?? 'https://uwaterloopm.com').replace(
+  /\/+$/,
+  '',
+);
+const LOGO_URL = `${SITE_URL}/email/uwpm-logo.png`;
+const STICKER_URL = `${SITE_URL}/email/hex-sticker.png`;
+
+function formatSubmittedAt(value: string | null): string {
+  if (!value) return '';
+  return new Date(value).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 function buildMessage(
   to: string,
   fullName: string,
@@ -76,39 +94,81 @@ function buildMessage(
     ['Name', fullName],
     ['Email', to],
     ['Program', application.program ?? ''],
-    ['Year', application.year_of_study ?? ''],
+    ['Year of Study', application.year_of_study ?? ''],
+    ['Submitted on', formatSubmittedAt(application.submitted_at)],
   ];
 
   const text = [
     `Hi ${name},`,
     '',
-    `Thanks for applying to ${eventName}! We've received your application and we're excited to have you join us.`,
+    `Thanks for applying to ${eventName}! We've received your application and you're all set.`,
     '',
     'Application summary',
     ...rows.map(([label, value]) => `${label}: ${value}`),
     '',
-    "We'll be in touch with next steps.",
+    "We're excited to have you join us!",
     '',
-    'UWPM',
+    '— The ProdCon Team',
   ].join('\n');
 
   const html = `<!doctype html>
-<html><body style="font-family:Arial,sans-serif;color:#1a1a1a;max-width:560px;margin:0 auto;padding:24px">
-<h1 style="font-size:22px">Your application has been received!</h1>
-<p>Hi ${escapeHtml(name)},</p>
-<p>Thanks for applying to ${escapeHtml(eventName)}! We've received your application and we're excited to have you join us.</p>
-<h2 style="font-size:16px">Application summary</h2>
-<table role="presentation" cellpadding="4">
+<html>
+  <body style="margin:0;padding:0;background-color:#f9f6f4;font-family:'Helvetica Neue',Arial,sans-serif;color:#262523">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9f6f4;background-image:radial-gradient(ellipse 85% 60% at 88% -5%,#f6c2c0 0%,#f9d8c9 30%,#f9f6f4 65%)">
+      <tr>
+        <td align="center" style="padding:32px 16px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
+            <tr>
+              <td style="padding:0 8px 20px">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td align="left" valign="middle">
+                      <img src="${LOGO_URL}" width="110" alt="UWPM" style="display:block;border:0" />
+                    </td>
+                    <td align="right" valign="middle">
+                      <img src="${STICKER_URL}" width="64" alt="" style="display:block;border:0" />
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color:#fefefe;border-radius:20px;padding:32px">
+                <h1 style="margin:0 0 20px;font-size:26px;line-height:1.3;color:#262523">Your application has been received!</h1>
+                <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#535361">
+                  Hi ${escapeHtml(name)},<br /><br />
+                  Thanks for applying to ${escapeHtml(eventName)}! We've received your application and you're all set.
+                </p>
+                <h2 style="margin:0 0 12px;font-size:18px;color:#262523">Application Summary</h2>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;font-size:16px;line-height:1.8">
 ${rows
   .map(
     ([label, value]) =>
-      `<tr><td><strong>${label}</strong></td><td>${escapeHtml(value)}</td></tr>`,
+      `                  <tr><td style="padding:2px 16px 2px 0;color:#535361;white-space:nowrap">${escapeHtml(label)}</td><td style="padding:2px 0;color:#262523">${escapeHtml(value)}</td></tr>`,
   )
   .join('\n')}
-</table>
-<p>We'll be in touch with next steps.</p>
-<p>UWPM</p>
-</body></html>`;
+                </table>
+                <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#535361">We're excited to have you join us!</p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+                  <tr>
+                    <td align="center" style="background-color:#f05c5b;border-radius:12px">
+                      <a href="${SITE_URL}/portal/dashboard" style="display:block;padding:14px 24px;font-size:16px;font-weight:600;color:#fefefe;text-decoration:none">View my application</a>
+                    </td>
+                  </tr>
+                </table>
+                <hr style="border:none;border-top:1px solid #ece9e6;margin:0 0 20px" />
+                <p style="margin:0;font-size:14px;color:#535361">
+                  Contact us at <a href="mailto:uwpm@uwaterloo.ca" style="color:#f05c5b;text-decoration:underline">uwpm@uwaterloo.ca</a>
+                </p>
+                <p style="margin:16px 0 0;font-size:14px;color:#262523">— <span style="color:#f05c5b;font-weight:600">The ProdCon Team</span></p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
 
   return {
     to,
@@ -142,7 +202,7 @@ Deno.serve(async (req) => {
     .eq('user_id', user.id)
     .neq('status', 'draft')
     .is('confirmation_email_sent_at', null)
-    .select('id, program, year_of_study, events(name)')
+    .select('id, program, year_of_study, submitted_at, events(name)')
     .maybeSingle();
 
   if (claimError) return json({ error: 'claim_failed' }, 500);

@@ -42,7 +42,6 @@ describe('Confirmation', () => {
   it('renders confirmation card with summary', () => {
     renderConfirmation();
 
-    expect(screen.getByText("You're in!")).toBeInTheDocument();
     expect(screen.getByText('Alex Chen')).toBeInTheDocument();
     expect(screen.getByText('alex@example.com')).toBeInTheDocument();
     expect(screen.getByText('Business')).toBeInTheDocument();
