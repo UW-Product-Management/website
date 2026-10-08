@@ -156,7 +156,7 @@ export default function WhatWeDo() {
           <Polaroid
             src={polaroidOne}
             alt="UW PM executives speaking at ProdCon 2022"
-            caption="UW PM execs at ProdCon '22!"
+            caption="Datadog x UW PM!"
             tilt="left"
           />
         </div>
@@ -183,7 +183,7 @@ export default function WhatWeDo() {
           <Polaroid
             src={polaroidTwo}
             alt="UW PM executives holding Datadog prizes"
-            caption="UW PM execs at ProdCon '22!"
+            caption="Fireside chat with Google & Shopify PMs!"
             tilt="right"
           />
         </div>
@@ -192,7 +192,7 @@ export default function WhatWeDo() {
           <Polaroid
             src={polaroidThree}
             alt="Students attending a UW PM presentation"
-            caption="UW PM execs at ProdCon '22!"
+            caption="Students at a UW PM speaker event!"
             tilt="slight"
           />
         </div>
