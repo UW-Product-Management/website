@@ -3,16 +3,31 @@ import { Link, Navigate } from 'react-router-dom';
 import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted, STATUS_LABELS } from '../../portal/applicationStatus';
 import PortalShell from '../../components/portal/PortalShell';
+import PortalSummary from '../../components/portal/PortalSummary';
 import { CheckIcon } from '../../components/portal/PortalIcons';
-import { PORTAL_MASCOTS } from '../../data/portalContent';
+import { DASHBOARD_MASCOTS } from '../../data/portalContent';
 import '../../styles/portal/Portal.css';
 
 const CHECKLIST = [
   { key: 'register', label: 'Register' },
-  { key: 'questions', label: 'Questions' },
-  { key: 'consent', label: 'Consent & Logistics' },
+  { key: 'questions', label: 'Complete questions' },
+  { key: 'consent', label: 'Consent and logistics' },
   { key: 'submit', label: 'Submit' },
 ];
+
+const formatCompletedOn = (value) => {
+  const date = new Date(value);
+  const day = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const time = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  return `${day}, at ${time}`;
+};
 
 export default function Dashboard() {
   const { application, state } = usePortal();
@@ -22,38 +37,27 @@ export default function Dashboard() {
     return <Navigate to="/portal/apply/register" replace />;
   }
 
-  const completedOn = submittedAt
-    ? new Date(submittedAt).toLocaleDateString()
-    : 'Recently';
+  const completedOn = submittedAt ? formatCompletedOn(submittedAt) : 'Recently';
 
-  const { grad } = PORTAL_MASCOTS;
+  const { grad } = DASHBOARD_MASCOTS;
 
   return (
     <PortalShell variant="dashboard">
       <h1>My Application</h1>
 
       <div className="portal-dashboard__card">
-        <div className="portal-dashboard__summary">
-          <img
-            src={grad.src}
-            width={grad.width}
-            height={grad.height}
-            alt=""
-            decoding="async"
-          />
-          <div>
-            <p className="portal-dashboard__headline">Application Submitted!</p>
-            {application?.status && application.status !== 'submitted' && (
-              <p className="portal-dashboard__decision">
-                Status: {STATUS_LABELS[application.status]}
-              </p>
-            )}
-            <p>
-              You&apos;re all set. We&apos;ll be in touch with next steps via
-              email.
+        <PortalSummary mascot={grad}>
+          <p className="portal-dashboard__headline">Application submitted!</p>
+          {application?.status && application.status !== 'submitted' && (
+            <p className="portal-dashboard__decision">
+              Status: {STATUS_LABELS[application.status]}
             </p>
-          </div>
-        </div>
+          )}
+          <p>
+            You&apos;re all set! We&apos;ll be in touch with next steps via
+            email.
+          </p>
+        </PortalSummary>
 
         <ol className="portal-dashboard__checklist">
           {CHECKLIST.map((step) => (

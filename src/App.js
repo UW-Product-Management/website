@@ -18,6 +18,7 @@ import ApplySubmit from './pages/portal/ApplySubmit';
 import Confirmation from './pages/portal/Confirmation';
 import Dashboard from './pages/portal/Dashboard';
 import DashboardDetails from './pages/portal/DashboardDetails';
+import Profile from './pages/portal/Profile';
 import PortalEnvironmentBanner from './components/portal/PortalEnvironmentBanner';
 import ApplyLayout from './components/portal/ApplyLayout';
 import RequireAuth from './components/portal/RequireAuth';
@@ -76,6 +77,14 @@ function App() {
             element={
               <RequireAuth>
                 <DashboardDetails />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/portal/profile"
+            element={
+              <RequireAuth>
+                <Profile />
               </RequireAuth>
             }
           />

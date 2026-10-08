@@ -10,6 +10,11 @@ import stepFigure2 from '../images/portal/step-figure-2.svg';
 import stepFigure3 from '../images/portal/step-figure-3.svg';
 import stepFigure4 from '../images/portal/step-figure-4.svg';
 import stepIcon from '../images/portal/step-icon.svg';
+import dashboardBadge from '../images/portal/dashboard-badge.svg';
+import dashboardGrad from '../images/portal/dashboard-grad.svg';
+import dashboardPink from '../images/portal/dashboard-pink.svg';
+import dashboardMic from '../images/portal/dashboard-mic.svg';
+import profileAvatar from '../images/portal/profile-avatar.svg';
 
 export const INSTAGRAM = {
   handle: '@uwaterloopm',
@@ -43,6 +48,14 @@ export const PORTAL_MASCOTS = {
   grad: { src: mascotGrad, width: 169, height: 170 },
   pencil: { src: mascotPencil, width: 187, height: 188 },
   mic: { src: mascotMic, width: 185, height: 182 },
+};
+
+export const DASHBOARD_MASCOTS = {
+  badge: { src: dashboardBadge, width: 93, height: 90 },
+  grad: { src: dashboardGrad, width: 169, height: 170 },
+  pink: { src: dashboardPink, width: 122, height: 123 },
+  mic: { src: dashboardMic, width: 103, height: 101 },
+  profile: { src: profileAvatar, width: 185, height: 192 },
 };
 
 export const STEP_ICON = { src: stepIcon, width: 46, height: 45 };

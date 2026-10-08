@@ -8,6 +8,12 @@
   --auth-subtext: #728896;
   --auth-muted: #756b6a;
   --auth-ink: #1a1a1a;
+  --portal-fs-title: clamp(1.75rem, 2.6vw, 2.25rem);
+  --portal-fs-heading: clamp(1.25rem, 1.9vw, 1.6rem);
+  --portal-fs-subheading: clamp(1.1rem, 1.7vw, 1.5rem);
+  --portal-fs-body: 1rem;
+  --portal-fs-small: 0.8rem;
+  --portal-fs-nav: clamp(0.9rem, 1.1vw, 1rem);
   font-family: 'Manrope', system-ui, sans-serif;
 }
 

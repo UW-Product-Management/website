@@ -4,19 +4,20 @@ import PortalSidebar from './PortalSidebar';
 import ApplicationStepper from './ApplicationStepper';
 import { usePortal } from '../../context/PortalContext';
 import { getWindowNotice } from '../../portal/applicationWindow';
-import { PORTAL_MASCOTS, getPortalTip } from '../../data/portalContent';
+import { DASHBOARD_MASCOTS, getPortalTip } from '../../data/portalContent';
 import '../../styles/portal/PortalShell.css';
 
 export default function PortalShell({
   variant = 'application',
   step,
   scrollContained = false,
+  showBadge = true,
   children,
 }) {
   const { event } = usePortal();
   const isApplication = variant === 'application';
   const windowNotice = isApplication ? getWindowNotice(event) : '';
-  const mascot = PORTAL_MASCOTS.pink;
+  const mascot = DASHBOARD_MASCOTS.badge;
 
   return (
     <div
@@ -46,14 +47,16 @@ export default function PortalShell({
           </section>
         ) : (
           <section className="portal-shell__panel portal-dashboard__content">
-            <img
-              className="portal-shell__badge"
-              src={mascot.src}
-              width={mascot.width}
-              height={mascot.height}
-              alt=""
-              decoding="async"
-            />
+            {showBadge && (
+              <img
+                className="portal-shell__badge"
+                src={mascot.src}
+                width={mascot.width}
+                height={mascot.height}
+                alt=""
+                decoding="async"
+              />
+            )}
             {children}
           </section>
         )}

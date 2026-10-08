@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePortal } from '../../context/PortalContext';
 import {
+  DASHBOARD_MASCOTS,
   INSTAGRAM,
   PORTAL_MASCOTS,
   STEP_FIGURES,
@@ -9,6 +10,7 @@ import {
 import { EditIcon, InstagramIcon, LogOutIcon, UserIcon } from './PortalIcons';
 
 const APPLICATION_PATHS = ['/portal/apply', '/portal/dashboard'];
+const PROFILE_PATH = '/portal/profile';
 
 export default function PortalSidebar({ tip = '', step, showDecor = false }) {
   const figure = STEP_FIGURES[step] || PORTAL_MASCOTS.yellow;
@@ -18,6 +20,8 @@ export default function PortalSidebar({ tip = '', step, showDecor = false }) {
   const isApplicationActive = APPLICATION_PATHS.some((path) =>
     pathname.startsWith(path),
   );
+
+  const isProfileActive = pathname.startsWith(PROFILE_PATH);
 
   const handleLogOut = () => {
     logOut();
@@ -37,10 +41,16 @@ export default function PortalSidebar({ tip = '', step, showDecor = false }) {
           <EditIcon />
           My Application
         </Link>
-        <span className="dashboard-sidebar__link dashboard-sidebar__link--disabled">
+        <Link
+          to={PROFILE_PATH}
+          className={`dashboard-sidebar__link${
+            isProfileActive ? ' dashboard-sidebar__link--active' : ''
+          }`}
+          aria-current={isProfileActive ? 'page' : undefined}
+        >
           <UserIcon />
           Profile
-        </span>
+        </Link>
         <button
           type="button"
           className="dashboard-sidebar__link dashboard-sidebar__logout"
@@ -76,17 +86,17 @@ export default function PortalSidebar({ tip = '', step, showDecor = false }) {
         <div className="portal-sidebar__decor" aria-hidden="true">
           <img
             className="portal-sidebar__decor-mic"
-            src={PORTAL_MASCOTS.mic.src}
-            width={PORTAL_MASCOTS.mic.width}
-            height={PORTAL_MASCOTS.mic.height}
+            src={DASHBOARD_MASCOTS.mic.src}
+            width={DASHBOARD_MASCOTS.mic.width}
+            height={DASHBOARD_MASCOTS.mic.height}
             alt=""
             decoding="async"
           />
           <img
             className="portal-sidebar__decor-pencil"
-            src={PORTAL_MASCOTS.pencil.src}
-            width={PORTAL_MASCOTS.pencil.width}
-            height={PORTAL_MASCOTS.pencil.height}
+            src={DASHBOARD_MASCOTS.pink.src}
+            width={DASHBOARD_MASCOTS.pink.width}
+            height={DASHBOARD_MASCOTS.pink.height}
             alt=""
             decoding="async"
           />
