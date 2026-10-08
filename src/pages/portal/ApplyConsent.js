@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import PortalHeader from '../../components/portal/PortalHeader';
-import ApplicationStepper from '../../components/portal/ApplicationStepper';
-import ApplySidebar from '../../components/portal/ApplySidebar';
 import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
 import { DIETARY_OPTIONS } from '../../portal/applicationOptions';
+import PortalShell from '../../components/portal/PortalShell';
+import ApplyActions from '../../components/portal/ApplyActions';
+import {
+  PortalCheckbox,
+  PortalSelect,
+  PortalTextarea,
+} from '../../components/portal/PortalField';
 import '../../styles/portal/Portal.css';
 
 export default function ApplyConsent() {
@@ -84,83 +88,46 @@ export default function ApplyConsent() {
   };
 
   return (
-    <main className="portal-page portal-apply">
-      <PortalHeader />
-      <ApplicationStepper currentStep={3} />
-      <div className="portal-apply__body">
-        <ApplySidebar currentStep={3} />
-        <section className="portal-apply__content">
-          <h1>Consent &amp; Logistics</h1>
-          <p>Please review and complete the following.</p>
+    <PortalShell step={3}>
+      <h1>Consent &amp; Logistics</h1>
+      <p>Please review and complete the following.</p>
+      {errorMessage && (
+        <div className="portal-apply__error" role="alert">
+          {errorMessage}
+        </div>
+      )}
 
-          {errorMessage && (
-            <div className="portal-apply__error" role="alert">
-              {errorMessage}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <h2>Media Consent</h2>
-            <label
-              htmlFor="media-consent"
-              className="portal-apply__checkbox-row"
-            >
-              <input
-                id="media-consent"
-                type="checkbox"
-                checked={mediaConsent}
-                onChange={(event) => setMediaConsent(event.target.checked)}
-              />
-              I grant UWPM permission to use photos, videos, and quotes from my
-              participation in the event for promotional purposes.
-            </label>
-
-            <label htmlFor="dietary-restrictions">
-              Dietary restrictions (optional)
-            </label>
-            <select
-              id="dietary-restrictions"
-              value={dietaryRestrictions}
-              onChange={(event) => setDietaryRestrictions(event.target.value)}
-            >
-              <option value="">Select dietary restrictions</option>
-              {DIETARY_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-
-            <label htmlFor="dietary-specify">
-              Please specify (e.g. allergies, food preferences)
-            </label>
-            <textarea
-              id="dietary-specify"
-              placeholder="Type here..."
-              value={specify}
-              onChange={(event) => setSpecify(event.target.value)}
-              maxLength={500}
-            />
-
-            <div className="portal-apply__actions">
-              <button
-                type="button"
-                className="portal-button portal-button--outline"
-                onClick={() => navigate('/portal/apply/questions')}
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="portal-button portal-button--primary"
-              >
-                {isSaving ? 'Saving...' : 'Next'}
-              </button>
-            </div>
-          </form>
-        </section>
-      </div>
-    </main>
+      <form onSubmit={handleSubmit}>
+        <h2>Media Consent</h2>
+        <PortalCheckbox
+          id="media-consent"
+          checked={mediaConsent}
+          onChange={(event) => setMediaConsent(event.target.checked)}
+        >
+          I grant UWPM permission to use photos, videos, and quotes from my
+          participation in the event for promotional purposes.
+        </PortalCheckbox>
+        <PortalSelect
+          id="dietary-restrictions"
+          label="Dietary restrictions (optional)"
+          placeholder="Select dietary restrictions"
+          options={DIETARY_OPTIONS}
+          value={dietaryRestrictions}
+          onChange={(event) => setDietaryRestrictions(event.target.value)}
+        />
+        <PortalTextarea
+          id="dietary-specify"
+          label="Please specify (e.g. allergies, food preferences)"
+          placeholder="Type here..."
+          value={specify}
+          onChange={(event) => setSpecify(event.target.value)}
+          maxLength={500}
+        />
+        <ApplyActions
+          isBusy={isSaving}
+          onBack={() => navigate('/portal/apply/questions')}
+        />
+      </form>
+    </PortalShell>
   );
 }

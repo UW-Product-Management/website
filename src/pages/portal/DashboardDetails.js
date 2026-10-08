@@ -1,9 +1,8 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import PortalHeader from '../../components/portal/PortalHeader';
-import DashboardSidebar from '../../components/portal/DashboardSidebar';
 import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
+import PortalShell from '../../components/portal/PortalShell';
 import '../../styles/portal/Portal.css';
 
 export default function DashboardDetails() {
@@ -40,63 +39,61 @@ export default function DashboardDetails() {
     ? new Date(submittedAt).toLocaleString()
     : 'Recently';
 
+  const detailRows = [
+    { label: 'Full name', value: fullName || '—' },
+    { label: 'Email address', value: email || '—' },
+    { label: 'Program', value: program || '—' },
+    { label: 'Year of study', value: yearOfStudy || '—' },
+  ];
+  const questionRows = [
+    {
+      label: '1. What product or service do you wish existed, and why?',
+      value: productIdea || '—',
+    },
+    { label: '2. What makes a great product team?', value: greatTeam || '—' },
+  ];
+
   return (
-    <main className="portal-page portal-dashboard">
-      <PortalHeader />
-      <div className="portal-dashboard__body">
-        <DashboardSidebar />
-        <section className="portal-dashboard__content">
-          <h1>Application Details</h1>
-          <p>Submitted on {formattedDate}</p>
+    <PortalShell variant="dashboard">
+      <h1>Application Details</h1>
+      <p>Submitted on {formattedDate}</p>
 
-          <dl className="portal-apply__review">
-            <div>
-              <dt>Full name</dt>
-              <dd>{fullName || '—'}</dd>
+      <div className="portal-dashboard__card portal-dashboard__card--details">
+        <dl className="portal-apply__review">
+          {detailRows.map(({ label, value }) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
             </div>
-            <div>
-              <dt>Email address</dt>
-              <dd>{email || '—'}</dd>
-            </div>
-            <div>
-              <dt>Program</dt>
-              <dd>{program || '—'}</dd>
-            </div>
-            <div>
-              <dt>Year of study</dt>
-              <dd>{yearOfStudy || '—'}</dd>
-            </div>
-          </dl>
+          ))}
+        </dl>
 
-          <h2>Questions</h2>
-          <dl className="portal-apply__review">
-            <div>
-              <dt>1. What product or service do you wish existed, and why?</dt>
-              <dd>{productIdea || '—'}</dd>
+        <h2>Questions</h2>
+        <dl className="portal-apply__review portal-apply__review--stacked">
+          {questionRows.map(({ label, value }) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
             </div>
-            <div>
-              <dt>2. What makes a great product team?</dt>
-              <dd>{greatTeam || '—'}</dd>
-            </div>
-          </dl>
+          ))}
+        </dl>
 
-          <h2>Logistics</h2>
-          <dl className="portal-apply__review">
-            <div>
-              <dt>Dietary restrictions</dt>
-              <dd>{dietaryRestrictions}</dd>
-            </div>
-          </dl>
+        <h2>Logistics</h2>
+        <dl className="portal-apply__review">
+          <div>
+            <dt>Dietary restrictions</dt>
+            <dd>{dietaryRestrictions}</dd>
+          </div>
+        </dl>
 
-          <button
-            type="button"
-            className="portal-button portal-button--outline"
-            onClick={() => window.print()}
-          >
-            Download confirmation (PDF)
-          </button>
-        </section>
+        <button
+          type="button"
+          className="portal-button portal-button--outline-coral"
+          onClick={() => window.print()}
+        >
+          Download confirmation (PDF)
+        </button>
       </div>
-    </main>
+    </PortalShell>
   );
 }

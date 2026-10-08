@@ -1,7 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import PortalHeader from '../../components/portal/PortalHeader';
-import ApplicationStepper from '../../components/portal/ApplicationStepper';
+import AuthLayout from '../../components/portal/AuthLayout';
+import {
+  PasswordField,
+  PortalField,
+} from '../../components/portal/PortalField';
 import UnconfirmedEmailNotice from '../../components/portal/UnconfirmedEmailNotice';
 import { PortalContext } from '../../context/PortalContext';
 import * as portalApi from '../../services/portalApi';
@@ -98,59 +101,54 @@ export default function Login() {
   };
 
   return (
-    <main className="portal-page portal-auth">
-      <PortalHeader />
-      <ApplicationStepper currentStep={1} />
-      <section className="portal-auth__card">
-        <h1>Welcome back!</h1>
-        <p>Log in to continue your ProdCon application.</p>
+    <AuthLayout>
+      <h1>Welcome back!</h1>
+      <p>Log in to continue your ProdCon application.</p>
 
-        {isUnconfirmed ? (
-          <UnconfirmedEmailNotice email={email} />
-        ) : errorMessage ? (
-          <div className="portal-auth__error" role="alert">
-            {errorMessage}
-          </div>
-        ) : null}
+      {isUnconfirmed ? (
+        <UnconfirmedEmailNotice email={email} />
+      ) : errorMessage ? (
+        <div className="portal-auth__error" role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
 
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="login-email">Email address</label>
-          <input
-            id="login-email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            disabled={isSubmitting}
-          />
+      <form onSubmit={handleSubmit}>
+        <PortalField
+          id="login-email"
+          label="Email address"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          required
+          disabled={isSubmitting}
+        />
 
-          <label htmlFor="login-password">Password</label>
-          <input
-            id="login-password"
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            disabled={isSubmitting}
-          />
+        <PasswordField
+          id="login-password"
+          label="Password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+          disabled={isSubmitting}
+        />
 
-          <button
-            type="submit"
-            className="portal-button portal-button--primary"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Logging in...' : 'Log in'}
-          </button>
-        </form>
-        <p>
-          <Link to="/portal/reset-password">Forgot your password?</Link>
-        </p>
-        <p>
-          Don&apos;t have an account? <Link to="/portal/signup">Sign up</Link>
-        </p>
-      </section>
-    </main>
+        <button
+          type="submit"
+          className="portal-button portal-button--primary"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Logging in...' : 'Log in'}
+        </button>
+      </form>
+      <p className="portal-auth__switch">
+        <Link to="/portal/reset-password">Forgot your password?</Link>
+      </p>
+      <p className="portal-auth__switch">
+        Don&apos;t have an account? <Link to="/portal/signup">Sign up</Link>
+      </p>
+    </AuthLayout>
   );
 }

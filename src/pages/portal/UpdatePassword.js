@@ -1,7 +1,8 @@
 import React, { useContext, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import PortalHeader from '../../components/portal/PortalHeader';
-import ApplicationStepper from '../../components/portal/ApplicationStepper';
+import AuthLayout from '../../components/portal/AuthLayout';
+import { PasswordField } from '../../components/portal/PortalField';
+import { ArrowIcon } from '../../components/portal/PortalIcons';
 import { PortalContext } from '../../context/PortalContext';
 import * as portalApi from '../../services/portalApi';
 import '../../styles/portal/Portal.css';
@@ -94,51 +95,47 @@ export default function UpdatePassword() {
   };
 
   return (
-    <main className="portal-page portal-auth">
-      <PortalHeader />
-      <ApplicationStepper currentStep={1} />
-      <section className="portal-auth__card">
-        <h1>Set new password</h1>
-        <p>Enter your new password to access your account.</p>
+    <AuthLayout>
+      <h1>Set new password</h1>
+      <p>Enter your new password to access your account.</p>
 
-        {errorMessage && (
-          <div className="portal-auth__error" role="alert">
-            <p>{errorMessage}</p>
-            {/expired|invalid|request a new/i.test(errorMessage) && (
-              <p>
-                <Link to="/portal/reset-password">
-                  Request a new reset link
-                </Link>
-              </p>
-            )}
-          </div>
-        )}
+      {errorMessage && (
+        <div className="portal-auth__error" role="alert">
+          <p>{errorMessage}</p>
+          {/expired|invalid|request a new/i.test(errorMessage) && (
+            <p>
+              <Link to="/portal/reset-password">Request a new reset link</Link>
+            </p>
+          )}
+        </div>
+      )}
 
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="update-password">New password</label>
-          <input
-            id="update-password"
-            type="password"
-            placeholder="Enter your new password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            disabled={isSubmitting}
-          />
+      <form onSubmit={handleSubmit}>
+        <PasswordField
+          id="update-password"
+          label="New password"
+          placeholder="Enter your new password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+          disabled={isSubmitting}
+        />
 
-          <button
-            type="submit"
-            className="portal-button portal-button--primary"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Updating password...' : 'Update password'}
-          </button>
-        </form>
+        <button
+          type="submit"
+          className="portal-button portal-button--primary"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Updating password...' : 'Update password'}
+        </button>
+      </form>
 
-        <p>
-          <Link to="/portal/login">Back to log in</Link>
-        </p>
-      </section>
-    </main>
+      <p className="portal-auth__switch">
+        <Link to="/portal/login">
+          Back to log in
+          <ArrowIcon />
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

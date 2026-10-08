@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import PortalHeader from '../../components/portal/PortalHeader';
-import ApplicationStepper from '../../components/portal/ApplicationStepper';
-import ApplySidebar from '../../components/portal/ApplySidebar';
 import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
 import { PROGRAMS, YEARS } from '../../portal/applicationOptions';
+import PortalShell from '../../components/portal/PortalShell';
+import ApplyActions from '../../components/portal/ApplyActions';
+import { PortalField, PortalSelect } from '../../components/portal/PortalField';
 import '../../styles/portal/Portal.css';
 
 export default function ApplyRegister() {
@@ -80,86 +80,57 @@ export default function ApplyRegister() {
   };
 
   return (
-    <main className="portal-page portal-apply">
-      <PortalHeader />
-      <ApplicationStepper currentStep={1} />
-      <div className="portal-apply__body">
-        <ApplySidebar currentStep={1} />
-        <section className="portal-apply__content">
-          <h1>Register</h1>
-          <p>Let&apos;s get to know you!</p>
+    <PortalShell step={1}>
+      <h1>Register</h1>
+      <p>Let&apos;s get to know you!</p>
+      {errorMessage && (
+        <div className="portal-apply__error" role="alert">
+          {errorMessage}
+        </div>
+      )}
 
-          {errorMessage && (
-            <div className="portal-apply__error" role="alert">
-              {errorMessage}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <label htmlFor="register-name">Full name *</label>
-            <input
-              id="register-name"
-              type="text"
-              placeholder="e.g. Alex Chen"
-              value={fullName}
-              onChange={(event) => setFullName(event.target.value)}
-              maxLength={120}
-              required
-            />
-
-            <label htmlFor="register-email">Email address *</label>
-            <input
-              id="register-email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              readOnly
-              disabled
-              className="portal-input--readonly"
-            />
-
-            <label htmlFor="register-program">Program *</label>
-            <select
-              id="register-program"
-              value={program}
-              onChange={(event) => setProgram(event.target.value)}
-              required
-            >
-              <option value="">Select your program</option>
-              {PROGRAMS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-
-            <label htmlFor="register-year">Year of study *</label>
-            <select
-              id="register-year"
-              value={yearOfStudy}
-              onChange={(event) => setYearOfStudy(event.target.value)}
-              required
-            >
-              <option value="">Select your year</option>
-              {YEARS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-
-            <div className="portal-apply__actions">
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="portal-button portal-button--primary"
-              >
-                {isSaving ? 'Saving...' : 'Next'}
-              </button>
-            </div>
-          </form>
-        </section>
-      </div>
-    </main>
+      <form onSubmit={handleSubmit}>
+        <PortalField
+          id="register-name"
+          label="Full name"
+          type="text"
+          placeholder="e.g. Alex Chen"
+          value={fullName}
+          onChange={(event) => setFullName(event.target.value)}
+          maxLength={120}
+          required
+        />
+        <PortalField
+          id="register-email"
+          label="Email address"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          readOnly
+          disabled
+          required
+          className="portal-input--readonly"
+        />
+        <PortalSelect
+          id="register-program"
+          label="Program"
+          placeholder="Select your program"
+          options={PROGRAMS}
+          value={program}
+          onChange={(event) => setProgram(event.target.value)}
+          required
+        />
+        <PortalSelect
+          id="register-year"
+          label="Year of study"
+          placeholder="Select your year"
+          options={YEARS}
+          value={yearOfStudy}
+          onChange={(event) => setYearOfStudy(event.target.value)}
+          required
+        />
+        <ApplyActions isBusy={isSaving} />
+      </form>
+    </PortalShell>
   );
 }

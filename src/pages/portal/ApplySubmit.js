@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import PortalHeader from '../../components/portal/PortalHeader';
-import ApplicationStepper from '../../components/portal/ApplicationStepper';
-import ApplySidebar from '../../components/portal/ApplySidebar';
 import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
+import PortalShell from '../../components/portal/PortalShell';
+import ApplyActions from '../../components/portal/ApplyActions';
+import { PortalCheckbox } from '../../components/portal/PortalField';
 import '../../styles/portal/Portal.css';
 
 export default function ApplySubmit() {
@@ -43,6 +43,16 @@ export default function ApplySubmit() {
     state?.application?.answers?.greatTeam ||
     '';
 
+  const reviewRows = [
+    { label: 'Full name', value: fullName || '—' },
+    { label: 'Email address', value: email || '—' },
+    { label: 'Program', value: program || '—' },
+    { label: 'Year of study', value: yearOfStudy || '—' },
+    { label: 'Dietary restrictions', value: dietaryRestrictions || 'None' },
+    { label: 'Q1. What product or service...', value: productIdea || '—' },
+    { label: 'Q2. What makes a great product team?', value: greatTeam || '—' },
+  ];
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!confirmed) return;
@@ -68,88 +78,42 @@ export default function ApplySubmit() {
   };
 
   return (
-    <main className="portal-page portal-apply">
-      <PortalHeader />
-      <ApplicationStepper currentStep={4} />
-      <div className="portal-apply__body">
-        <ApplySidebar currentStep={4} />
-        <section className="portal-apply__content">
-          <h1>Review &amp; Submit</h1>
-          <p>
-            Please make sure all your information is correct before submitting.
-          </p>
+    <PortalShell step={4}>
+      <h1>Review &amp; Submit</h1>
+      <p>Please make sure all your information is correct before submitting.</p>
+      {errorMessage && (
+        <div className="portal-apply__error" role="alert">
+          {errorMessage}
+        </div>
+      )}
 
-          {errorMessage && (
-            <div className="portal-apply__error" role="alert">
-              {errorMessage}
+      <form onSubmit={handleSubmit}>
+        <dl className="portal-apply__review">
+          {reviewRows.map(({ label, value }) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
             </div>
-          )}
+          ))}
+        </dl>
 
-          <form onSubmit={handleSubmit}>
-            <dl className="portal-apply__review">
-              <div>
-                <dt>Full name</dt>
-                <dd>{fullName || '—'}</dd>
-              </div>
-              <div>
-                <dt>Email address</dt>
-                <dd>{email || '—'}</dd>
-              </div>
-              <div>
-                <dt>Program</dt>
-                <dd>{program || '—'}</dd>
-              </div>
-              <div>
-                <dt>Year of study</dt>
-                <dd>{yearOfStudy || '—'}</dd>
-              </div>
-              <div>
-                <dt>Dietary restrictions</dt>
-                <dd>{dietaryRestrictions || 'None'}</dd>
-              </div>
-              <div>
-                <dt>Q1. What product or service...</dt>
-                <dd>{productIdea || '—'}</dd>
-              </div>
-              <div>
-                <dt>Q2. What makes a great product team?</dt>
-                <dd>{greatTeam || '—'}</dd>
-              </div>
-            </dl>
+        <PortalCheckbox
+          id="confirm-accurate"
+          checked={confirmed}
+          onChange={(event) => setConfirmed(event.target.checked)}
+          required
+        >
+          I confirm that all information provided is accurate and complete.
+        </PortalCheckbox>
 
-            <label
-              htmlFor="confirm-accurate"
-              className="portal-apply__checkbox-row"
-            >
-              <input
-                id="confirm-accurate"
-                type="checkbox"
-                checked={confirmed}
-                onChange={(event) => setConfirmed(event.target.checked)}
-                required
-              />
-              I confirm that all information provided is accurate and complete.
-            </label>
-
-            <div className="portal-apply__actions">
-              <button
-                type="button"
-                className="portal-button portal-button--outline"
-                onClick={() => navigate('/portal/apply/consent')}
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={!confirmed || isSubmitting}
-                className="portal-button portal-button--primary"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit'}
-              </button>
-            </div>
-          </form>
-        </section>
-      </div>
-    </main>
+        <ApplyActions
+          onBack={() => navigate('/portal/apply/consent')}
+          nextLabel="Submit"
+          busyLabel="Submitting..."
+          disabled={!confirmed}
+          isBusy={isSubmitting}
+        />
+      </form>
+    </PortalShell>
   );
 }

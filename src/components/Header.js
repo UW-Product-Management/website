@@ -10,6 +10,7 @@ export default function Header({
   hideNav = false,
   className = '',
   ariaLabel,
+  children,
 }) {
   const location = useLocation();
   const activeKey = resolveActiveKey(location.pathname, active);
@@ -35,6 +36,8 @@ export default function Header({
           <NavCapsule active={activeKey} />
         </div>
       )}
+
+      {children && <div className="home-hero__aside">{children}</div>}
     </header>
   );
 }

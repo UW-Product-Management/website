@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import PortalHeader from '../../components/portal/PortalHeader';
 import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
+import ConfirmationLayout from '../../components/portal/ConfirmationLayout';
 import '../../styles/portal/Portal.css';
 
 export default function Confirmation() {
@@ -22,49 +22,42 @@ export default function Confirmation() {
     ? new Date(submittedAt).toLocaleString()
     : 'Recently';
 
-  return (
-    <main className="portal-page portal-confirmation">
-      <PortalHeader />
-      <section className="portal-confirmation__card">
-        <h1>You&apos;re in!</h1>
-        <p>Your application has been submitted successfully.</p>
+  const summaryRows = [
+    { label: 'Name', value: fullName },
+    { label: 'Email', value: email },
+    { label: 'Program', value: program },
+    { label: 'Year', value: yearOfStudy },
+    { label: 'Submitted on', value: formattedDate },
+  ];
 
+  return (
+    <ConfirmationLayout>
+      <h1>You&apos;re in!</h1>
+      <p>Your application has been submitted successfully.</p>
+
+      <section className="portal-confirmation__card">
         <h2>Application Summary</h2>
         <dl className="portal-apply__review">
-          <div>
-            <dt>Name</dt>
-            <dd>{fullName}</dd>
-          </div>
-          <div>
-            <dt>Email</dt>
-            <dd>{email}</dd>
-          </div>
-          <div>
-            <dt>Program</dt>
-            <dd>{program}</dd>
-          </div>
-          <div>
-            <dt>Year</dt>
-            <dd>{yearOfStudy}</dd>
-          </div>
-          <div>
-            <dt>Submitted on</dt>
-            <dd>{formattedDate}</dd>
-          </div>
+          {summaryRows.map(({ label, value }) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
         </dl>
-
-        <div className="portal-apply__actions">
-          <Link
-            to="/portal/dashboard"
-            className="portal-button portal-button--primary"
-          >
-            View my application
-          </Link>
-          <Link to="/portal" className="portal-button portal-button--outline">
-            Back to home
-          </Link>
-        </div>
       </section>
-    </main>
+
+      <div className="portal-confirmation__actions">
+        <Link
+          to="/portal/dashboard"
+          className="portal-button portal-button--primary"
+        >
+          View my application
+        </Link>
+        <Link to="/portal" className="portal-button portal-button--outline">
+          Back to home
+        </Link>
+      </div>
+    </ConfirmationLayout>
   );
 }

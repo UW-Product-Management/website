@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import PortalHeader from '../../components/portal/PortalHeader';
-import ApplicationStepper from '../../components/portal/ApplicationStepper';
+import AuthLayout from '../../components/portal/AuthLayout';
+import { PortalField } from '../../components/portal/PortalField';
+import { ArrowIcon } from '../../components/portal/PortalIcons';
 import * as portalApi from '../../services/portalApi';
 import '../../styles/portal/Portal.css';
 
@@ -57,55 +58,54 @@ export default function ResetPassword() {
   };
 
   return (
-    <main className="portal-page portal-auth">
-      <PortalHeader />
-      <ApplicationStepper currentStep={1} />
-      <section className="portal-auth__card">
-        <h1>Reset your password</h1>
-        <p>
-          Enter your email address and we&apos;ll send you instructions to reset
-          your password.
-        </p>
+    <AuthLayout>
+      <h1>Reset your password</h1>
+      <p>
+        Enter your email address and we&apos;ll send you instructions to reset
+        your password.
+      </p>
 
-        {errorMessage && (
-          <div className="portal-auth__error" role="alert">
-            {errorMessage}
-          </div>
-        )}
+      {errorMessage && (
+        <div className="portal-auth__error" role="alert">
+          {errorMessage}
+        </div>
+      )}
 
-        {sent ? (
-          <div className="portal-auth__confirmation">
-            <p>
-              Check your inbox for a link to reset your password sent to{' '}
-              <strong>{email.trim()}</strong>.
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <label htmlFor="reset-email">Email address</label>
-            <input
-              id="reset-email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              disabled={isSubmitting}
-            />
+      {sent ? (
+        <div className="portal-auth__confirmation">
+          <p>
+            Check your inbox for a link to reset your password sent to{' '}
+            <strong>{email.trim()}</strong>.
+          </p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <PortalField
+            id="reset-email"
+            label="Email address"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            disabled={isSubmitting}
+          />
 
-            <button
-              type="submit"
-              className="portal-button portal-button--primary"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Sending link...' : 'Send reset link'}
-            </button>
-          </form>
-        )}
-        <p>
-          <Link to="/portal/login">Back to log in</Link>
-        </p>
-      </section>
-    </main>
+          <button
+            type="submit"
+            className="portal-button portal-button--primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Sending link...' : 'Send reset link'}
+          </button>
+        </form>
+      )}
+      <p className="portal-auth__switch">
+        <Link to="/portal/login">
+          Back to log in
+          <ArrowIcon />
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

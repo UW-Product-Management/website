@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import PortalHeader from '../../components/portal/PortalHeader';
-import ApplicationStepper from '../../components/portal/ApplicationStepper';
+import AuthLayout from '../../components/portal/AuthLayout';
+import {
+  PasswordField,
+  PortalField,
+} from '../../components/portal/PortalField';
 import * as portalApi from '../../services/portalApi';
 import '../../styles/portal/Portal.css';
 
@@ -66,80 +69,75 @@ export default function Signup() {
   };
 
   return (
-    <main className="portal-page portal-auth">
-      <PortalHeader />
-      <ApplicationStepper currentStep={1} />
-      <section className="portal-auth__card">
-        {isSuccess ? (
-          <div className="portal-auth__confirmation">
-            <h1>Check your inbox</h1>
-            <p>
-              We&apos;ve sent a confirmation link to{' '}
-              <strong>{email.trim()}</strong>. Please check your inbox and click
-              the link to confirm your account and continue your application.
-            </p>
-            <p>
-              Already confirmed? <Link to="/portal/login">Log in</Link>
-            </p>
-          </div>
-        ) : (
-          <>
-            <h1>Create your account</h1>
-            <p>Get started with your email and password.</p>
-            {errorMessage && (
-              <div className="portal-auth__error" role="alert">
-                {errorMessage}
-              </div>
-            )}
-            <form onSubmit={handleSubmit}>
-              <label htmlFor="signup-name">Full name</label>
-              <input
-                id="signup-name"
-                type="text"
-                placeholder="e.g. Alex Chen"
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
-                maxLength={120}
-                required
-                disabled={isSubmitting}
-              />
+    <AuthLayout>
+      {isSuccess ? (
+        <div className="portal-auth__confirmation">
+          <h1>Check your inbox</h1>
+          <p>
+            We&apos;ve sent a confirmation link to{' '}
+            <strong>{email.trim()}</strong>. Please check your inbox and click
+            the link to confirm your account and continue your application.
+          </p>
+          <p>
+            Already confirmed? <Link to="/portal/login">Log in</Link>
+          </p>
+        </div>
+      ) : (
+        <>
+          <h1>Create your account</h1>
+          <p>Get started with your email and password.</p>
+          {errorMessage && (
+            <div className="portal-auth__error" role="alert">
+              {errorMessage}
+            </div>
+          )}
+          <form onSubmit={handleSubmit}>
+            <PortalField
+              id="signup-name"
+              label="Full name"
+              type="text"
+              placeholder="e.g. Alex Chen"
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+              maxLength={120}
+              required
+              disabled={isSubmitting}
+            />
 
-              <label htmlFor="signup-email">Email address</label>
-              <input
-                id="signup-email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                disabled={isSubmitting}
-              />
+            <PortalField
+              id="signup-email"
+              label="Email address"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              disabled={isSubmitting}
+            />
 
-              <label htmlFor="signup-password">Password</label>
-              <input
-                id="signup-password"
-                type="password"
-                placeholder="Create a password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                disabled={isSubmitting}
-              />
+            <PasswordField
+              id="signup-password"
+              label="Password"
+              placeholder="Create a password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              disabled={isSubmitting}
+            />
 
-              <button
-                type="submit"
-                className="portal-button portal-button--primary"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Signing up...' : 'Sign up'}
-              </button>
-            </form>
-            <p>
-              Already have an account? <Link to="/portal/login">Log in</Link>
-            </p>
-          </>
-        )}
-      </section>
-    </main>
+            <button
+              type="submit"
+              className="portal-button portal-button--primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Signing up...' : 'Sign up'}
+            </button>
+          </form>
+          <p className="portal-auth__switch">
+            Already have an account? <Link to="/portal/login">Log in</Link>
+          </p>
+        </>
+      )}
+    </AuthLayout>
   );
 }
