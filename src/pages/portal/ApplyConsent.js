@@ -3,7 +3,6 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
 import { DIETARY_OPTIONS } from '../../portal/applicationOptions';
-import PortalShell from '../../components/portal/PortalShell';
 import ApplyActions from '../../components/portal/ApplyActions';
 import {
   PortalCheckbox,
@@ -88,7 +87,7 @@ export default function ApplyConsent() {
   };
 
   return (
-    <PortalShell step={3}>
+    <>
       <h1>Consent &amp; Logistics</h1>
       <p>Please review and complete the following.</p>
       {errorMessage && (
@@ -128,6 +127,6 @@ export default function ApplyConsent() {
           onBack={() => navigate('/portal/apply/questions')}
         />
       </form>
-    </PortalShell>
+    </>
   );
 }

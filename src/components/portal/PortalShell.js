@@ -10,6 +10,7 @@ import '../../styles/portal/PortalShell.css';
 export default function PortalShell({
   variant = 'application',
   step,
+  scrollContained = false,
   children,
 }) {
   const { event } = usePortal();
@@ -18,11 +19,16 @@ export default function PortalShell({
   const mascot = PORTAL_MASCOTS.pink;
 
   return (
-    <div className={`portal-shell portal-shell--${variant}`}>
+    <div
+      className={`portal-shell portal-shell--${variant}${
+        scrollContained ? ' portal-shell--scroll-contained' : ''
+      }`}
+    >
       <div className="portal-shell__aside">
         <PortalHeader />
         <PortalSidebar
           tip={isApplication ? getPortalTip(step, event) : ''}
+          step={step}
           showDecor={!isApplication}
         />
       </div>

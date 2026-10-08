@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
-import PortalShell from '../../components/portal/PortalShell';
 import ApplyActions from '../../components/portal/ApplyActions';
 import { PortalCheckbox } from '../../components/portal/PortalField';
 import '../../styles/portal/Portal.css';
@@ -43,6 +42,12 @@ export default function ApplySubmit() {
     state?.application?.answers?.greatTeam ||
     '';
 
+  const productExperience =
+    application?.productExperience ||
+    application?.answers?.productExperience ||
+    state?.application?.answers?.productExperience ||
+    '';
+
   const reviewRows = [
     { label: 'Full name', value: fullName || '—' },
     { label: 'Email address', value: email || '—' },
@@ -51,6 +56,10 @@ export default function ApplySubmit() {
     { label: 'Dietary restrictions', value: dietaryRestrictions || 'None' },
     { label: 'Q1. What product or service...', value: productIdea || '—' },
     { label: 'Q2. What makes a great product team?', value: greatTeam || '—' },
+    {
+      label: 'Q3. One product you worked on...',
+      value: productExperience || '—',
+    },
   ];
 
   const handleSubmit = async (event) => {
@@ -78,7 +87,7 @@ export default function ApplySubmit() {
   };
 
   return (
-    <PortalShell step={4}>
+    <>
       <h1>Review &amp; Submit</h1>
       <p>Please make sure all your information is correct before submitting.</p>
       {errorMessage && (
@@ -114,6 +123,6 @@ export default function ApplySubmit() {
           isBusy={isSubmitting}
         />
       </form>
-    </PortalShell>
+    </>
   );
 }

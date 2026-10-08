@@ -53,8 +53,40 @@
   top: 38%;
   left: 1%;
   width: clamp(120px, 14vw, 215px);
-  height: auto;
+  aspect-ratio: 187 / 188;
   filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.12));
+}
+
+.hexagon-decor__mascot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.hexagon-decor__mascot-eye {
+  position: absolute;
+  top: 34.57%;
+  left: 35.83%;
+  width: 22.46%;
+  height: 18.09%;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.hexagon-decor__mascot-pupil {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 52.38%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #570029;
+  transform: translate(
+    calc(-50% + var(--pupil-x, 0) * 1%),
+    calc(-50% + var(--pupil-y, 0) * 1%)
+  );
+  transition: transform 0.12s ease-out;
 }
 
 .portal-auth__card {
@@ -121,9 +153,9 @@
 }
 
 .portal-field__control input:focus-visible {
-  outline: 2px solid var(--auth-coral);
-  outline-offset: 2px;
+  outline: none;
   border-color: var(--auth-coral);
+  box-shadow: inset 0 0 0 1px var(--auth-coral);
 }
 
 .portal-field__toggle {

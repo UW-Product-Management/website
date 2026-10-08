@@ -5,10 +5,12 @@ import {
   PasswordField,
   PortalField,
 } from '../../components/portal/PortalField';
+import PortalToast from '../../components/portal/PortalToast';
 import UnconfirmedEmailNotice from '../../components/portal/UnconfirmedEmailNotice';
 import { PortalContext } from '../../context/PortalContext';
 import * as portalApi from '../../services/portalApi';
 import '../../styles/portal/Portal.css';
+import '../../styles/portal/PortalToast.css';
 
 export function getLoginErrorMessage(error) {
   if (!error) return '';
@@ -105,13 +107,7 @@ export default function Login() {
       <h1>Welcome back!</h1>
       <p>Log in to continue your ProdCon application.</p>
 
-      {isUnconfirmed ? (
-        <UnconfirmedEmailNotice email={email} />
-      ) : errorMessage ? (
-        <div className="portal-auth__error" role="alert">
-          {errorMessage}
-        </div>
-      ) : null}
+      {isUnconfirmed ? <UnconfirmedEmailNotice email={email} /> : null}
 
       <form onSubmit={handleSubmit}>
         <PortalField
@@ -149,6 +145,13 @@ export default function Login() {
       <p className="portal-auth__switch">
         Don&apos;t have an account? <Link to="/portal/signup">Sign up</Link>
       </p>
+      {errorMessage && (
+        <PortalToast
+          variant="error"
+          title={errorMessage}
+          onDone={() => setErrorMessage(null)}
+        />
+      )}
     </AuthLayout>
   );
 }

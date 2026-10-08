@@ -3,7 +3,6 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
 import { PROGRAMS, YEARS } from '../../portal/applicationOptions';
-import PortalShell from '../../components/portal/PortalShell';
 import ApplyActions from '../../components/portal/ApplyActions';
 import { PortalField, PortalSelect } from '../../components/portal/PortalField';
 import '../../styles/portal/Portal.css';
@@ -80,7 +79,7 @@ export default function ApplyRegister() {
   };
 
   return (
-    <PortalShell step={1}>
+    <>
       <h1>Register</h1>
       <p>Let&apos;s get to know you!</p>
       {errorMessage && (
@@ -131,6 +130,6 @@ export default function ApplyRegister() {
         />
         <ApplyActions isBusy={isSaving} />
       </form>
-    </PortalShell>
+    </>
   );
 }

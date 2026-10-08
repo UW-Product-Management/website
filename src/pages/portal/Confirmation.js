@@ -32,7 +32,6 @@ export default function Confirmation() {
 
   return (
     <ConfirmationLayout>
-      <h1>You&apos;re in!</h1>
       <p>Your application has been submitted successfully.</p>
 
       <section className="portal-confirmation__card">

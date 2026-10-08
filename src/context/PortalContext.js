@@ -25,6 +25,7 @@ const defaultApplication = {
   yearOfStudy: '',
   productIdea: '',
   greatTeam: '',
+  productExperience: '',
   mediaConsent: false,
   dietaryRestriction: '',
   dietaryRestrictions: '',
@@ -32,7 +33,7 @@ const defaultApplication = {
   specify: '',
   status: 'draft',
   submittedAt: null,
-  answers: { productIdea: '', greatTeam: '' },
+  answers: { productIdea: '', greatTeam: '', productExperience: '' },
   consent: { mediaConsent: false, dietaryRestrictions: '', specify: '' },
 };
 
@@ -249,6 +250,9 @@ export function PortalProvider({ children, value: customValue }) {
         if (fields.answers.greatTeam !== undefined) {
           merged.greatTeam = fields.answers.greatTeam;
         }
+        if (fields.answers.productExperience !== undefined) {
+          merged.productExperience = fields.answers.productExperience;
+        }
       }
       if (fields.consent) {
         merged.consent = { ...current.consent, ...fields.consent };
@@ -279,6 +283,10 @@ export function PortalProvider({ children, value: customValue }) {
             application.productIdea || application.answers?.productIdea || '',
           greatTeam:
             application.greatTeam || application.answers?.greatTeam || '',
+          productExperience:
+            application.productExperience ||
+            application.answers?.productExperience ||
+            '',
         },
         consent: {
           ...defaultApplication.consent,

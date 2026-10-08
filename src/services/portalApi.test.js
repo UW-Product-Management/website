@@ -380,6 +380,7 @@ describe('portalApi row & form mappings', () => {
     expect(mapped.answers).toEqual({
       productIdea: 'Campus tracker',
       greatTeam: 'High trust',
+      productExperience: '',
     });
     expect(mapped.consent).toEqual({
       mediaConsent: true,

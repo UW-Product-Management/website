@@ -1,5 +1,6 @@
 import React from 'react';
-import { AUTH_HEXAGONS, AUTH_MASCOT } from '../../data/portalAuthDecor';
+import { AUTH_HEXAGONS } from '../../data/portalAuthDecor';
+import TrackingMascot from './TrackingMascot';
 
 const SIDES = ['top', 'right', 'bottom', 'left'];
 
@@ -26,16 +27,7 @@ export default function HexagonDecor({ showMascot = true }) {
           style={hexagonVars(hexagon)}
         />
       ))}
-      {showMascot && (
-        <img
-          className="hexagon-decor__mascot"
-          src={AUTH_MASCOT.src}
-          width={AUTH_MASCOT.width}
-          height={AUTH_MASCOT.height}
-          alt=""
-          decoding="async"
-        />
-      )}
+      {showMascot && <TrackingMascot />}
     </div>
   );
 }

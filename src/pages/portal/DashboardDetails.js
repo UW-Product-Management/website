@@ -28,6 +28,11 @@ export default function DashboardDetails() {
     application?.answers?.greatTeam ||
     state?.application?.answers?.greatTeam ||
     '';
+  const productExperience =
+    application?.productExperience ||
+    application?.answers?.productExperience ||
+    state?.application?.answers?.productExperience ||
+    '';
   const dietaryRestrictions =
     application?.dietaryRestrictions ||
     application?.dietaryRestriction ||
@@ -51,6 +56,11 @@ export default function DashboardDetails() {
       value: productIdea || '—',
     },
     { label: '2. What makes a great product team?', value: greatTeam || '—' },
+    {
+      label:
+        '3. What is one product you’ve worked on or contributed to, and what was your role?',
+      value: productExperience || '—',
+    },
   ];
 
   return (

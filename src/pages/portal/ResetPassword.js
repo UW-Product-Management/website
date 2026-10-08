@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import AuthLayout from '../../components/portal/AuthLayout';
 import { PortalField } from '../../components/portal/PortalField';
 import { ArrowIcon } from '../../components/portal/PortalIcons';
+import PortalToast from '../../components/portal/PortalToast';
 import * as portalApi from '../../services/portalApi';
 import '../../styles/portal/Portal.css';
+import '../../styles/portal/PortalToast.css';
 
 export function getResetPasswordErrorMessage(error) {
   if (!error) return '';
@@ -32,6 +34,7 @@ export function getResetPasswordErrorMessage(error) {
 export default function ResetPassword() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
@@ -51,6 +54,7 @@ export default function ResetPassword() {
       }
 
       setSent(true);
+      setShowToast(true);
     } catch (err) {
       setIsSubmitting(false);
       setErrorMessage(getResetPasswordErrorMessage(err));
@@ -106,6 +110,14 @@ export default function ResetPassword() {
           <ArrowIcon />
         </Link>
       </p>
+      {showToast && (
+        <PortalToast
+          title="Your password has been reset!"
+          message="Check your email for confirmation"
+          hint="you can now log in with your new password"
+          onDone={() => setShowToast(false)}
+        />
+      )}
     </AuthLayout>
   );
 }

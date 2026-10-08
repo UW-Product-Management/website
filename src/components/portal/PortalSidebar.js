@@ -1,12 +1,17 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePortal } from '../../context/PortalContext';
-import { INSTAGRAM, PORTAL_MASCOTS } from '../../data/portalContent';
+import {
+  INSTAGRAM,
+  PORTAL_MASCOTS,
+  STEP_FIGURES,
+} from '../../data/portalContent';
 import { EditIcon, InstagramIcon, LogOutIcon, UserIcon } from './PortalIcons';
 
 const APPLICATION_PATHS = ['/portal/apply', '/portal/dashboard'];
 
-export default function PortalSidebar({ tip = '', showDecor = false }) {
+export default function PortalSidebar({ tip = '', step, showDecor = false }) {
+  const figure = STEP_FIGURES[step] || PORTAL_MASCOTS.yellow;
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { logOut } = usePortal();
@@ -57,9 +62,10 @@ export default function PortalSidebar({ tip = '', showDecor = false }) {
           </div>
           <img
             className="portal-sidebar__mascot"
-            src={PORTAL_MASCOTS.yellow.src}
-            width={PORTAL_MASCOTS.yellow.width}
-            height={PORTAL_MASCOTS.yellow.height}
+            src={figure.src}
+            width={figure.width}
+            height={figure.height}
+            style={{ '--figure-width': figure.width }}
             alt=""
             decoding="async"
           />

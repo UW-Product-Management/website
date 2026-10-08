@@ -64,6 +64,21 @@ describe('ResetPassword page', () => {
     expect(screen.getByText('student@uwaterloo.ca')).toBeInTheDocument();
   });
 
+  it('shows the success toast after the reset link is sent', async () => {
+    portalApi.requestPasswordReset.mockResolvedValueOnce({
+      data: {},
+      error: null,
+    });
+
+    renderResetPassword();
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: /send reset link/i }));
+
+    const toast = await screen.findByRole('status');
+    expect(toast).toHaveTextContent('Your password has been reset!');
+    expect(toast).toHaveTextContent('Check your email for confirmation');
+  });
+
   it('displays rate limit error message when API returns 429 status', async () => {
     portalApi.requestPasswordReset.mockResolvedValueOnce({
       data: null,

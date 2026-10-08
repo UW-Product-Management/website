@@ -73,6 +73,7 @@ export function mapApplicationFromRow(row) {
     yearOfStudy: row.year_of_study || '',
     productIdea: row.product_idea || '',
     greatTeam: row.great_team || '',
+    productExperience: row.product_experience || '',
     mediaConsent: Boolean(row.media_consent),
     dietaryRestriction: row.dietary_restriction || '',
     dietaryRestrictions: row.dietary_restriction || '',
@@ -86,6 +87,7 @@ export function mapApplicationFromRow(row) {
     answers: {
       productIdea: row.product_idea || '',
       greatTeam: row.great_team || '',
+      productExperience: row.product_experience || '',
     },
     consent: {
       mediaConsent: Boolean(row.media_consent),
@@ -123,6 +125,14 @@ export function mapApplicationFormToRow(fields = {}) {
     row.great_team = fields.answers.greatTeam;
   } else if ('great_team' in fields) {
     row.great_team = fields.great_team;
+  }
+
+  if ('productExperience' in fields) {
+    row.product_experience = fields.productExperience;
+  } else if (fields.answers && 'productExperience' in fields.answers) {
+    row.product_experience = fields.answers.productExperience;
+  } else if ('product_experience' in fields) {
+    row.product_experience = fields.product_experience;
   }
 
   if ('mediaConsent' in fields) {
