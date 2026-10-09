@@ -7,6 +7,7 @@ import 'swiper/css';
 import { ExecList } from '../components/ExecList';
 import Footer from '../components/Footer';
 import PageHero from '../components/PageHero';
+import { CLUB_MISSION, CLUB_VALUES } from '../data/clubValues';
 import teamPhoto from '../images/prodcon/prodcon1.JPG';
 import '../styles/Home.css';
 import '../styles/EventsV4.css';
@@ -103,58 +104,19 @@ export default function Team() {
               className="values-swiper"
             >
               <SwiperSlide className="value-card">
-                <div className="value-icon" />
                 <h3>Mission</h3>
-                <p>
-                  UW PM is dedicated to creating a thriving product management
-                  community and offering students exposure to the field of
-                  product.
-                </p>
+                <p>{CLUB_MISSION.mission}</p>
               </SwiperSlide>
               <SwiperSlide className="value-card">
-                <div className="value-icon" />
                 <h3>Vision</h3>
-                <p>
-                  Inspire product-level thinking and explore the rationale
-                  behind what we should build and why that will propel students
-                  towards successful careers in product.
-                </p>
+                <p>{CLUB_MISSION.vision}</p>
               </SwiperSlide>
-              <SwiperSlide className="value-card">
-                <div className="value-icon" />
-                <h3>What We Do</h3>
-                <p>
-                  We host a wide array of events running from product case
-                  competitions, resume reviews, mock interviews, panel
-                  discussions with alumni, and more!
-                </p>
-              </SwiperSlide>
-              <SwiperSlide className="value-card">
-                <div className="value-icon" />
-                <h3>Empowerment</h3>
-                <p>
-                  We help people break into product management by providing the
-                  resources, skills, and opportunities they need to succeed,
-                  regardless of their background.
-                </p>
-              </SwiperSlide>
-              <SwiperSlide className="value-card">
-                <div className="value-icon" />
-                <h3>Continuous Learning</h3>
-                <p>
-                  We embrace a growth mindset, encouraging continuous learning
-                  and development through shared knowledge and experiences.
-                </p>
-              </SwiperSlide>
-              <SwiperSlide className="value-card">
-                <div className="value-icon" />
-                <h3>Community Engagement</h3>
-                <p>
-                  We engage with the Waterloo product management community,
-                  including alumni, students, and beyond, to share knowledge and
-                  build lasting connections.
-                </p>
-              </SwiperSlide>
+              {CLUB_VALUES.map((value) => (
+                <SwiperSlide key={value.id} className="value-card">
+                  <h3>{value.title}</h3>
+                  <p>{value.description}</p>
+                </SwiperSlide>
+              ))}
             </Swiper>
           </div>
 
