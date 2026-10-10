@@ -20,16 +20,16 @@
   background: linear-gradient(180deg, #fdd4da 0%, #fce0e0 55%, #fbe3dc 100%);
 }
 
-.portal-shell__aside .home-hero {
+.portal-shell__aside .site-header {
   background: transparent;
 }
 
-.portal-shell__aside .home-hero--compact.home-hero--standalone-brand {
+.portal-shell__aside .site-header.site-header--standalone-brand {
   margin-bottom: 0;
   padding-inline: 20px;
 }
 
-.portal-shell__aside .home-hero--compact .home-hero__brand {
+.portal-shell__aside .site-header .site-header__brand {
   width: 101px;
   height: 48px;
 }
