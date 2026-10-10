@@ -15,6 +15,84 @@
   display: flex;
   flex-direction: column;
 }
+.home-hero__bloom {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Static resting position via left/top; JS only adds a transform offset */
+.hb-cluster {
+  position: absolute;
+  width: var(--size);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) scale(0.88);
+  will-change: transform;
+}
+
+.hb-cluster--a {
+  --size: 24vw; /* was 20vw */
+  left: 42%;
+  top: 50%;
+}
+.hb-cluster--b {
+  --size: 31vw; /* was 26vw */
+  left: 58%;
+  top: 52%;
+}
+
+/* Blur on the group melts the hexagon steps into a smooth gradient */
+.hb-shape {
+  position: absolute;
+  inset: 0;
+  filter: blur(calc(var(--size) * 0.05)); /* was 0.12 */
+}
+
+.hb-cluster i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 100%;
+  aspect-ratio: 0.866;
+  transform: translate(-50%, -50%) scale(var(--s));
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+.hb-cluster i:nth-child(1) {
+  --s: 1;
+  background: #ffc2c6;
+}
+.hb-cluster i:nth-child(2) {
+  --s: 0.8;
+  background: #fd8a8f;
+}
+.hb-cluster i:nth-child(3) {
+  --s: 0.6;
+  background: #ff636b;
+}
+.hb-cluster i:nth-child(4) {
+  --s: 0.4;
+  background: #ff525b;
+}
+.hb-cluster i:nth-child(5) {
+  --s: 0.2;
+  background: #ff4d56;
+}
+
+/* Grain travels with each blob and fades out toward its edge */
+.hb-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  -webkit-mask-image: radial-gradient(
+    circle at center,
+    #000 0%,
+    transparent 70%
+  );
+  mask-image: radial-gradient(circle at center, #000 0%, transparent 70%);
+}
 
 /* Home renders the nav at the bottom of the hero, so it only needs the
    extra vertical rhythm; sizing and colours come from Navbar.css. */
@@ -439,6 +517,10 @@
   .home-hero__star--outline {
     animation: none;
   }
+}
+
+#home .home-hero--compact {
+  background: transparent;
 }
 
 .what-we-do {
