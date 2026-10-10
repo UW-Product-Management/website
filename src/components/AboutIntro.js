@@ -5,6 +5,7 @@ import missionPhoto from '../images/about/mission-photo.webp';
 import whatWeDoPhoto from '../images/about/what-we-do-photo.webp';
 import missionPaperBg from '../images/about/mission-paper-bg.webp';
 import whatWeDoPaperBg from '../images/about/what-we-do-paper-bg.webp';
+import { CLUB_MISSION } from '../data/clubValues';
 
 function PaperPhoto({ src, alt, paperBg, tilt }) {
   return (
@@ -38,10 +39,7 @@ export default function AboutIntro() {
         <div className="about-intro__copy">
           <h2 className="about-intro__title">Mission</h2>
           <p className="about-intro__text">
-            UW PM fosters a thriving product management community, exposing
-            students to the field and inspiring product-level thinking. Our
-            vision is to explore the &quot;what&quot; and &quot;why&quot;,
-            guiding students toward successful careers in product.
+            {CLUB_MISSION.mission} {CLUB_MISSION.vision}
           </p>
         </div>
         <div className="about-intro__media">
