@@ -59,7 +59,14 @@ export default function PastEventsV4() {
       <div className="container">
         <div className="ev4-head">
           <h2>Past events</h2>
-          <span className="link-arrow link-arrow--muted" aria-disabled="true">
+
+          <a
+            className="link-arrow"
+            href="https://www.instagram.com/uwaterloopm/?hl=en"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View all UWPM events on Instagram"
+          >
             View all events
             <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
@@ -69,7 +76,7 @@ export default function PastEventsV4() {
                 strokeLinecap="square"
               />
             </svg>
-          </span>
+          </a>
         </div>
 
         <div className="ev__slide">
