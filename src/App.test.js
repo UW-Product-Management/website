@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 
-test('renders the supplied UW PM hero artwork', () => {
+test('renders the supplied UW PM hero artwork', async () => {
   render(
     <MemoryRouter>
       <App />
@@ -10,8 +10,9 @@ test('renders the supplied UW PM hero artwork', () => {
   );
 
   expect(
-    screen.getByRole('region', { name: /uw pm introduction/i }),
+    await screen.findByRole('region', { name: /uw pm introduction/i }),
   ).toBeInTheDocument();
+
   expect(
     screen.getByRole('heading', {
       name: /fostering the creative product management community/i,
@@ -32,4 +33,28 @@ test('renders the supplied UW PM hero artwork', () => {
     screen.getByRole('heading', { name: /our community has worked at/i }),
   ).toBeInTheDocument();
   expect(screen.getByAltText('Microsoft')).toBeInTheDocument();
+});
+
+test('redirects unauthenticated users trying to access protected portal routes to login', async () => {
+  render(
+    <MemoryRouter initialEntries={['/portal/dashboard']}>
+      <App />
+    </MemoryRouter>,
+  );
+
+  expect(
+    await screen.findByRole('heading', { name: /welcome back!/i }),
+  ).toBeInTheDocument();
+});
+
+test('renders update password page for recovery flow without redirecting', async () => {
+  render(
+    <MemoryRouter initialEntries={['/portal/update-password']}>
+      <App />
+    </MemoryRouter>,
+  );
+
+  expect(
+    await screen.findByRole('heading', { name: /set new password/i }),
+  ).toBeInTheDocument();
 });

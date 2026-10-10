@@ -52,6 +52,17 @@
   justify-content: center;
 }
 
+.home-hero__aside {
+  position: absolute;
+  top: 50%;
+  right: 4%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+}
+
 /* Home/About render their own nav lower down, so the header carries only the
    brand. It returns to the flow to give the header height, since the hero
    clips overflow and the brand is otherwise absolutely positioned. */

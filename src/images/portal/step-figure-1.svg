@@ -1,0 +1,39 @@
+<svg width="226" height="221" viewBox="54 729 226 221" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(232.05 768.95) rotate(-20.07) translate(-38.6 -28.5)"><g id="Stars">
+<path id="Star 7" d="M38.5974 0L44.2392 18.4398L65.8898 8.34617L52.218 24.3303L77.1948 28.4956L52.218 32.6609L65.8898 48.645L44.2392 38.5514L38.5974 56.9912L32.9555 38.5514L11.3049 48.645L24.9767 32.6609L0 28.4956L24.9767 24.3303L11.3049 8.34617L32.9555 18.4398L38.5974 0Z" fill="#F9858E"/>
+</g>
+</g>
+<g transform="translate(54.8 730.34)"><g id="ProdCon Application Portal">
+<g id="Application Step 1 - Register ">
+<g id="Group 5866">
+<g id="Group 5867" filter="url(#filter0_d_0_1)">
+<rect id="Rectangle 254" width="67.2907" height="33.2397" rx="16.6199" transform="matrix(0.980497 -0.196533 0.196586 0.980487 38.199 180.392)" fill="#F6F6F6"/>
+<rect id="Rectangle 255" width="67.2907" height="33.2397" rx="16.6199" transform="matrix(0.992847 -0.119398 0.119452 0.99284 109.198 160.202)" fill="#F6F6F6"/>
+<path id="Polygon 65" d="M14.9268 114.888C12.2316 111.393 11.6673 106.702 13.4565 102.667L43.7868 34.2752C45.5052 30.4004 49.1365 27.7163 53.3451 27.2102L130.012 17.9904C134.221 17.4842 138.385 19.2309 140.973 22.5878L186.661 81.8382C189.356 85.3335 189.92 90.024 188.131 94.0586L157.801 162.451C156.082 166.326 152.451 169.01 148.243 169.516L71.5756 178.736C67.367 179.242 63.2026 177.495 60.6142 174.138L14.9268 114.888Z" fill="#F6F6F6"/>
+</g>
+<g id="Group 5862">
+<rect id="Rectangle 268" x="52.8574" y="188.272" width="41.7035" height="13.3156" rx="6.65779" transform="rotate(-11.262 52.8574 188.272)" fill="#F6D958"/>
+<rect id="Rectangle 270" x="123.199" y="169.199" width="41.7035" height="13.3156" rx="6.65779" transform="rotate(-6.78508 123.199 169.199)" fill="#F6D958"/>
+<path id="Polygon 50" d="M32.8599 111.862C30.636 108.947 30.1728 105.054 31.6507 101.698L55.5346 47.4735C56.9702 44.2142 60.0211 41.9561 63.5576 41.5353L123.771 34.3711C127.308 33.9504 130.803 35.4296 132.964 38.2611L168.904 85.3681C171.128 88.283 171.591 92.1764 170.113 95.5317L146.229 149.757C144.794 153.016 141.743 155.274 138.206 155.695L77.9925 162.859C74.456 163.28 70.9604 161.8 68.8002 158.969L32.8599 111.862Z" fill="#F6D958"/>
+<path id="Vector" d="M104.227 115.956C120.16 114.06 131.571 99.8764 129.715 84.2759C127.859 68.6753 113.438 57.5653 97.5054 59.4609C81.5729 61.3566 70.1617 75.54 72.0178 91.1406C73.8739 106.741 88.2945 117.851 104.227 115.956Z" fill="white"/>
+<path id="Vector_2" d="M110.4 91.8489C118.391 90.8981 124.257 84.9878 123.503 78.6479C122.749 72.308 115.659 67.9393 107.668 68.89C99.677 69.8408 93.8105 75.7511 94.5648 82.091C95.3191 88.4309 102.409 92.7996 110.4 91.8489Z" fill="#570029"/>
+</g>
+</g>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_0_1" x="8.42383" y="17.904" width="184.74" height="200.14" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="4"/>
+<feGaussianBlur stdDeviation="2"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape"/>
+</filter>
+</defs>
+</g>
+<g transform="translate(153.6 846.4) rotate(-15) translate(-34.34 -17)"><path id="Ellipse 77" d="M68.6821 17C68.6821 26.3888 53.3071 34 34.341 34C15.375 34 0 26.3888 0 17C0 7.61116 15.375 0 34.341 0C53.3071 0 68.6821 7.61116 68.6821 17Z" fill="#F6D958"/>
+</g>
+</svg>

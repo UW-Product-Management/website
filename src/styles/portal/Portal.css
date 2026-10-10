@@ -1,0 +1,118 @@
+.portal-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.portal-button {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: 1px solid #111;
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.portal-button--primary {
+  background: #111;
+  color: #fff;
+}
+
+.portal-button--outline {
+  background: transparent;
+  color: #111;
+}
+
+.portal-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 2-4. Auth pages: layout and card live in PortalAuth.css */
+.portal-auth__error,
+.portal-apply__error {
+  background-color: #fef2f2;
+  border: 1px solid #f87171;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.portal-input--readonly {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.portal-auth__error p {
+  margin: 0 0 8px;
+}
+
+.portal-auth__error p:last-child {
+  margin-bottom: 0;
+}
+
+.portal-button--resend {
+  margin-top: 4px;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+  padding: 6px 14px;
+  background-color: #fff;
+  border-color: #991b1b;
+  color: #991b1b;
+}
+
+.portal-button--resend:hover:not(:disabled) {
+  background-color: #fee2e2;
+}
+
+.portal-auth__resend-success {
+  color: #166534;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.portal-auth__resend-error {
+  color: #991b1b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.portal-auth__confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Loading & Spinner */
+.portal-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  gap: 16px;
+  font-size: 1rem;
+  color: #555;
+}
+
+.portal-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: portal-spin 0.8s linear infinite;
+}
+
+@keyframes portal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
