@@ -8,8 +8,6 @@ import { ExecList } from '../components/ExecList';
 import Footer from '../components/Footer';
 import PageHero from '../components/PageHero';
 import teamPhoto from '../images/prodcon/prodcon1.JPG';
-import '../styles/Home.css';
-import '../styles/EventsV4.css';
 import '../styles/Team.css';
 
 const teamCategories = [
@@ -98,7 +96,7 @@ export default function Team() {
             <Swiper
               modules={[Mousewheel]}
               spaceBetween={20}
-              slidesPerView={3.5}
+              slidesPerView="auto"
               mousewheel={{ forceToAxis: true }}
               className="values-swiper"
             >

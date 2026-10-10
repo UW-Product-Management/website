@@ -4,10 +4,9 @@
    pixel-perfect logo positioning and nav styling.
    ================================================================== */
 
-/* This element also carries `.home-hero`, whose full-height hero rules load
-   after this file. Chaining both classes keeps the bar sized to its content
-   instead of inheriting the hero's 620px/86vh min-height. */
-.home-hero.home-hero--compact {
+/* Shared site header used across all pages. */
+
+.site-header {
   position: relative;
   width: 100%;
   aspect-ratio: auto;
@@ -15,6 +14,7 @@
   overflow: visible;
   flex: 0 0 auto;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding-block: clamp(16px, 2vw, 26px);
@@ -24,7 +24,7 @@
   z-index: 10;
 }
 
-.home-hero--compact .home-hero__brand {
+.site-header .site-header__brand {
   position: absolute;
   top: 50%;
   left: 4%;
@@ -39,20 +39,20 @@
   border-radius: 4px;
 }
 
-.home-hero--compact .home-hero__brand img {
+.site-header .site-header__brand img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
-.home-hero__nav-slot {
+.site-header__nav-slot {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.home-hero__aside {
+.site-header__aside {
   position: absolute;
   top: 50%;
   right: 4%;
@@ -66,23 +66,23 @@
 /* Home/About render their own nav lower down, so the header carries only the
    brand. It returns to the flow to give the header height, since the hero
    clips overflow and the brand is otherwise absolutely positioned. */
-.home-hero--compact.home-hero--standalone-brand {
+.site-header.site-header--standalone-brand {
   align-items: flex-start;
   margin-bottom: clamp(24px, 3.5vw, 48px);
 }
 
-.home-hero--compact.home-hero--standalone-brand .home-hero__brand {
+.site-header.site-header--standalone-brand .site-header__brand {
   position: static;
   transform: none;
 }
 
-.home-hero--compact .uwpm-navbar {
+.site-header .uwpm-navbar {
   position: static;
   transform: none;
   margin: 0;
 }
 
-.home-hero__brand:focus-visible {
+.site-header__brand:focus-visible {
   outline: 2px solid var(--hero-ink, #262523);
   outline-offset: 3px;
 }
@@ -137,13 +137,13 @@
    Scales the heading down, indents it to match the brand mark, and opens up
    the space between the two. */
 @media screen and (max-width: 640px) {
-  .home-hero--compact.home-hero--standalone-brand {
+  .site-header.site-header--standalone-brand {
     padding-block: 24px;
     padding-inline: 5%;
     margin-bottom: 44px;
   }
 
-  .home-hero--standalone-brand .home-hero__brand {
+  .site-header--standalone-brand .site-header__brand {
     width: 22vw;
     height: 11vw;
     min-width: 84px;
