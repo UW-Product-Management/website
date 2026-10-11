@@ -23,6 +23,35 @@ export const SUBMISSION_ERRORS = {
     'Only submitted applications can be given a decision.',
 };
 
+export const DRAFT_ERRORS = {
+  closed:
+    'Applications are not open for this event right now, so your answers could not be saved.',
+  locked:
+    'This application can no longer be edited. Applications may be closed or already submitted.',
+};
+
+const POSTGRES_INSUFFICIENT_PRIVILEGE = '42501';
+const POSTGREST_NO_ROWS = 'PGRST116';
+
+function mapDraftError(error) {
+  if (error.code === POSTGRES_INSUFFICIENT_PRIVILEGE) {
+    return { ...error, message: DRAFT_ERRORS.closed };
+  }
+  if (error.code === POSTGREST_NO_ROWS) {
+    return { ...error, message: DRAFT_ERRORS.locked };
+  }
+  return error;
+}
+
+async function getCurrentUserId() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const sessionUserId = sessionData?.session?.user?.id;
+  if (sessionUserId) return sessionUserId;
+
+  const { data: userData } = await supabase.auth.getUser();
+  return userData?.user?.id ?? null;
+}
+
 export function mapProfileFromRow(row) {
   if (!row) return null;
   return {
@@ -44,6 +73,7 @@ export function mapApplicationFromRow(row) {
     yearOfStudy: row.year_of_study || '',
     productIdea: row.product_idea || '',
     greatTeam: row.great_team || '',
+    productExperience: row.product_experience || '',
     mediaConsent: Boolean(row.media_consent),
     dietaryRestriction: row.dietary_restriction || '',
     dietaryRestrictions: row.dietary_restriction || '',
@@ -57,6 +87,7 @@ export function mapApplicationFromRow(row) {
     answers: {
       productIdea: row.product_idea || '',
       greatTeam: row.great_team || '',
+      productExperience: row.product_experience || '',
     },
     consent: {
       mediaConsent: Boolean(row.media_consent),
@@ -94,6 +125,14 @@ export function mapApplicationFormToRow(fields = {}) {
     row.great_team = fields.answers.greatTeam;
   } else if ('great_team' in fields) {
     row.great_team = fields.great_team;
+  }
+
+  if ('productExperience' in fields) {
+    row.product_experience = fields.productExperience;
+  } else if (fields.answers && 'productExperience' in fields.answers) {
+    row.product_experience = fields.answers.productExperience;
+  } else if ('product_experience' in fields) {
+    row.product_experience = fields.product_experience;
   }
 
   if ('mediaConsent' in fields) {
@@ -207,10 +246,15 @@ export async function getEvent(slug) {
     .maybeSingle();
 }
 
-export async function getProfile() {
+export async function getProfile(knownUserId) {
+  const userId = knownUserId ?? (await getCurrentUserId());
+  if (!userId) return { data: null, error: null };
+
+  // Organizers can read every profile, so RLS alone does not scope this query.
   const { data, error } = await supabase
     .from('profiles')
     .select('id, full_name, email, created_at, updated_at')
+    .eq('id', userId)
     .maybeSingle();
 
   if (error) return { data: null, error };
@@ -221,13 +265,7 @@ export async function getProfile() {
 }
 
 export async function updateProfile({ fullName }) {
-  let userId;
-  const { data: sessionData } = await supabase.auth.getSession();
-  userId = sessionData?.session?.user?.id;
-  if (!userId) {
-    const { data: userData } = await supabase.auth.getUser();
-    userId = userData?.user?.id;
-  }
+  const userId = await getCurrentUserId();
 
   let query = supabase.from('profiles').update({ full_name: fullName });
   if (userId) {
@@ -242,8 +280,12 @@ export async function updateProfile({ fullName }) {
   };
 }
 
-export async function getMyApplication(eventId) {
-  let query = supabase.from('applications').select('*');
+export async function getMyApplication(eventId, knownUserId) {
+  const userId = knownUserId ?? (await getCurrentUserId());
+  if (!userId) return { data: null, error: null };
+
+  // Organizers can read every application, so RLS alone does not scope this.
+  let query = supabase.from('applications').select('*').eq('user_id', userId);
   if (eventId) {
     query = query.eq('event_id', eventId);
   }
@@ -267,7 +309,7 @@ export async function saveApplicationDraft({ applicationId, eventId, fields }) {
       .select()
       .single();
 
-    if (error) return { data: null, error };
+    if (error) return { data: null, error: mapDraftError(error) };
     return {
       data: data ? mapApplicationFromRow(data) : null,
       error: null,
@@ -284,7 +326,7 @@ export async function saveApplicationDraft({ applicationId, eventId, fields }) {
     .select()
     .single();
 
-  if (error) return { data: null, error };
+  if (error) return { data: null, error: mapDraftError(error) };
   return {
     data: data ? mapApplicationFromRow(data) : null,
     error: null,

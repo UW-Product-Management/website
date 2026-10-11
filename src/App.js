@@ -18,6 +18,9 @@ import ApplySubmit from './pages/portal/ApplySubmit';
 import Confirmation from './pages/portal/Confirmation';
 import Dashboard from './pages/portal/Dashboard';
 import DashboardDetails from './pages/portal/DashboardDetails';
+import Profile from './pages/portal/Profile';
+import PortalEnvironmentBanner from './components/portal/PortalEnvironmentBanner';
+import ApplyLayout from './components/portal/ApplyLayout';
 import RequireAuth from './components/portal/RequireAuth';
 import RequireOrganizer from './components/portal/RequireOrganizer';
 import OrganizerReview from './pages/portal/OrganizerReview';
@@ -25,6 +28,7 @@ import OrganizerReview from './pages/portal/OrganizerReview';
 function PortalLayout() {
   return (
     <PortalProvider>
+      <PortalEnvironmentBanner />
       <Outlet />
     </PortalProvider>
   );
@@ -43,38 +47,15 @@ function App() {
           <Route path="/portal/login" element={<Login />} />
           <Route path="/portal/reset-password" element={<ResetPassword />} />
           <Route path="/portal/update-password" element={<UpdatePassword />} />
-          <Route
-            path="/portal/apply/register"
-            element={
-              <RequireAuth>
-                <ApplyRegister />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/portal/apply/questions"
-            element={
-              <RequireAuth>
-                <ApplyQuestions />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/portal/apply/consent"
-            element={
-              <RequireAuth>
-                <ApplyConsent />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/portal/apply/submit"
-            element={
-              <RequireAuth>
-                <ApplySubmit />
-              </RequireAuth>
-            }
-          />
+          <Route element={<ApplyLayout />}>
+            <Route path="/portal/apply/register" element={<ApplyRegister />} />
+            <Route
+              path="/portal/apply/questions"
+              element={<ApplyQuestions />}
+            />
+            <Route path="/portal/apply/consent" element={<ApplyConsent />} />
+            <Route path="/portal/apply/submit" element={<ApplySubmit />} />
+          </Route>
           <Route
             path="/portal/apply/confirmation"
             element={
@@ -96,6 +77,14 @@ function App() {
             element={
               <RequireAuth>
                 <DashboardDetails />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/portal/profile"
+            element={
+              <RequireAuth>
+                <Profile />
               </RequireAuth>
             }
           />

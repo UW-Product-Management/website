@@ -2,7 +2,10 @@ import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
 
+import { assertLocalSupabase } from './local-only.mjs';
+
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
+assertLocalSupabase(SUPABASE_URL);
 const PUBLISHABLE_KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY ??
   process.env.REACT_APP_SUPABASE_PUBLISHABLE_KEY ??
@@ -37,7 +40,9 @@ const firstLink = (message) =>
     '&',
   );
 
-before(() => assert.ok(PUBLISHABLE_KEY, 'SUPABASE_PUBLISHABLE_KEY is required'));
+before(() =>
+  assert.ok(PUBLISHABLE_KEY, 'SUPABASE_PUBLISHABLE_KEY is required'),
+);
 
 test('applicant can sign up, confirm, apply, and submit', async () => {
   const email = `applicant-${Date.now()}@test.local`;

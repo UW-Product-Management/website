@@ -71,9 +71,13 @@ describe('ApplyQuestions', () => {
 
     const q1 = screen.getByLabelText(/what product or service/i);
     const q2 = screen.getByLabelText(/what makes a great product team/i);
+    const q3 = screen.getByLabelText(/one product you.ve worked on/i);
 
     fireEvent.change(q1, { target: { value: 'Autonomous food delivery' } });
     fireEvent.change(q2, { target: { value: 'Cross-functional trust' } });
+    fireEvent.change(q3, {
+      target: { value: 'Led onboarding for a campus app' },
+    });
 
     fireEvent.click(screen.getByRole('button', { name: /next/i }));
 
@@ -81,6 +85,7 @@ describe('ApplyQuestions', () => {
       expect(context.saveDraft).toHaveBeenCalledWith({
         productIdea: 'Autonomous food delivery',
         greatTeam: 'Cross-functional trust',
+        productExperience: 'Led onboarding for a campus app',
       });
       expect(screen.getByText('Consent Page')).toBeInTheDocument();
     });

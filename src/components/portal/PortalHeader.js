@@ -1,13 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Header from '../Header';
 
 export default function PortalHeader({ rightSlot }) {
   return (
-    <header className="portal-header">
-      <Link to="/portal" className="portal-header__logo">
-        UWPM
-      </Link>
-      {rightSlot && <div className="portal-header__right">{rightSlot}</div>}
-    </header>
+    <Header hideNav className="portal-header" ariaLabel="UW PM ProdCon portal">
+      {rightSlot}
+    </Header>
   );
 }

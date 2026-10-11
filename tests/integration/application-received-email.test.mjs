@@ -2,7 +2,10 @@ import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
 
+import { assertLocalSupabase } from './local-only.mjs';
+
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
+assertLocalSupabase(SUPABASE_URL);
 const PUBLISHABLE_KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY ??
   process.env.REACT_APP_SUPABASE_PUBLISHABLE_KEY ??
@@ -79,7 +82,9 @@ async function draftApplication(supabase) {
   return draft;
 }
 
-before(() => assert.ok(PUBLISHABLE_KEY, 'SUPABASE_PUBLISHABLE_KEY is required'));
+before(() =>
+  assert.ok(PUBLISHABLE_KEY, 'SUPABASE_PUBLISHABLE_KEY is required'),
+);
 
 test('submitting an application sends exactly one received email', async () => {
   const { supabase, email } = await signedInApplicant();
@@ -121,9 +126,12 @@ test('submitting an application sends exactly one received email', async () => {
 });
 
 test('received email function rejects requests without a user session', async () => {
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/send-application-received`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${PUBLISHABLE_KEY}` },
-  });
+  const res = await fetch(
+    `${SUPABASE_URL}/functions/v1/send-application-received`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${PUBLISHABLE_KEY}` },
+    },
+  );
   assert.ok([401, 403].includes(res.status));
 });

@@ -49,6 +49,7 @@ export default function ReviewTable({
                   </summary>
                   <p>{application.productIdea}</p>
                   <p>{application.greatTeam}</p>
+                  <p>{application.productExperience}</p>
                 </details>
               </td>
               <td>

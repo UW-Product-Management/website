@@ -23,7 +23,7 @@ so they are run by a person, in order.
 ```bash
 npx supabase login
 npx supabase link --project-ref <project-ref>
-npx supabase db push --dry-run   # expect 3 migrations
+npx supabase db push --dry-run   # expect 4 migrations
 npx supabase db push
 ```
 
@@ -33,10 +33,23 @@ Do not pass `--include-seed`; `seed.sql` is local-only.
 
 Studio → SQL editor:
 
+Take the open and close times from the organizers; do not copy placeholder
+dates. The applicant-facing deadline text is generated from `applications_close_at`,
+so this row is the single source of truth. Times are stored in UTC; use an
+explicit offset (Waterloo is `-05` in winter, `-04` in summer).
+
 ```sql
 insert into public.events (slug, name, applications_open_at, applications_close_at)
-values ('prodcon-2026', 'ProdCon 2027', '2026-11-01 00:00-05', '2027-01-15 23:59-05');
+values (
+  'prodcon-2026',                  -- must equal REACT_APP_PORTAL_EVENT_SLUG
+  'ProdCon 2026',                  -- used in the "application received" email
+  '<open, e.g. 2026-10-15 00:00-04>',
+  '<close, e.g. 2026-11-02 23:59-05>'
+);
 ```
+
+Applications are rejected before the open time and after the close time, and
+the apply pages show a notice in both cases.
 
 ## 3. Auth configuration (dashboard)
 
@@ -105,6 +118,12 @@ row from `public.organizers`. Applicants are **not** emailed when a decision is
 recorded (plan §12 #12).
 
 ## 7. Frontend environment variables
+
+Production must **not** set `REACT_APP_PORTAL_ENV`. Vercel builds run
+`scripts/check-portal-env.mjs`, which fails a Production build that targets the
+Docker stack, and a Preview build that targets this project (give Preview its
+own staging project with `REACT_APP_PORTAL_ENV=staging`, or leave the Supabase
+variables unset there).
 
 Set in the hosting provider's build settings (CRA inlines them at build time):
 

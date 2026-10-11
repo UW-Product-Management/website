@@ -42,10 +42,10 @@ describe('Dashboard', () => {
     expect(
       screen.getByRole('heading', { name: /my application/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Application Submitted!')).toBeInTheDocument();
+    expect(screen.getByText('Application submitted!')).toBeInTheDocument();
     expect(screen.getByText('Register')).toBeInTheDocument();
-    expect(screen.getByText('Questions')).toBeInTheDocument();
-    expect(screen.getByText('Consent & Logistics')).toBeInTheDocument();
+    expect(screen.getByText('Complete questions')).toBeInTheDocument();
+    expect(screen.getByText('Consent and logistics')).toBeInTheDocument();
     expect(screen.getByText('Submit')).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /view application details/i }),

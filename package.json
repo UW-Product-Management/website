@@ -29,18 +29,21 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "prebuild": "node scripts/check-portal-env.mjs",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint --ext js,jsx src && prettier --check src",
     "fix-code": "eslint --ext js,jsx src --fix",
     "format-code": "prettier '**/*.{js,jsx,css}' --write",
+    "dev:local": "node scripts/dev-local.mjs",
+    "dev:functions": "supabase functions serve",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
     "db:env": "supabase status -o env --override-name api.url=REACT_APP_SUPABASE_URL --override-name auth.publishable_key=REACT_APP_SUPABASE_PUBLISHABLE_KEY",
-    "test:integration": "node --test \"tests/integration/*.test.mjs\""
+    "test:integration": "node scripts/test-integration.mjs"
   },
   "jest": {
     "resetMocks": false

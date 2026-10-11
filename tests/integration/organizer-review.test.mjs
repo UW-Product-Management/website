@@ -3,7 +3,10 @@ import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
 
+import { assertLocalSupabase } from './local-only.mjs';
+
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
+assertLocalSupabase(SUPABASE_URL);
 const PUBLISHABLE_KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY ??
   process.env.REACT_APP_SUPABASE_PUBLISHABLE_KEY ??
@@ -134,4 +137,51 @@ test('organizers review applications and applicants see the decision', async () 
     .from('applications')
     .select('id');
   assert.equal(applicantsView.data.length, 1);
+});
+
+test('organizers still resolve their own profile and application when scoped to their user id', async () => {
+  const organizer = await createConfirmedUser('Orla Organizer');
+  const other = await createConfirmedUser('Pat Applicant');
+  await adminClient().from('organizers').insert({ user_id: organizer.userId });
+
+  const { data: event } = await organizer.supabase
+    .from('events')
+    .select('id')
+    .eq('slug', 'prodcon-local')
+    .single();
+
+  for (const person of [organizer, other]) {
+    const created = await person.supabase
+      .from('applications')
+      .insert({ event_id: event.id, program: 'Business' })
+      .select()
+      .single();
+    assert.equal(created.error, null);
+  }
+
+  const unscopedProfile = await organizer.supabase
+    .from('profiles')
+    .select('id')
+    .maybeSingle();
+  assert.ok(
+    unscopedProfile.error,
+    'organizers see every profile, so an unscoped single-row query must fail',
+  );
+
+  const ownProfile = await organizer.supabase
+    .from('profiles')
+    .select('id, full_name')
+    .eq('id', organizer.userId)
+    .maybeSingle();
+  assert.equal(ownProfile.error, null);
+  assert.equal(ownProfile.data.full_name, 'Orla Organizer');
+
+  const ownApplication = await organizer.supabase
+    .from('applications')
+    .select('user_id')
+    .eq('user_id', organizer.userId)
+    .eq('event_id', event.id)
+    .maybeSingle();
+  assert.equal(ownApplication.error, null);
+  assert.equal(ownApplication.data.user_id, organizer.userId);
 });

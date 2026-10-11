@@ -7,6 +7,7 @@ const COLUMNS = [
   ['Submitted at', (a) => a.submittedAt],
   ['Product idea', (a) => a.productIdea],
   ['Great team', (a) => a.greatTeam],
+  ['Product experience', (a) => a.productExperience],
   ['Media consent', (a) => (a.mediaConsent ? 'Yes' : 'No')],
   ['Dietary restriction', (a) => a.dietaryRestriction],
   ['Dietary details', (a) => a.dietaryDetails],

@@ -1,10 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
+import {
+  DEFAULT_LOCAL_PUBLISHABLE_KEY,
+  SUPABASE_URL,
+  portalEnvironment,
+} from '../portal/portalEnvironment.mjs';
 
-const supabaseUrl =
-  process.env.REACT_APP_SUPABASE_URL || 'http://127.0.0.1:54321';
+if (portalEnvironment.error) {
+  if (process.env.NODE_ENV === 'production') {
+    // eslint-disable-next-line no-console
+    console.error(portalEnvironment.error);
+  } else {
+    throw new Error(portalEnvironment.error);
+  }
+}
+
 const supabasePublishableKey =
   process.env.REACT_APP_SUPABASE_PUBLISHABLE_KEY ||
-  'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
+  DEFAULT_LOCAL_PUBLISHABLE_KEY;
 
-export const supabase = createClient(supabaseUrl, supabasePublishableKey);
+export const supabase = createClient(SUPABASE_URL, supabasePublishableKey);
 export default supabase;
