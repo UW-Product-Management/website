@@ -5,11 +5,11 @@
   isolation: isolate;
 }
 
-.auth-layout .home-hero {
+.auth-layout .site-header {
   background: transparent;
 }
 
-.auth-layout .home-hero--compact.home-hero--standalone-brand {
+.auth-layout .site-header.site-header--standalone-brand {
   margin-bottom: 0;
 }
 
