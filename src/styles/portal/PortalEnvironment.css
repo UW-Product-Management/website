@@ -1,0 +1,80 @@
+.portal-env-banner {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 2000;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 12px 40px 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.portal-env-banner--local {
+  background-color: #eef2ff;
+  border-color: #6366f1;
+  color: #312e81;
+}
+
+.portal-env-banner--staging {
+  background-color: #fffbeb;
+  border-color: #f59e0b;
+  color: #78350f;
+}
+
+.portal-env-banner__message,
+.portal-env-banner__links {
+  margin: 0;
+}
+
+.portal-env-banner__links {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.portal-env-banner__links a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.portal-env-banner__dismiss {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.portal-env-banner--pill {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.portal-env-banner__dismiss:focus-visible,
+.portal-env-banner__links a:focus-visible,
+.portal-env-banner--pill:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .portal-env-banner {
+    bottom: 8px;
+    left: 8px;
+  }
+}

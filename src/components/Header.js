@@ -10,6 +10,7 @@ export default function Header({
   hideNav = false,
   className = '',
   ariaLabel,
+  children,
 }) {
   const location = useLocation();
   const activeKey = resolveActiveKey(location.pathname, active);
@@ -21,20 +22,22 @@ export default function Header({
 
   return (
     <header
-      className={`home-hero home-hero--compact ${
-        hideNav ? 'home-hero--standalone-brand' : ''
+      className={`site-header ${
+        hideNav ? 'site-header--standalone-brand' : ''
       } ${className}`.trim()}
       aria-label={label}
     >
-      <Link className="home-hero__brand" to="/" aria-label="UW PM home">
+      <Link className="site-header__brand" to="/" aria-label="UW PM home">
         <img src={pmLogo} alt="UW PM" />
       </Link>
 
       {!hideNav && (
-        <div className="home-hero__nav-slot">
+        <div className="site-header__nav-slot">
           <NavCapsule active={activeKey} />
         </div>
       )}
+
+      {children && <div className="site-header__aside">{children}</div>}
     </header>
   );
 }
