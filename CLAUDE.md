@@ -71,7 +71,7 @@ Recommended Commit:
 
 ```text
 src/
-├── components/          # Reusable UI components (Navbar, Header, Footer, CustomCard, etc.)
+├── components/          # Reusable UI components (Navbar, Header, Footer, PageHero, etc.)
 │   └── eventsV4/        # Sub-feature module for Events V4 experience
 ├── pages/               # Top-level route pages (Home.js, About.js, Events.js, Team.js, PMJobs.js, Contact.js)
 ├── styles/              # Dedicated CSS stylesheets matching pages & components
