@@ -1,6 +1,5 @@
 import React from 'react';
 import PageHero from '../components/PageHero';
-import '../styles/Home.css';
 import '../styles/About.css';
 import '../App.css';
 import { Container } from 'react-bootstrap';
