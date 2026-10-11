@@ -10,6 +10,9 @@ import mascot from '../images/mascot.svg';
 const toTranslate = ({ x, y }) => `translate(${x}, ${y})`;
 
 function placeMascotOnRoute(marker, route, progress) {
+  // ctx.revert() fires one last onUpdate while GSAP tears down the tween on
+  // unmount, after React has already nulled the refs, so guard against that.
+  if (!marker || !route) return;
   marker.setAttribute(
     'transform',
     toTranslate(route.getPointAtLength(progress * route.getTotalLength())),
