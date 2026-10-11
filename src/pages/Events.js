@@ -4,7 +4,6 @@ import EventsSection from '../components/eventsV4/EventsSection';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
 import PageHero from '../components/PageHero';
-import '../styles/Home.css';
 
 // Dedicated Events route (/events). Opens with the shared page hero
 // (brand, title, nav) so it matches About, then renders the Events section.
