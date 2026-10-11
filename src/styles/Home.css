@@ -896,13 +896,10 @@
 .our-impact__title,
 .our-impact__community-title {
   margin: 0;
-  font-weight: 400;
-  letter-spacing: -0.045em;
-}
-
-.our-impact__title {
-  font-size: clamp(2.5rem, 6.35vw, 6rem);
-  line-height: 0.95;
+  font:
+    600 clamp(2.4rem, 4.2vw, 4rem) / 1 'Manrope',
+    system-ui,
+    sans-serif;
 }
 
 .impact-stats {
@@ -998,8 +995,6 @@
 .our-impact__community-title {
   max-width: 1250px;
   margin-top: clamp(100px, 11.3vw, 172px);
-  font-size: clamp(2.45rem, 6.1vw, 5.75rem);
-  line-height: 1.02;
 }
 
 .company-wall {
@@ -1040,11 +1035,9 @@
       clamp(60px, 12vw, 100px);
   }
 
-  .our-impact__title {
-    font-size: clamp(2.2rem, 7.5vw, 2.85rem);
-    font-weight: 500;
-    line-height: 1.1;
-    letter-spacing: -0.035em;
+  .our-impact__title,
+  .our-impact__community-title {
+    font-size: clamp(2rem, 9vw, 3rem);
   }
 
   .impact-stats {
@@ -1157,7 +1150,6 @@
 
   .our-impact__community-title {
     margin-top: 94px;
-    line-height: 1.06;
   }
 
   .company-wall {
