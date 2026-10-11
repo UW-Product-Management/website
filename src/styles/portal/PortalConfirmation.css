@@ -1,0 +1,112 @@
+.portal-confirmation__main {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(642px, 100%);
+  margin: 0 auto;
+  padding: 0 16px 48px;
+  box-sizing: border-box;
+  color: #4a4a4a;
+}
+
+.portal-confirmation__mascots {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(0px, 1vw, 12px);
+  margin-bottom: 16px;
+}
+
+.portal-confirmation__mascots img {
+  width: clamp(90px, 12vw, 150px);
+  height: auto;
+}
+
+.portal-confirmation__main h1 {
+  margin: 0 0 4px;
+  font-size: clamp(1.6rem, 2.4vw, 2rem);
+  font-weight: 600;
+  color: #000;
+}
+
+.portal-confirmation__main > p {
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.portal-confirmation__card {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 16px 24px 20px;
+  background: #fff;
+  border-radius: 14px;
+}
+
+.portal-confirmation__card h2 {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.portal-confirmation__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.portal-confirmation__actions .portal-button {
+  box-sizing: border-box;
+  padding: 12px 20px;
+  font-size: 1rem;
+  text-align: center;
+  border-radius: 8px;
+}
+
+.portal-confirmation__actions .portal-button--primary {
+  color: #fff;
+  background: var(--auth-coral);
+  border-color: var(--auth-coral);
+}
+
+.portal-confirmation__actions .portal-button--outline {
+  color: var(--auth-coral);
+  border-color: var(--auth-coral);
+}
+
+.portal-confirmation__star {
+  position: absolute;
+  z-index: 1;
+  width: clamp(36px, 4.5vw, 70px);
+  height: auto;
+  pointer-events: none;
+}
+
+.portal-confirmation__star--one {
+  top: 11%;
+  right: 20%;
+}
+
+.portal-confirmation__star--two {
+  right: 4%;
+  bottom: 24%;
+}
+
+.portal-confirmation__star--three {
+  bottom: 6%;
+  left: 5%;
+}
+
+.portal-confirmation .home-hero {
+  background: transparent;
+}
+
+@media (max-width: 767px) {
+  .portal-confirmation__star {
+    display: none;
+  }
+}
