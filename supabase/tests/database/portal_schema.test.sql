@@ -59,9 +59,9 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ update public.applications set product_idea = repeat('x', 201) $$,
+  $$ update public.applications set product_idea = repeat('word ', 151) $$,
   '23514', null,
-  'answers over 200 characters are rejected'
+  'answers over 150 words are rejected'
 );
 
 select throws_ok(

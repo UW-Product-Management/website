@@ -53,7 +53,7 @@ function renderApplyQuestions(contextOverrides = {}) {
 }
 
 describe('ApplyQuestions', () => {
-  it('displays character counts for both questions', () => {
+  it('displays word counts for both questions', () => {
     renderApplyQuestions({
       application: {
         id: 'app-1',
@@ -63,7 +63,7 @@ describe('ApplyQuestions', () => {
       },
     });
 
-    expect(screen.getAllByText('9/200')).toHaveLength(2);
+    expect(screen.getAllByText('2/150 words')).toHaveLength(2);
   });
 
   it('saves questions draft and navigates to consent on next', async () => {

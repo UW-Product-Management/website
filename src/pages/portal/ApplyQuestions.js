@@ -6,7 +6,12 @@ import ApplyActions from '../../components/portal/ApplyActions';
 import { PortalTextarea } from '../../components/portal/PortalField';
 import '../../styles/portal/Portal.css';
 
-const MAX_LENGTH = 200;
+const MAX_WORDS = 150;
+
+function countWords(value) {
+  const trimmed = value.trim();
+  return trimmed === '' ? 0 : trimmed.split(/\s+/).length;
+}
 
 export default function ApplyQuestions() {
   const navigate = useNavigate();
@@ -38,6 +43,11 @@ export default function ApplyQuestions() {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const handleAnswerChange = (setter) => (event) => {
+    const { value } = event.target;
+    if (countWords(value) <= MAX_WORDS) setter(value);
+  };
 
   useEffect(() => {
     if (initialProductIdea) setProductIdea(initialProductIdea);
@@ -86,8 +96,8 @@ export default function ApplyQuestions() {
     <>
       <h1>Fun Questions</h1>
       <p>
-        Show us your creativity! Answer the following questions (200 characters
-        max each).
+        Show us your creativity! Answer the following questions (150 words max
+        each).
       </p>
       {errorMessage && (
         <div className="portal-apply__error" role="alert">
@@ -101,30 +111,27 @@ export default function ApplyQuestions() {
             id="question-product"
             label="1. What product or service do you wish existed, and why?"
             placeholder="Type your answer here..."
-            maxLength={MAX_LENGTH}
             value={productIdea}
-            onChange={(event) => setProductIdea(event.target.value)}
-            counter={`${productIdea.length}/${MAX_LENGTH}`}
+            onChange={handleAnswerChange(setProductIdea)}
+            counter={`${countWords(productIdea)}/${MAX_WORDS} words`}
             required
           />
           <PortalTextarea
             id="question-team"
             label="2. What makes a great product team?"
             placeholder="Type your answer here..."
-            maxLength={MAX_LENGTH}
             value={greatTeam}
-            onChange={(event) => setGreatTeam(event.target.value)}
-            counter={`${greatTeam.length}/${MAX_LENGTH}`}
+            onChange={handleAnswerChange(setGreatTeam)}
+            counter={`${countWords(greatTeam)}/${MAX_WORDS} words`}
             required
           />
           <PortalTextarea
             id="question-experience"
             label="3. What is one product you've worked on or contributed to, and what was your role?"
             placeholder="Type your answer here..."
-            maxLength={MAX_LENGTH}
             value={productExperience}
-            onChange={(event) => setProductExperience(event.target.value)}
-            counter={`${productExperience.length}/${MAX_LENGTH}`}
+            onChange={handleAnswerChange(setProductExperience)}
+            counter={`${countWords(productExperience)}/${MAX_WORDS} words`}
             required
           />
         </div>
