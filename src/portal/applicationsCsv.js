@@ -5,6 +5,12 @@ const COLUMNS = [
   ['Year of study', (a) => a.yearOfStudy],
   ['Status', (a) => a.status],
   ['Submitted at', (a) => a.submittedAt],
+  [
+    'Reviewed by',
+    (a) => a.reviews?.[0]?.reviewerName || a.reviews?.[0]?.reviewerEmail,
+  ],
+  ['Reviewed at', (a) => a.reviewedAt],
+  ['Review note', (a) => a.reviews?.[0]?.note],
   ['Product idea', (a) => a.productIdea],
   ['Great team', (a) => a.greatTeam],
   ['Product experience', (a) => a.productExperience],

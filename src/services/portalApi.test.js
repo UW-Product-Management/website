@@ -12,6 +12,9 @@ import {
   getMyApplication,
   saveApplicationDraft,
   submitApplication,
+  listApplicationsForReview,
+  listReviewHistory,
+  reviewApplication,
   mapProfileFromRow,
   mapApplicationFromRow,
   mapApplicationFormToRow,
@@ -824,5 +827,131 @@ describe('portalApi application service', () => {
       const result = await submitApplication('app-1');
       expect(result.error.message).toBe('unexpected_db_outage');
     });
+  });
+});
+
+describe('portalApi organizer review service', () => {
+  const logRow = {
+    id: 'log-1',
+    application_id: 'app-1',
+    reviewer_id: 'org-1',
+    reviewer_name: 'Olive Organizer',
+    reviewer_email: 'olive@example.com',
+    previous_status: 'submitted',
+    new_status: 'accepted',
+    note: 'Great fit',
+    created_at: '2026-10-14T12:00:00Z',
+  };
+
+  const queryResult = (result) => {
+    const chain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
+      order: jest.fn(() => Promise.resolve(result)),
+    };
+    return chain;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('sends a trimmed note with the decision', async () => {
+    supabase.rpc.mockResolvedValueOnce({
+      data: { id: 'app-1', status: 'accepted', reviewed_by: 'org-1' },
+      error: null,
+    });
+
+    const result = await reviewApplication('app-1', 'accepted', '  Great fit ');
+
+    expect(supabase.rpc).toHaveBeenCalledWith('review_application', {
+      target_application_id: 'app-1',
+      decision: 'accepted',
+      note: 'Great fit',
+    });
+    expect(result.data.reviewedBy).toBe('org-1');
+  });
+
+  it('sends a null note when none is given', async () => {
+    supabase.rpc.mockResolvedValueOnce({ data: { id: 'app-1' }, error: null });
+
+    await reviewApplication('app-1', 'rejected');
+
+    expect(supabase.rpc).toHaveBeenCalledWith('review_application', {
+      target_application_id: 'app-1',
+      decision: 'rejected',
+      note: null,
+    });
+  });
+
+  it.each([
+    ['decision_unchanged', SUBMISSION_ERRORS.decision_unchanged],
+    ['note_too_long', SUBMISSION_ERRORS.note_too_long],
+  ])('maps review error %s to friendly copy', async (code, message) => {
+    supabase.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: code },
+    });
+
+    const result = await reviewApplication('app-1', 'accepted');
+
+    expect(result.error.message).toBe(message);
+  });
+
+  it('lists review history newest first with mapped fields', async () => {
+    const chain = queryResult({ data: [logRow], error: null });
+    supabase.from.mockReturnValueOnce(chain);
+
+    const result = await listReviewHistory('app-1');
+
+    expect(supabase.from).toHaveBeenCalledWith('application_reviews');
+    expect(chain.eq).toHaveBeenCalledWith('application_id', 'app-1');
+    expect(chain.order).toHaveBeenCalledWith('created_at', {
+      ascending: false,
+    });
+    expect(result.data).toEqual([
+      {
+        id: 'log-1',
+        applicationId: 'app-1',
+        reviewerId: 'org-1',
+        reviewerName: 'Olive Organizer',
+        reviewerEmail: 'olive@example.com',
+        previousStatus: 'submitted',
+        newStatus: 'accepted',
+        note: 'Great fit',
+        createdAt: '2026-10-14T12:00:00Z',
+      },
+    ]);
+  });
+
+  it('attaches each application its own review log', async () => {
+    const applications = queryResult({
+      data: [
+        { id: 'app-1', status: 'accepted', profiles: { full_name: 'Alex' } },
+        { id: 'app-2', status: 'submitted', profiles: { full_name: 'Blair' } },
+      ],
+      error: null,
+    });
+    const log = queryResult({ data: [logRow], error: null });
+    supabase.from.mockReturnValueOnce(applications).mockReturnValueOnce(log);
+
+    const result = await listApplicationsForReview('evt-1');
+
+    expect(log.eq).toHaveBeenCalledWith('event_id', 'evt-1');
+    expect(result.data[0].reviews).toHaveLength(1);
+    expect(result.data[0].reviews[0].reviewerName).toBe('Olive Organizer');
+    expect(result.data[1].reviews).toEqual([]);
+  });
+
+  it('returns the error when the review log cannot be read', async () => {
+    const applications = queryResult({ data: [], error: null });
+    const log = queryResult({ data: null, error: { message: 'denied' } });
+    supabase.from.mockReturnValueOnce(applications).mockReturnValueOnce(log);
+
+    const result = await listApplicationsForReview('evt-1');
+
+    expect(result.data).toEqual([]);
+    expect(result.error.message).toBe('denied');
   });
 });

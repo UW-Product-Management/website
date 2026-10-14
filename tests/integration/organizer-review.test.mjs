@@ -121,10 +121,44 @@ test('organizers review applications and applicants see the decision', async () 
   const decided = await organizer.supabase.rpc('review_application', {
     target_application_id: draft.data.id,
     decision: 'waitlisted',
+    note: 'Strong idea, limited seats',
   });
   assert.equal(decided.error, null);
   assert.equal(decided.data.status, 'waitlisted');
   assert.ok(decided.data.reviewed_at);
+  assert.equal(decided.data.reviewed_by, organizer.userId);
+
+  const unchanged = await organizer.supabase.rpc('review_application', {
+    target_application_id: draft.data.id,
+    decision: 'waitlisted',
+  });
+  assert.equal(unchanged.error?.message, 'decision_unchanged');
+
+  const log = await organizer.supabase
+    .from('application_reviews')
+    .select('*')
+    .eq('application_id', draft.data.id);
+  assert.equal(log.error, null);
+  assert.equal(log.data.length, 1);
+  assert.equal(log.data[0].reviewer_id, organizer.userId);
+  assert.equal(log.data[0].reviewer_name, 'Olive Organizer');
+  assert.equal(log.data[0].previous_status, 'submitted');
+  assert.equal(log.data[0].new_status, 'waitlisted');
+  assert.equal(log.data[0].note, 'Strong idea, limited seats');
+
+  const applicantLog = await applicant.supabase
+    .from('application_reviews')
+    .select('id');
+  assert.equal(applicantLog.data.length, 0);
+
+  const forgedLog = await organizer.supabase
+    .from('application_reviews')
+    .insert({
+      application_id: draft.data.id,
+      event_id: event.id,
+      new_status: 'accepted',
+    });
+  assert.ok(forgedLog.error, 'log rows can only be written by the RPC');
 
   const seen = await applicant.supabase
     .from('applications')

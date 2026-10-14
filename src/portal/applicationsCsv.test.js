@@ -36,4 +36,25 @@ describe('applicationsToCsv', () => {
 
     expect(csv).toContain(`"'=HYPERLINK(""http://evil"")"`);
   });
+
+  it('exports the latest reviewer, review time and note', () => {
+    const csv = applicationsToCsv([
+      {
+        ...application,
+        reviewedAt: '2026-10-14T13:00:00Z',
+        reviews: [
+          {
+            reviewerName: 'Olive Organizer',
+            reviewerEmail: 'olive@example.com',
+            note: 'Strong pitch',
+          },
+        ],
+      },
+    ]);
+
+    expect(csv.split('\r\n')[0]).toContain(
+      'Reviewed by,Reviewed at,Review note',
+    );
+    expect(csv).toContain('Olive Organizer,2026-10-14T13:00:00Z,Strong pitch');
+  });
 });

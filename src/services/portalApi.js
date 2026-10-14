@@ -21,6 +21,8 @@ export const SUBMISSION_ERRORS = {
   invalid_decision: 'That decision is not recognised.',
   application_not_reviewable:
     'Only submitted applications can be given a decision.',
+  decision_unchanged: 'The application already has that decision.',
+  note_too_long: 'Review notes can be at most 2000 characters.',
 };
 
 export const DRAFT_ERRORS = {
@@ -82,6 +84,7 @@ export function mapApplicationFromRow(row) {
     status: row.status,
     submittedAt: row.submitted_at,
     reviewedAt: row.reviewed_at,
+    reviewedBy: row.reviewed_by || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     answers: {
@@ -360,11 +363,26 @@ export async function sendApplicationReceivedEmail() {
   return supabase.functions.invoke('send-application-received');
 }
 
-function mapReviewRow(row) {
+export function mapReviewLogRow(row) {
+  return {
+    id: row.id,
+    applicationId: row.application_id,
+    reviewerId: row.reviewer_id,
+    reviewerName: row.reviewer_name || '',
+    reviewerEmail: row.reviewer_email || '',
+    previousStatus: row.previous_status,
+    newStatus: row.new_status,
+    note: row.note || '',
+    createdAt: row.created_at,
+  };
+}
+
+function mapReviewRow(row, reviews = []) {
   return {
     ...mapApplicationFromRow(row),
     fullName: row.profiles?.full_name || '',
     email: row.profiles?.email || '',
+    reviews,
   };
 }
 
@@ -375,21 +393,52 @@ export async function getIsOrganizer() {
 }
 
 export async function listApplicationsForReview(eventId) {
-  const { data, error } = await supabase
-    .from('applications')
-    .select('*, profiles(full_name, email)')
-    .eq('event_id', eventId)
-    .neq('status', 'draft')
-    .order('submitted_at', { ascending: true });
+  const [applications, log] = await Promise.all([
+    supabase
+      .from('applications')
+      .select('*, profiles(full_name, email)')
+      .eq('event_id', eventId)
+      .neq('status', 'draft')
+      .order('submitted_at', { ascending: true }),
+    supabase
+      .from('application_reviews')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: false }),
+  ]);
 
+  const error = applications.error || log.error;
   if (error) return { data: [], error };
-  return { data: (data || []).map(mapReviewRow), error: null };
+
+  const reviewsByApplication = {};
+  (log.data || []).map(mapReviewLogRow).forEach((review) => {
+    (reviewsByApplication[review.applicationId] ||= []).push(review);
+  });
+
+  return {
+    data: (applications.data || []).map((row) =>
+      mapReviewRow(row, reviewsByApplication[row.id]),
+    ),
+    error: null,
+  };
 }
 
-export async function reviewApplication(applicationId, decision) {
+export async function listReviewHistory(applicationId) {
+  const { data, error } = await supabase
+    .from('application_reviews')
+    .select('*')
+    .eq('application_id', applicationId)
+    .order('created_at', { ascending: false });
+
+  if (error) return { data: [], error };
+  return { data: (data || []).map(mapReviewLogRow), error: null };
+}
+
+export async function reviewApplication(applicationId, decision, note = '') {
   const { data, error } = await supabase.rpc('review_application', {
     target_application_id: applicationId,
     decision,
+    note: note.trim() || null,
   });
 
   if (error) {

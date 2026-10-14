@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PortalHeader from '../../components/portal/PortalHeader';
+import ReviewDetailPanel from '../../components/portal/ReviewDetailPanel';
 import ReviewTable from '../../components/portal/ReviewTable';
 import { usePortal } from '../../context/PortalContext';
 import { STATUS_LABELS } from '../../portal/applicationStatus';
 import { applicationsToCsv } from '../../portal/applicationsCsv';
 import {
   listApplicationsForReview,
+  listReviewHistory,
   reviewApplication,
 } from '../../services/portalApi';
 import '../../styles/portal/Portal.css';
@@ -17,6 +19,7 @@ export default function OrganizerReview() {
   const eventId = event?.id;
   const [applications, setApplications] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedId, setSelectedId] = useState(null);
   const [pendingId, setPendingId] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -48,22 +51,37 @@ export default function OrganizerReview() {
     [applications, statusFilter],
   );
 
-  const handleDecide = useCallback(async (applicationId, decision) => {
+  const selectedApplication = applications.find((a) => a.id === selectedId);
+
+  const handleDecide = useCallback(async (applicationId, decision, note) => {
     setPendingId(applicationId);
     setErrorMessage('');
-    const { data, error } = await reviewApplication(applicationId, decision);
+    const { data, error } = await reviewApplication(
+      applicationId,
+      decision,
+      note,
+    );
     if (error) {
       setErrorMessage(error.message);
-    } else {
-      setApplications((current) =>
-        current.map((a) =>
-          a.id === applicationId
-            ? { ...a, status: data.status, reviewedAt: data.reviewedAt }
-            : a,
-        ),
-      );
+      setPendingId(null);
+      return false;
     }
+    const { data: reviews } = await listReviewHistory(applicationId);
+    setApplications((current) =>
+      current.map((a) =>
+        a.id === applicationId
+          ? {
+              ...a,
+              status: data.status,
+              reviewedAt: data.reviewedAt,
+              reviewedBy: data.reviewedBy,
+              reviews,
+            }
+          : a,
+      ),
+    );
     setPendingId(null);
+    return true;
   }, []);
 
   const handleExport = () => {
@@ -133,8 +151,18 @@ export default function OrganizerReview() {
         ) : (
           <ReviewTable
             applications={visibleApplications}
-            pendingId={pendingId}
-            onDecide={handleDecide}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+          />
+        )}
+        {selectedApplication && (
+          <ReviewDetailPanel
+            application={selectedApplication}
+            isPending={pendingId === selectedApplication.id}
+            onDecide={(decision, note) =>
+              handleDecide(selectedApplication.id, decision, note)
+            }
+            onClose={() => setSelectedId(null)}
           />
         )}
       </section>

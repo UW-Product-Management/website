@@ -1,5 +1,11 @@
 export const REVIEW_DECISIONS = ['accepted', 'waitlisted', 'rejected'];
 
+export const DECISION_ACTIONS = {
+  accepted: 'Accept',
+  waitlisted: 'Waitlist',
+  rejected: 'Decline',
+};
+
 export const STATUS_LABELS = {
   draft: 'Draft',
   submitted: 'Under review',
