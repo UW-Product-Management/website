@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { gsap, ScrollTrigger, prefersReducedMotion } from './motion';
+import { gsap, prefersReducedMotion } from './motion';
 
 import highlight from '../../images/deco/highlight-29.svg';
 import vector from '../../images/deco/vector.svg';
@@ -14,9 +14,8 @@ import prodcon2405 from '../../images/prodcon/prodcon2405.webp';
 import prodcon2406 from '../../images/prodcon/prodcon2406.webp';
 
 // All six ProdCon winners, copy carried over from the v4 design repo.
-// Three sit on screen at a time, so descriptions read as the section
-// scrolls in, and the remaining three give the pinned track real
-// horizontal travel.
+// Three sit on screen at a time on desktop; the rest are reached with the
+// arrows or a horizontal swipe.
 const projects = [
   {
     src: prodcon2401,
@@ -62,24 +61,19 @@ const projects = [
   },
 ];
 
-// A pinned, full-height horizontal track needs room a phone doesn't have, so
-// below this width the track becomes a plain swipeable carousel instead
-// (see EventsV4.css) and the pin is skipped.
-const COMPACT = '(max-width: 640px)';
-
-// Only rendered at phone widths, where the track is a snap carousel.
-function TrackArrow({ dir, onClick }) {
+function TrackArrow({ dir, onClick, disabled }) {
   const back = dir === 'prev';
   return (
     <button
       type="button"
       className={`pw__nav pw__nav--${dir}`}
       onClick={onClick}
+      disabled={disabled}
       aria-label={back ? 'Previous winner' : 'Next winner'}
     >
       <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <path
-          d={back ? 'M14 8H2m5-5L2 8l5 5' : 'M2 8h12M9 3l5 5-5 5'}
+          d={back ? 'M10 2 4 8l6 6' : 'M6 2l6 6-6 6'}
           stroke="currentColor"
           strokeWidth="1.6"
           strokeLinecap="square"
@@ -92,57 +86,43 @@ function TrackArrow({ dir, onClick }) {
 export default function PastWinners() {
   const sectionRef = useRef(null);
   const trackRef = useRef(null);
-  const [compact, setCompact] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia(COMPACT).matches,
-  );
+  const [edges, setEdges] = useState({ atStart: true, atEnd: false });
 
   useEffect(() => {
-    const query = window.matchMedia(COMPACT);
-    const onChange = (event) => setCompact(event.matches);
-    query.addEventListener('change', onChange);
-    return () => query.removeEventListener('change', onChange);
+    const track = trackRef.current;
+    if (!track) return undefined;
+
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      // 1px of slack: fractional scroll offsets never quite reach the edge.
+      const atStart = track.scrollLeft <= 1;
+      const atEnd =
+        track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+      setEdges((prev) =>
+        prev.atStart === atStart && prev.atEnd === atEnd
+          ? prev
+          : { atStart, atEnd },
+      );
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(measure);
+    };
+
+    measure();
+    track.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    return () => {
+      track.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   useLayoutEffect(() => {
-    if (
-      compact ||
-      !sectionRef.current ||
-      !trackRef.current ||
-      prefersReducedMotion()
-    ) {
-      return undefined;
-    }
+    if (!sectionRef.current || prefersReducedMotion()) return undefined;
 
     const ctx = gsap.context(() => {
-      const getScrollAmount = () => {
-        const track = trackRef.current;
-        const band = track ? track.parentElement : null;
-        const lastCard = track ? track.lastElementChild : null;
-        if (!track || !band || !lastCard) return 0;
-        return -Math.max(
-          0,
-          lastCard.offsetLeft + lastCard.offsetWidth - band.clientWidth,
-        );
-      };
-
-      // Pinned horizontal track, config from cedricicic/uwpm-v4.
-      // Held in a variable so the card reveals below can hang off it.
-      const horizontal = gsap.to(trackRef.current, {
-        x: getScrollAmount,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          pin: true,
-          start: 'top top',
-          // shorter pinned zone: same horizontal travel, less vertical scroll
-          end: () => '+=' + Math.abs(getScrollAmount()) * 0.35,
-          scrub: 0.2,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-        },
-      });
-
-      // Heading fades up as the section arrives.
       const heading = sectionRef.current.querySelector('.pw__reveal-head');
       if (heading) {
         gsap.from(heading, {
@@ -154,40 +134,24 @@ export default function PastWinners() {
         });
       }
 
-      // Each card's text reveals as that card slides in from the right.
-      // containerAnimation is what ties the trigger to HORIZONTAL position
-      // inside the pinned track — without it the trigger reads the card's
-      // vertical position, which never changes once pinned, so the text
-      // either fired all at once up front or only after the card had
-      // already slid past.
-      gsap.utils.toArray('.pw__col').forEach((card) => {
-        const copy = card.querySelectorAll(
-          '.pw__award, .pw__title, .pw__team, .pw__desc',
-        );
-        if (!copy.length) return;
-        gsap.from(copy, {
-          y: 24,
-          autoAlpha: 0,
-          duration: 0.5,
-          ease: 'power3.out',
-          stagger: 0.07,
-          scrollTrigger: {
-            trigger: card,
-            containerAnimation: horizontal,
-            start: 'left 88%',
-            once: true,
-          },
-        });
+      gsap.from('.pw__col', {
+        y: 24,
+        autoAlpha: 0,
+        duration: 0.5,
+        ease: 'power3.out',
+        stagger: 0.08,
+        scrollTrigger: {
+          trigger: trackRef.current,
+          start: 'top 85%',
+          once: true,
+        },
       });
     }, sectionRef);
 
-    // pinned sections compute against a stale layout without this
-    ScrollTrigger.refresh();
-
     return () => ctx.revert();
-  }, [compact]);
+  }, []);
 
-  // Advance the snap carousel by exactly one card.
+  // Advance the track by exactly one card; scroll snapping settles it.
   const step = (direction) => {
     const track = trackRef.current;
     const card = track && track.firstElementChild;
@@ -195,7 +159,7 @@ export default function PastWinners() {
     const gap = parseFloat(window.getComputedStyle(track).columnGap) || 0;
     track.scrollBy({
       left: direction * (card.offsetWidth + gap),
-      behavior: 'smooth',
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
     });
   };
 
@@ -220,9 +184,13 @@ export default function PastWinners() {
         </div>
 
         <div className="pw__band">
-          <TrackArrow dir="prev" onClick={() => step(-1)} />
-          <TrackArrow dir="next" onClick={() => step(1)} />
-          <div className="pw__track" ref={trackRef}>
+          <div
+            className="pw__track"
+            ref={trackRef}
+            role="region"
+            aria-label="Winning teams"
+            tabIndex={0}
+          >
             {projects.map((p) => (
               <div className="pw__col" key={p.title}>
                 <div className="pw__box">
@@ -236,6 +204,18 @@ export default function PastWinners() {
                 </div>
               </div>
             ))}
+          </div>
+          <div className="pw__controls">
+            <TrackArrow
+              dir="prev"
+              onClick={() => step(-1)}
+              disabled={edges.atStart}
+            />
+            <TrackArrow
+              dir="next"
+              onClick={() => step(1)}
+              disabled={edges.atEnd}
+            />
           </div>
         </div>
       </div>
