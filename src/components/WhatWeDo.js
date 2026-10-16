@@ -43,18 +43,20 @@ export default function WhatWeDo() {
   const trail = useWhatWeDoTrail(canvasRef, svgRef);
 
   useEffect(() => {
-    if (!canvasRef.current || prefersReducedMotion()) return undefined;
+    // Captured up front: React nulls refs on unmount before this cleanup
+    // runs, and ctx.revert() still renders the tween (and onUpdate) once.
+    const marker = mascotRef.current;
+    const route = routeRef.current;
+    if (!canvasRef.current || !marker || !route || prefersReducedMotion()) {
+      return undefined;
+    }
 
     const ctx = gsap.context(() => {
       gsap.to(travelRef.current, {
         progress: 1,
         ease: 'none',
         onUpdate: () =>
-          placeMascotOnRoute(
-            mascotRef.current,
-            routeRef.current,
-            travelRef.current.progress,
-          ),
+          placeMascotOnRoute(marker, route, travelRef.current.progress),
         scrollTrigger: {
           trigger: canvasRef.current,
           start: 'top 75%',
