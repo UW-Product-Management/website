@@ -1,5 +1,5 @@
 begin;
-select plan(13);
+select plan(14);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('11111111-1111-1111-1111-111111111111', 'alex@test.local', '{"full_name":"Alex Chen"}'),
@@ -64,7 +64,7 @@ select throws_ok(
 );
 
 select is(
-  (public.review_application('bbbbbbbb-0000-0000-0000-000000000001', 'accepted')).reviewed_by,
+  (public.review_application('bbbbbbbb-0000-0000-0000-000000000001', 'accepted')).decided_by,
   '33333333-3333-3333-3333-333333333333'::uuid,
   'organizers can record a decision and are credited for it'
 );
@@ -73,8 +73,13 @@ set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","r
 
 select is(
   (select status from public.applications),
-  'accepted',
-  'applicants see the decision on their application'
+  'submitted',
+  'applicants do not see the decision before results are sent'
+);
+
+select is_empty(
+  $$ select application_id from public.application_decisions $$,
+  'applicants cannot read recorded decisions'
 );
 
 select is_empty(

@@ -10,6 +10,7 @@ import {
 } from '../../services/portalApi';
 
 jest.mock('../../services/portalApi');
+jest.mock('../../components/portal/ReleaseResultsPanel', () => () => null);
 
 const applications = [
   {
@@ -167,7 +168,9 @@ describe('OrganizerReview', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Decline' }));
 
     expect(reviewApplication).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent(/applicant will see/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      /applicant is only told/i,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm decline' }));
 

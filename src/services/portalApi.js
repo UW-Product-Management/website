@@ -25,6 +25,25 @@ export const SUBMISSION_ERRORS = {
   note_too_long: 'Review notes can be at most 2000 characters.',
 };
 
+export const DECISION_EMAIL_ERRORS = {
+  not_organizer: 'Only organizers can send results.',
+  counts_changed:
+    'Decisions changed while you were reviewing. Refresh the numbers and confirm again.',
+  undecided_applications:
+    'Some submitted applications have no decision yet. Acknowledge them to continue.',
+  confirmation_mismatch: 'The confirmation text does not match.',
+  test_email_required:
+    'Send yourself a test email for this event first (valid for 24 hours).',
+  nothing_to_send: 'There are no decisions waiting to be emailed.',
+  run_expired: 'This approval expired. Approve the release again.',
+  run_finished: 'This release has already finished.',
+  mode_changed: 'The email environment changed. Approve the release again.',
+  email_environment_not_configured:
+    'Email is not configured for this environment (set EMAIL_ENV or EMAIL_SANDBOX_REDIRECT).',
+  no_email_transport_configured: 'No email provider is configured.',
+  send_failed: 'Sending failed. Nothing was lost; try again.',
+};
+
 export const DRAFT_ERRORS = {
   closed:
     'Applications are not open for this event right now, so your answers could not be saved.',
@@ -377,9 +396,12 @@ export function mapReviewLogRow(row) {
   };
 }
 
-function mapReviewRow(row, reviews = []) {
+function mapReviewRow(row, reviews = [], decision = null) {
   return {
     ...mapApplicationFromRow(row),
+    status: decision?.decision || row.status,
+    emailSentAt: decision?.email_sent_at || null,
+    emailedDecision: decision?.emailed_decision || null,
     fullName: row.profiles?.full_name || '',
     email: row.profiles?.email || '',
     reviews,
@@ -393,7 +415,7 @@ export async function getIsOrganizer() {
 }
 
 export async function listApplicationsForReview(eventId) {
-  const [applications, log] = await Promise.all([
+  const [applications, log, decisions] = await Promise.all([
     supabase
       .from('applications')
       .select('*, profiles(full_name, email)')
@@ -405,9 +427,10 @@ export async function listApplicationsForReview(eventId) {
       .select('*')
       .eq('event_id', eventId)
       .order('created_at', { ascending: false }),
+    supabase.from('application_decisions').select('*').eq('event_id', eventId),
   ]);
 
-  const error = applications.error || log.error;
+  const error = applications.error || log.error || decisions.error;
   if (error) return { data: [], error };
 
   const reviewsByApplication = {};
@@ -415,9 +438,17 @@ export async function listApplicationsForReview(eventId) {
     (reviewsByApplication[review.applicationId] ||= []).push(review);
   });
 
+  const decisionsByApplication = Object.fromEntries(
+    (decisions.data || []).map((row) => [row.application_id, row]),
+  );
+
   return {
     data: (applications.data || []).map((row) =>
-      mapReviewRow(row, reviewsByApplication[row.id]),
+      mapReviewRow(
+        row,
+        reviewsByApplication[row.id],
+        decisionsByApplication[row.id],
+      ),
     ),
     error: null,
   };
@@ -451,5 +482,44 @@ export async function reviewApplication(applicationId, decision, note = '') {
       },
     };
   }
-  return { data: data ? mapApplicationFromRow(data) : null, error: null };
+  return {
+    data: data
+      ? {
+          status: data.decision,
+          reviewedAt: data.decided_at,
+          reviewedBy: data.decided_by,
+        }
+      : null,
+    error: null,
+  };
 }
+
+async function invokeDecisionEmails(body) {
+  const { data, error } = await supabase.functions.invoke(
+    'send-application-decisions',
+    { body },
+  );
+  if (!error) return { data, error: null };
+
+  const payload = await error.context?.json?.().catch(() => null);
+  const code = payload?.error || 'send_failed';
+  return {
+    data: payload?.counts ? { counts: payload.counts } : null,
+    error: {
+      code,
+      message: DECISION_EMAIL_ERRORS[code] || DECISION_EMAIL_ERRORS.send_failed,
+    },
+  };
+}
+
+export const previewDecisionEmails = (eventId) =>
+  invokeDecisionEmails({ action: 'preview', eventId });
+
+export const sendTestDecisionEmail = (eventId, decision) =>
+  invokeDecisionEmails({ action: 'test', eventId, decision });
+
+export const approveDecisionEmails = (eventId, options) =>
+  invokeDecisionEmails({ action: 'approve', eventId, ...options });
+
+export const sendDecisionEmailBatch = (eventId, runId) =>
+  invokeDecisionEmails({ action: 'send', eventId, runId });

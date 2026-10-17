@@ -1,76 +1,14 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-};
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-
-const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-
-interface Message {
-  to: string;
-  subject: string;
-  html: string;
-  text: string;
-}
-
-// The local stack always injects MAILPIT_URL, so a developer's Resend key can
-// never send real email from a local run unless ALLOW_REAL_EMAIL=true is set
-// deliberately. Hosted projects have no Mailpit and use Resend.
-async function deliver(message: Message) {
-  const resendKey = Deno.env.get('RESEND_API_KEY');
-  const mailpitUrl = Deno.env.get('MAILPIT_URL');
-  const allowRealEmail = Deno.env.get('ALLOW_REAL_EMAIL') === 'true';
-  const from = Deno.env.get('EMAIL_FROM') ?? 'UWPM <portal@uwproduct.com>';
-
-  if (resendKey && (!mailpitUrl || allowRealEmail)) {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from, ...message, to: [message.to] }),
-    });
-    if (!res.ok) throw new Error(`resend ${res.status}: ${await res.text()}`);
-    return;
-  }
-
-  if (!mailpitUrl) throw new Error('no_email_transport_configured');
-
-  const address = /<(.+)>/.exec(from)?.[1] ?? from;
-  const res = await fetch(`${mailpitUrl}/api/v1/send`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      From: { Email: address, Name: 'UWPM' },
-      To: [{ Email: message.to }],
-      Subject: message.subject,
-      HTML: message.html,
-      Text: message.text,
-    }),
-  });
-  if (!res.ok) throw new Error(`mailpit ${res.status}: ${await res.text()}`);
-}
-
-const SITE_URL = (Deno.env.get('SITE_URL') ?? 'https://uwaterloopm.com').replace(
-  /\/+$/,
-  '',
-);
-const LOGO_URL = `${SITE_URL}/email/uwpm-logo.png`;
-const STICKER_URL = `${SITE_URL}/email/hex-sticker.png`;
+import {
+  LOGO_URL,
+  SITE_URL,
+  STICKER_URL,
+  corsHeaders,
+  deliver,
+  escapeHtml,
+  json,
+  type Message,
+} from '../_shared/email.ts';
 
 function formatSubmittedAt(value: string | null): string {
   if (!value) return '';
@@ -137,14 +75,20 @@ function buildMessage(
                 <h1 style="margin:0 0 20px;font-size:26px;line-height:1.3;color:#262523">Your application has been received!</h1>
                 <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#535361">
                   Hi ${escapeHtml(name)},<br /><br />
-                  Thanks for applying to ${escapeHtml(eventName)}! We've received your application and you're all set.
+                  Thanks for applying to ${escapeHtml(
+                    eventName,
+                  )}! We've received your application and you're all set.
                 </p>
                 <h2 style="margin:0 0 12px;font-size:18px;color:#262523">Application Summary</h2>
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;font-size:16px;line-height:1.8">
 ${rows
   .map(
     ([label, value]) =>
-      `                  <tr><td style="padding:2px 16px 2px 0;color:#535361;white-space:nowrap">${escapeHtml(label)}</td><td style="padding:2px 0;color:#262523">${escapeHtml(value)}</td></tr>`,
+      `                  <tr><td style="padding:2px 16px 2px 0;color:#535361;white-space:nowrap">${escapeHtml(
+        label,
+      )}</td><td style="padding:2px 0;color:#262523">${escapeHtml(
+        value,
+      )}</td></tr>`,
   )
   .join('\n')}
                 </table>
@@ -179,7 +123,8 @@ ${rows
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method === 'OPTIONS')
+    return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
 
   const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');

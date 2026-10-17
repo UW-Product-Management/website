@@ -62,7 +62,7 @@ before(() => {
   assert.ok(SECRET_KEY, 'SUPABASE_SECRET_KEY is required');
 });
 
-test('organizers review applications and applicants see the decision', async () => {
+test('organizers record decisions that stay hidden from applicants until results are sent', async () => {
   const applicant = await createConfirmedUser('Avery Applicant');
   const organizer = await createConfirmedUser('Olive Organizer');
   await adminClient().from('organizers').insert({ user_id: organizer.userId });
@@ -124,9 +124,8 @@ test('organizers review applications and applicants see the decision', async () 
     note: 'Strong idea, limited seats',
   });
   assert.equal(decided.error, null);
-  assert.equal(decided.data.status, 'waitlisted');
-  assert.ok(decided.data.reviewed_at);
-  assert.equal(decided.data.reviewed_by, organizer.userId);
+  assert.equal(decided.data.decision, 'waitlisted');
+  assert.equal(decided.data.decided_by, organizer.userId);
 
   const unchanged = await organizer.supabase.rpc('review_application', {
     target_application_id: draft.data.id,
@@ -165,7 +164,7 @@ test('organizers review applications and applicants see the decision', async () 
     .select('status')
     .eq('id', draft.data.id)
     .single();
-  assert.equal(seen.data.status, 'waitlisted');
+  assert.equal(seen.data.status, 'submitted');
 
   const applicantsView = await applicant.supabase
     .from('applications')

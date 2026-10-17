@@ -46,8 +46,8 @@ export default function ReviewDecisionForm({
       </label>
       {confirming === 'rejected' && (
         <p role="alert" className="portal-review__confirm">
-          The applicant will see this application as {STATUS_LABELS.rejected}{' '}
-          right away. Confirm to continue.
+          This records the application as {STATUS_LABELS.rejected}. The
+          applicant is only told when results are sent. Confirm to continue.
         </p>
       )}
       <div className="portal-review__actions">

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PortalHeader from '../../components/portal/PortalHeader';
+import ReleaseResultsPanel from '../../components/portal/ReleaseResultsPanel';
 import ReviewDetailPanel from '../../components/portal/ReviewDetailPanel';
 import ReviewTable from '../../components/portal/ReviewTable';
 import { usePortal } from '../../context/PortalContext';
@@ -23,6 +24,13 @@ export default function OrganizerReview() {
   const [pendingId, setPendingId] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
+  const loadApplications = useCallback(async () => {
+    const { data, error } = await listApplicationsForReview(eventId);
+    if (error) setErrorMessage(error.message);
+    setApplications(data || []);
+    setIsLoading(false);
+  }, [eventId]);
 
   useEffect(() => {
     if (!eventId) {
@@ -109,6 +117,10 @@ export default function OrganizerReview() {
           <div className="portal-apply__error" role="alert">
             {errorMessage}
           </div>
+        )}
+
+        {eventId && (
+          <ReleaseResultsPanel event={event} onReleased={loadApplications} />
         )}
 
         <div className="portal-review__toolbar">
