@@ -1,6 +1,11 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  within,
+} from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ApplySubmit from './ApplySubmit';
 import { PortalContext } from '../../context/PortalContext';
@@ -37,6 +42,7 @@ function renderApplySubmit(contextOverrides = {}) {
       submittedAt: null,
     },
     submitApplication: jest.fn().mockResolvedValue({ data: {}, error: null }),
+    saveDraft: jest.fn().mockResolvedValue({ data: {}, error: null }),
     ...contextOverrides,
   };
 
@@ -125,6 +131,97 @@ describe('ApplySubmit', () => {
       'Please complete all required fields before submitting.',
     );
     expect(screen.queryByText('Confirmation Page')).not.toBeInTheDocument();
+  });
+
+  const openEditor = (questionNumber) =>
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: `Edit answer to question ${questionNumber}`,
+      }),
+    );
+
+  it('opens the answer dialog with the current response', () => {
+    renderApplySubmit();
+
+    openEditor(1);
+
+    const dialog = screen.getByRole('dialog', {
+      name: /edit answer to question 1/i,
+    });
+    expect(within(dialog).getByRole('textbox')).toHaveValue(
+      'Campus grocery delivery',
+    );
+    expect(within(dialog).getByText('3/150 words')).toBeInTheDocument();
+  });
+
+  it('saves only the edited answer and closes the dialog', async () => {
+    const { context } = renderApplySubmit();
+
+    openEditor(2);
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Trust and clarity' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(context.saveDraft).toHaveBeenCalledWith({
+        greatTeam: 'Trust and clarity',
+      });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  it('returns focus to the edit button after saving', async () => {
+    renderApplySubmit();
+
+    openEditor(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: /edit answer to question 1/i }),
+      ).toHaveFocus(),
+    );
+  });
+
+  it('closes the dialog without saving on escape', () => {
+    const { context } = renderApplySubmit();
+
+    openEditor(1);
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Something else' },
+    });
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(context.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it('does not allow saving an empty answer', () => {
+    const { context } = renderApplySubmit();
+
+    openEditor(1);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '  ' } });
+
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(context.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it('keeps the dialog open and shows the error when saving fails', async () => {
+    renderApplySubmit({
+      saveDraft: jest.fn().mockResolvedValue({
+        data: null,
+        error: { message: 'Could not save your answer.' },
+      }),
+    });
+
+    openEditor(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not save your answer.',
+    );
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
   it('navigates back to consent', () => {
