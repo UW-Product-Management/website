@@ -20,7 +20,7 @@ website-v3.0/
 │   │   ├── Navbar.js
 │   │   ├── Header.js
 │   │   ├── Footer.js
-│   │   ├── CustomCard.js
+│   │   ├── PageHero.js
 │   │   ├── ExecList.js
 │   │   └── ...
 │   ├── pages/              # Top-level view routes
@@ -57,7 +57,7 @@ website-v3.0/
 - **Rule:** Do not inline 500+ lines of raw markup and styling into a single page file. Break complex sections into dedicated components under `src/components/`.
 
 ### Presentational & Reusable Components (`src/components/`)
-- **Role:** Discrete, reusable UI components (e.g., `CustomCard.js`, `TeamProfileCard.js`, `Navbar.js`).
+- **Role:** Discrete, reusable UI components (e.g., `PageHero.js`, `TeamProfileCard.js`, `Navbar.js`).
 - **Responsibilities:**
   - Receive data and callbacks strictly via props.
   - Encapsulate local interactive state (e.g., modal open/close, hover state).

@@ -22,12 +22,16 @@
 }
 
 .site-footer__mark {
-  width: 100%;
+  position: relative;
+  left: 50%;
+  width: 100vw;
   font-size: clamp(7rem, 25vw, 24rem);
-  font-weight: 700;
+  font-weight: 1000;
   line-height: 0.76;
   text-align: center;
   white-space: nowrap;
+  transform: translateX(-50%) scaleX(1.165) scaleY(0.95);
+  letter-spacing: -0.03em;
 }
 
 .site-footer__content {
@@ -129,6 +133,11 @@
   .site-footer {
     padding-right: 18px;
     padding-left: 18px;
+  }
+
+  .site-footer__mark {
+    font-size: clamp(5.5rem, 28vw, 8rem);
+    transform: translateX(-50%) scaleX(1.04) scaleY(0.95);
   }
 
   .site-footer__content {

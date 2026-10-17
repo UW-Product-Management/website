@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300&display=swap');
+
+.portal-mobile-gate {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .portal-mobile-gate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: #fdefee;
+    overflow: hidden;
+  }
+
+  .portal-app-content {
+    display: none;
+  }
+}
+
+/* The background fills the full viewport edge-to-edge so there's no
+   visible seam where the letterboxed frame below falls short of it. */
+.portal-mobile-gate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      ellipse 70% 60% at 85% 100%,
+      rgba(255, 183, 0, 0.18),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 60% 70% at 15% 20%,
+      rgba(255, 28, 206, 0.16),
+      transparent 70%
+    );
+}
+
+/* The design is laid out against a fixed 402x874 frame, and every
+   decoration below is positioned/sized as a percentage of that frame.
+   Locking the frame to that aspect ratio (and letterboxing it inside
+   the viewport) keeps every percentage scaling together, so nothing
+   drifts out of place on phones whose aspect ratio doesn't match. */
+.portal-mobile-gate__frame {
+  position: relative;
+  width: min(100vw, calc(100dvh * 402 / 874));
+  height: min(100dvh, calc(100vw * 874 / 402));
+  font-family: 'Manrope', system-ui, sans-serif;
+}
+
+/* Scattered hexagon/star decorations, transcribed 1:1 from the Figma
+   node's inset box + rotate/skew so the shapes land exactly where the
+   design places them regardless of viewport width. */
+.portal-mobile-gate__scatter {
+  position: absolute;
+  inset: var(--mg-inset);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+  z-index: 1;
+}
+
+.portal-mobile-gate__scatter--star {
+  z-index: 2;
+}
+
+.portal-mobile-gate__scatter-inner {
+  flex: none;
+  height: hypot(calc(var(--mg-h-a) * 1cqw), calc(var(--mg-h-b) * 1cqh));
+  width: hypot(calc(var(--mg-w-a) * 1cqw), calc(var(--mg-w-b) * 1cqh));
+  transform: rotate(var(--mg-rotate)) skewX(var(--mg-skew));
+}
+
+.portal-mobile-gate__scatter-inner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.portal-mobile-gate__logo {
+  position: absolute;
+  top: 0;
+  left: 2.24%;
+  width: 25.35%;
+  height: 11.5%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+}
+
+.portal-mobile-gate__logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.portal-mobile-gate__mascot {
+  position: absolute;
+  inset: 55.72% 46.77% 25.95% 13.68%;
+  z-index: 2;
+}
+
+.portal-mobile-gate__mascot-backing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+}
+
+.portal-mobile-gate__mascot-backing > img {
+  flex: none;
+  height: 100cqw;
+  width: 100cqh;
+  transform: rotate(-90.07deg);
+}
+
+.portal-mobile-gate__mascot-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.portal-mobile-gate__bubble {
+  position: absolute;
+  top: 45.88%;
+  left: 7.96%;
+  width: 34.08%;
+  z-index: 3;
+  container-type: inline-size;
+}
+
+.portal-mobile-gate__bubble-shape {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.portal-mobile-gate__bubble-text {
+  position: absolute;
+  inset: 0 0 39.53% 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14%;
+  text-align: center;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(0.8rem, 13cqw, 1.15rem);
+  line-height: 1.2;
+  color: #000;
+}
+
+.portal-mobile-gate__arrow {
+  position: absolute;
+  top: 13.96%;
+  left: 5.97%;
+  width: 21.35%;
+  height: auto;
+  transform: rotate(-11.06deg);
+  transform-origin: top left;
+  z-index: 3;
+}
+
+.portal-mobile-gate__card {
+  position: absolute;
+  top: 21.62%;
+  left: 12.44%;
+  right: 13.68%;
+  min-height: 14.88%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  border-radius: 11px;
+  background: #86262d;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.4);
+  container-type: inline-size;
+}
+
+.portal-mobile-gate__message {
+  margin: 0;
+  padding: 7cqw 8cqw;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 300;
+  font-size: clamp(0.8rem, 5.2cqw, 1rem);
+  line-height: 1.5;
+  color: #fff;
+}

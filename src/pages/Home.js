@@ -11,11 +11,13 @@ import WhatWeDo from '../components/WhatWeDo';
 import OurImpact from '../components/OurImpact';
 import Footer from '../components/Footer';
 import '../styles/Home.css';
+import HeroBloom from '../components/HeroBloom';
 
 export default function Home() {
   return (
     <>
       <section id="home" className="home-hero" aria-label="UW PM introduction">
+        <HeroBloom />
         <Header hideNav active="home" />
 
         <div className="home-hero__stage">
