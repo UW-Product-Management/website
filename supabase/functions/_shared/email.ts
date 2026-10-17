@@ -136,7 +136,7 @@ ${contentHtml}
                 </table>
                 <hr style="border:none;border-top:1px solid #ece9e6;margin:0 0 20px" />
                 <p style="margin:0;font-size:14px;color:#535361">
-                  Contact us at <a href="mailto:uwpm@uwaterloo.ca" style="color:#f05c5b;text-decoration:underline">uwpm@uwaterloo.ca</a>
+                  Contact us at <a href="mailto:uwpmwaterloo@gmail.com" style="color:#f05c5b;text-decoration:underline">uwpmwaterloo@gmail.com</a>
                 </p>
                 <p style="margin:16px 0 0;font-size:14px;color:#262523">— <span style="color:#f05c5b;font-weight:600">The ProdCon Team</span></p>
               </td>
