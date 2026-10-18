@@ -15,6 +15,10 @@ import {
   listApplicationsForReview,
   listReviewHistory,
   reviewApplication,
+  listOrganizers,
+  addOrganizer,
+  removeOrganizer,
+  ORGANIZER_ERRORS,
   mapProfileFromRow,
   mapApplicationFromRow,
   mapApplicationFormToRow,
@@ -1034,5 +1038,65 @@ describe('portalApi decision email service', () => {
       message: DECISION_EMAIL_ERRORS.counts_changed,
     });
     expect(result.data.counts).toEqual({ accepted: 3 });
+  });
+});
+
+describe('organizer management', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('maps listed organizers', async () => {
+    supabase.rpc.mockResolvedValueOnce({
+      data: [
+        {
+          user_id: 'u1',
+          email: 'a@example.com',
+          full_name: 'Ada',
+          created_at: '2026-10-01T00:00:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const { data } = await listOrganizers();
+
+    expect(supabase.rpc).toHaveBeenCalledWith('list_organizers');
+    expect(data).toEqual([
+      {
+        userId: 'u1',
+        email: 'a@example.com',
+        fullName: 'Ada',
+        createdAt: '2026-10-01T00:00:00Z',
+      },
+    ]);
+  });
+
+  it('adds an organizer by email and maps errors to friendly copy', async () => {
+    supabase.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'user_not_found' },
+    });
+
+    const { error } = await addOrganizer('ghost@example.com');
+
+    expect(supabase.rpc).toHaveBeenCalledWith('add_organizer', {
+      target_email: 'ghost@example.com',
+    });
+    expect(error).toMatchObject({
+      code: 'user_not_found',
+      message: ORGANIZER_ERRORS.user_not_found,
+    });
+  });
+
+  it('removes an organizer by user id', async () => {
+    supabase.rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const { error } = await removeOrganizer('u2');
+
+    expect(supabase.rpc).toHaveBeenCalledWith('remove_organizer', {
+      target_user_id: 'u2',
+    });
+    expect(error).toBeNull();
   });
 });

@@ -44,6 +44,16 @@ export const DECISION_EMAIL_ERRORS = {
   send_failed: 'Sending failed. Nothing was lost; try again.',
 };
 
+export const ORGANIZER_ERRORS = {
+  not_organizer: 'Only admins can manage admins.',
+  invalid_email: 'Enter a valid email address.',
+  user_not_found:
+    'No account uses that email. Ask them to sign up to the portal first.',
+  already_organizer: 'That person is already an admin.',
+  cannot_remove_self: 'You cannot remove your own admin access.',
+  organizer_not_found: 'That person is not an admin.',
+};
+
 export const DRAFT_ERRORS = {
   closed:
     'Applications are not open for this event right now, so your answers could not be saved.',
@@ -523,3 +533,39 @@ export const approveDecisionEmails = (eventId, options) =>
 
 export const sendDecisionEmailBatch = (eventId, runId) =>
   invokeDecisionEmails({ action: 'send', eventId, runId });
+
+function mapOrganizerError(error) {
+  return {
+    ...error,
+    code: error.message,
+    message: ORGANIZER_ERRORS[error.message] || error.message,
+  };
+}
+
+export async function listOrganizers() {
+  const { data, error } = await supabase.rpc('list_organizers');
+  if (error) return { data: [], error: mapOrganizerError(error) };
+  return {
+    data: (data || []).map((row) => ({
+      userId: row.user_id,
+      email: row.email || '',
+      fullName: row.full_name || '',
+      createdAt: row.created_at,
+    })),
+    error: null,
+  };
+}
+
+export async function addOrganizer(email) {
+  const { error } = await supabase.rpc('add_organizer', {
+    target_email: email,
+  });
+  return { error: error ? mapOrganizerError(error) : null };
+}
+
+export async function removeOrganizer(userId) {
+  const { error } = await supabase.rpc('remove_organizer', {
+    target_user_id: userId,
+  });
+  return { error: error ? mapOrganizerError(error) : null };
+}

@@ -265,3 +265,46 @@
   min-height: 44px;
   margin-top: 4px;
 }
+
+.portal-admins {
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+}
+
+.portal-admins__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-top: 16px;
+}
+
+.portal-admins__form input,
+.portal-admins__form .portal-button {
+  display: block;
+  min-height: 44px;
+  margin-top: 4px;
+}
+
+.portal-admins__list {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portal-admins__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  overflow-wrap: anywhere;
+}
+
+.portal-admins__item .portal-button {
+  min-height: 44px;
+}

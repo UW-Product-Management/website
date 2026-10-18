@@ -11,6 +11,7 @@ import {
 
 jest.mock('../../services/portalApi');
 jest.mock('../../components/portal/ReleaseResultsPanel', () => () => null);
+jest.mock('../../components/portal/ManageAdminsPanel', () => () => null);
 
 const applications = [
   {

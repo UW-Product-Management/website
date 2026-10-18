@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import ManageAdminsPanel from '../../components/portal/ManageAdminsPanel';
 import PortalHeader from '../../components/portal/PortalHeader';
 import ReleaseResultsPanel from '../../components/portal/ReleaseResultsPanel';
 import ReviewDetailPanel from '../../components/portal/ReviewDetailPanel';
@@ -122,6 +123,8 @@ export default function OrganizerReview() {
         {eventId && (
           <ReleaseResultsPanel event={event} onReleased={loadApplications} />
         )}
+
+        <ManageAdminsPanel />
 
         <div className="portal-review__toolbar">
           <label htmlFor="review-status-filter">
