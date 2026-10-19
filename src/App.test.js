@@ -27,6 +27,9 @@ test('renders the supplied UW PM hero artwork', async () => {
     'https://linktr.ee/uwaterloopm',
   );
   expect(
+    screen.getByRole('link', { name: /visit prodcon application portal/i }),
+  ).toHaveAttribute('href', '/portal');
+  expect(
     screen.getByRole('heading', { name: /our impact/i }),
   ).toBeInTheDocument();
   expect(

@@ -5,6 +5,7 @@ import mascotMic from '../images/home/mascot-mic.png';
 import mascotGrad from '../images/home/mascot-grad.png';
 import starsOutline from '../images/home/stars-outline.png';
 import starsFilled from '../images/deco/stars.svg';
+import arrowRight from '../images/deco/arrow-right.svg';
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import WhatWeDo from '../components/WhatWeDo';
@@ -33,6 +34,11 @@ export default function Home() {
           </div>
 
           <div className="home-hero__content">
+            <Link className="home-hero__portal-cta" to="/portal">
+              <span>Visit ProdCon Application Portal</span>
+              <img src={arrowRight} alt="" aria-hidden="true" />
+            </Link>
+
             <h1 className="home-hero__headline">
               <span className="home-hero__headline-part">
                 <span>Fostering</span> <span>the creative</span>

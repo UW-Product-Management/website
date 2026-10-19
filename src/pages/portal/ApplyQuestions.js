@@ -4,14 +4,12 @@ import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
 import ApplyActions from '../../components/portal/ApplyActions';
 import { PortalTextarea } from '../../components/portal/PortalField';
+import {
+  MAX_WORDS,
+  QUESTIONS,
+  countWords,
+} from '../../portal/applicationQuestions';
 import '../../styles/portal/Portal.css';
-
-const MAX_WORDS = 150;
-
-function countWords(value) {
-  const trimmed = value.trim();
-  return trimmed === '' ? 0 : trimmed.split(/\s+/).length;
-}
 
 export default function ApplyQuestions() {
   const navigate = useNavigate();
@@ -108,8 +106,8 @@ export default function ApplyQuestions() {
       <form onSubmit={handleSubmit}>
         <div className="portal-apply__scroll">
           <PortalTextarea
-            id="question-product"
-            label="1. What product or service do you wish existed, and why?"
+            id={QUESTIONS[0].id}
+            label={`1. ${QUESTIONS[0].label}`}
             placeholder="Type your answer here..."
             value={productIdea}
             onChange={handleAnswerChange(setProductIdea)}
@@ -117,8 +115,8 @@ export default function ApplyQuestions() {
             required
           />
           <PortalTextarea
-            id="question-team"
-            label="2. What makes a great product team?"
+            id={QUESTIONS[1].id}
+            label={`2. ${QUESTIONS[1].label}`}
             placeholder="Type your answer here..."
             value={greatTeam}
             onChange={handleAnswerChange(setGreatTeam)}
@@ -126,8 +124,8 @@ export default function ApplyQuestions() {
             required
           />
           <PortalTextarea
-            id="question-experience"
-            label="3. What is one product you've worked on or contributed to, and what was your role?"
+            id={QUESTIONS[2].id}
+            label={`3. ${QUESTIONS[2].label}`}
             placeholder="Type your answer here..."
             value={productExperience}
             onChange={handleAnswerChange(setProductExperience)}
