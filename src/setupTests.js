@@ -37,6 +37,9 @@ jest.mock('gsap', () => ({
     from: jest.fn(),
     fromTo: jest.fn(),
     set: jest.fn(),
+    utils: {
+      toArray: jest.fn(() => []),
+    },
     context: jest.fn((fn) => {
       if (typeof fn === 'function') fn();
       return { revert: jest.fn() };
