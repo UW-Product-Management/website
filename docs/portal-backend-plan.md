@@ -711,7 +711,7 @@ Each phase is a separate PR and must leave `npm run lint`, `npm test`,
 | 4 | Email editable on Register? | **Read-only.** |
 | 5 | Per-step "Completed on" timestamps on Dashboard? | **Not in Phase 1** (show submission date for all, as today). Add `*_completed_at` columns later if wanted. |
 | 6 | How do organizers review/accept applications? | **Resolved in Phases 6–7:** `organizers` table + RLS, `/portal/admin` page, `accepted`/`waitlisted`/`rejected` statuses, CSV export. Organizers are added by SQL (no UI). |
-| 12 | Email applicants when a decision is recorded? | Not built. Decisions are visible on the dashboard only. The `send-application-received` pattern (Edge Function + idempotency stamp) can be reused. |
+| 12 | Email applicants when a decision is recorded? | ✅ Built as an approval-gated release (`send-application-decisions`, runbook §6a). Decisions are hidden from applicants until results are sent.  Original note: not built. Decisions are visible on the dashboard only. The `send-application-received` pattern (Edge Function + idempotency stamp) can be reused. |
 | 7 | Can applicants edit after submitting? | **No** (enforced). Change = relax the UPDATE policy until the close date. |
 | 8 | "Application received" email | Defer to Phase 5; the Auth confirmation email covers launch. |
 | 9 | Where is uwproduct.com hosted? | Needed for §10.4 and redirect URLs. |

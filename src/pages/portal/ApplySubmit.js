@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
 import ApplyActions from '../../components/portal/ApplyActions';
+import EditAnswerDialog from '../../components/portal/EditAnswerDialog';
 import { PortalCheckbox } from '../../components/portal/PortalField';
+import { QUESTIONS } from '../../portal/applicationQuestions';
+import zoomInIcon from '../../images/portal/zoom-in.svg';
 import '../../styles/portal/Portal.css';
 
 export default function ApplySubmit() {
   const navigate = useNavigate();
-  const { session, profile, application, state, submitApplication } =
+  const { session, profile, application, state, submitApplication, saveDraft } =
     usePortal();
   const [confirmed, setConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [editingField, setEditingField] = useState(null);
+  const editTriggers = useRef({});
+  const lastEditedField = useRef(null);
+
+  const closeEditor = useCallback(() => {
+    setEditingField(null);
+    editTriggers.current[lastEditedField.current]?.focus();
+  }, []);
 
   const isSubmitted = hasSubmitted(application) || Boolean(state?.submittedAt);
 
@@ -31,36 +42,48 @@ export default function ApplySubmit() {
     application?.consent?.dietaryRestrictions ||
     state?.application?.consent?.dietaryRestrictions ||
     'None';
-  const productIdea =
-    application?.productIdea ||
-    application?.answers?.productIdea ||
-    state?.application?.answers?.productIdea ||
-    '';
-  const greatTeam =
-    application?.greatTeam ||
-    application?.answers?.greatTeam ||
-    state?.application?.answers?.greatTeam ||
-    '';
+  const answers = {
+    productIdea:
+      application?.productIdea ||
+      application?.answers?.productIdea ||
+      state?.application?.answers?.productIdea ||
+      '',
+    greatTeam:
+      application?.greatTeam ||
+      application?.answers?.greatTeam ||
+      state?.application?.answers?.greatTeam ||
+      '',
+    productExperience:
+      application?.productExperience ||
+      application?.answers?.productExperience ||
+      state?.application?.answers?.productExperience ||
+      '',
+  };
 
-  const productExperience =
-    application?.productExperience ||
-    application?.answers?.productExperience ||
-    state?.application?.answers?.productExperience ||
-    '';
-
-  const reviewRows = [
-    { label: 'Full name', value: fullName || '—' },
-    { label: 'Email address', value: email || '—' },
+  const profileRows = [
+    { label: 'Full Name', value: fullName || '—' },
     { label: 'Program', value: program || '—' },
-    { label: 'Year of study', value: yearOfStudy || '—' },
-    { label: 'Dietary restrictions', value: dietaryRestrictions || 'None' },
-    { label: 'Q1. What product or service...', value: productIdea || '—' },
-    { label: 'Q2. What makes a great product team?', value: greatTeam || '—' },
-    {
-      label: 'Q3. One product you worked on...',
-      value: productExperience || '—',
-    },
+    { label: 'Year of Study', value: yearOfStudy || '—' },
+    { label: 'Dietary Restrictions', value: dietaryRestrictions || 'None' },
   ];
+
+  const openEditor = (field) => {
+    lastEditedField.current = field;
+    setEditingField(field);
+  };
+
+  const saveAnswer = async (field, value) => {
+    const result = await saveDraft({ [field]: value });
+    if (result?.error) {
+      return result.error.message || 'Failed to save your answer.';
+    }
+    closeEditor();
+    return '';
+  };
+
+  const editingIndex = QUESTIONS.findIndex(
+    ({ field }) => field === editingField,
+  );
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -97,11 +120,37 @@ export default function ApplySubmit() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <dl className="portal-apply__review">
-          {reviewRows.map(({ label, value }) => (
-            <div key={label}>
+        <dl className="portal-review-summary">
+          {profileRows.map(({ label, value }) => (
+            <div key={label} className="portal-review-summary__item">
               <dt>{label}</dt>
               <dd>{value}</dd>
+            </div>
+          ))}
+          <div className="portal-review-summary__item">
+            <dt>Email Address</dt>
+            <dd>{email || '—'}</dd>
+          </div>
+          {QUESTIONS.map(({ field, label }, index) => (
+            <div key={field} className="portal-review-summary__item">
+              <dt>
+                <span className="portal-review-summary__label">{label}</span>
+                <button
+                  type="button"
+                  ref={(node) => {
+                    editTriggers.current[field] = node;
+                  }}
+                  className="portal-review-summary__edit"
+                  aria-label={`Edit answer to question ${index + 1}`}
+                  disabled={isSubmitting}
+                  onClick={() => openEditor(field)}
+                >
+                  <img src={zoomInIcon} width="20" height="20" alt="" />
+                </button>
+              </dt>
+              <dd className="portal-review-summary__answer">
+                {answers[field] || '—'}
+              </dd>
             </div>
           ))}
         </dl>
@@ -123,6 +172,16 @@ export default function ApplySubmit() {
           isBusy={isSubmitting}
         />
       </form>
+
+      {editingIndex !== -1 && (
+        <EditAnswerDialog
+          number={editingIndex + 1}
+          question={QUESTIONS[editingIndex].label}
+          initialValue={answers[editingField]}
+          onSave={(value) => saveAnswer(editingField, value)}
+          onClose={closeEditor}
+        />
+      )}
     </>
   );
 }

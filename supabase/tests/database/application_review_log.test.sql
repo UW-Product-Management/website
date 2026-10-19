@@ -26,7 +26,7 @@ select throws_ok(
 );
 
 select is(
-  (public.review_application('bbbbbbbb-0000-0000-0000-000000000001', 'waitlisted', '  Strong idea, limited seats  ')).status,
+  (public.review_application('bbbbbbbb-0000-0000-0000-000000000001', 'waitlisted', '  Strong idea, limited seats  ')).decision,
   'waitlisted',
   'a decision with a note is recorded'
 );
@@ -38,31 +38,31 @@ select throws_ok(
 );
 
 select is(
-  (select count(*)::int from public.application_reviews),
+  (select count(*)::int from public.application_reviews where application_id = 'bbbbbbbb-0000-0000-0000-000000000001'),
   1,
   'the decision is written to the review log'
 );
 
 select is(
-  (select reviewer_id from public.application_reviews),
+  (select reviewer_id from public.application_reviews where application_id = 'bbbbbbbb-0000-0000-0000-000000000001'),
   '33333333-3333-3333-3333-333333333333'::uuid,
   'the log credits the reviewing organizer'
 );
 
 select is(
-  (select reviewer_name || ' <' || reviewer_email || '>' from public.application_reviews),
+  (select reviewer_name || ' <' || reviewer_email || '>' from public.application_reviews where application_id = 'bbbbbbbb-0000-0000-0000-000000000001'),
   'Olive Organizer <organizer@test.local>',
   'the log snapshots the reviewer name and email'
 );
 
 select is(
-  (select previous_status || '>' || new_status from public.application_reviews),
+  (select previous_status || '>' || new_status from public.application_reviews where application_id = 'bbbbbbbb-0000-0000-0000-000000000001'),
   'submitted>waitlisted',
   'the log records the status transition'
 );
 
 select is(
-  (select note from public.application_reviews),
+  (select note from public.application_reviews where application_id = 'bbbbbbbb-0000-0000-0000-000000000001'),
   'Strong idea, limited seats',
   'the log stores the trimmed note'
 );

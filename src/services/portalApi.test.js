@@ -15,11 +15,18 @@ import {
   listApplicationsForReview,
   listReviewHistory,
   reviewApplication,
+  listOrganizers,
+  addOrganizer,
+  removeOrganizer,
+  ORGANIZER_ERRORS,
   mapProfileFromRow,
   mapApplicationFromRow,
   mapApplicationFormToRow,
   SUBMISSION_ERRORS,
   DRAFT_ERRORS,
+  DECISION_EMAIL_ERRORS,
+  approveDecisionEmails,
+  previewDecisionEmails,
 } from './portalApi';
 
 describe('portalApi auth service', () => {
@@ -853,13 +860,22 @@ describe('portalApi organizer review service', () => {
     return chain;
   };
 
+  const eqResult = (result) => ({
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn(() => Promise.resolve(result)),
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('sends a trimmed note with the decision', async () => {
     supabase.rpc.mockResolvedValueOnce({
-      data: { id: 'app-1', status: 'accepted', reviewed_by: 'org-1' },
+      data: {
+        application_id: 'app-1',
+        decision: 'accepted',
+        decided_by: 'org-1',
+      },
       error: null,
     });
 
@@ -870,7 +886,10 @@ describe('portalApi organizer review service', () => {
       decision: 'accepted',
       note: 'Great fit',
     });
-    expect(result.data.reviewedBy).toBe('org-1');
+    expect(result.data).toMatchObject({
+      status: 'accepted',
+      reviewedBy: 'org-1',
+    });
   });
 
   it('sends a null note when none is given', async () => {
@@ -934,10 +953,26 @@ describe('portalApi organizer review service', () => {
       error: null,
     });
     const log = queryResult({ data: [logRow], error: null });
-    supabase.from.mockReturnValueOnce(applications).mockReturnValueOnce(log);
+    const decisions = eqResult({
+      data: [
+        {
+          application_id: 'app-2',
+          decision: 'waitlisted',
+          email_sent_at: null,
+          emailed_decision: null,
+        },
+      ],
+      error: null,
+    });
+    supabase.from
+      .mockReturnValueOnce(applications)
+      .mockReturnValueOnce(log)
+      .mockReturnValueOnce(decisions);
 
     const result = await listApplicationsForReview('evt-1');
 
+    expect(result.data[1].status).toBe('waitlisted');
+    expect(result.data[0].status).toBe('accepted');
     expect(log.eq).toHaveBeenCalledWith('event_id', 'evt-1');
     expect(result.data[0].reviews).toHaveLength(1);
     expect(result.data[0].reviews[0].reviewerName).toBe('Olive Organizer');
@@ -947,11 +982,121 @@ describe('portalApi organizer review service', () => {
   it('returns the error when the review log cannot be read', async () => {
     const applications = queryResult({ data: [], error: null });
     const log = queryResult({ data: null, error: { message: 'denied' } });
-    supabase.from.mockReturnValueOnce(applications).mockReturnValueOnce(log);
+    const decisions = eqResult({ data: [], error: null });
+    supabase.from
+      .mockReturnValueOnce(applications)
+      .mockReturnValueOnce(log)
+      .mockReturnValueOnce(decisions);
 
     const result = await listApplicationsForReview('evt-1');
 
     expect(result.data).toEqual([]);
     expect(result.error.message).toBe('denied');
+  });
+});
+
+describe('portalApi decision email service', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('invokes the function with the action and event', async () => {
+    supabase.functions.invoke.mockResolvedValueOnce({
+      data: { mode: 'local' },
+      error: null,
+    });
+
+    const result = await previewDecisionEmails('evt-1');
+
+    expect(supabase.functions.invoke).toHaveBeenCalledWith(
+      'send-application-decisions',
+      { body: { action: 'preview', eventId: 'evt-1' } },
+    );
+    expect(result.data.mode).toBe('local');
+  });
+
+  it('maps an error code from the response body to friendly copy', async () => {
+    supabase.functions.invoke.mockResolvedValueOnce({
+      data: null,
+      error: {
+        context: {
+          json: () =>
+            Promise.resolve({
+              error: 'counts_changed',
+              counts: { accepted: 3 },
+            }),
+        },
+      },
+    });
+
+    const result = await approveDecisionEmails('evt-1', {
+      confirmation: 'SEND 4',
+    });
+
+    expect(result.error).toEqual({
+      code: 'counts_changed',
+      message: DECISION_EMAIL_ERRORS.counts_changed,
+    });
+    expect(result.data.counts).toEqual({ accepted: 3 });
+  });
+});
+
+describe('organizer management', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('maps listed organizers', async () => {
+    supabase.rpc.mockResolvedValueOnce({
+      data: [
+        {
+          user_id: 'u1',
+          email: 'a@example.com',
+          full_name: 'Ada',
+          created_at: '2026-10-01T00:00:00Z',
+        },
+      ],
+      error: null,
+    });
+
+    const { data } = await listOrganizers();
+
+    expect(supabase.rpc).toHaveBeenCalledWith('list_organizers');
+    expect(data).toEqual([
+      {
+        userId: 'u1',
+        email: 'a@example.com',
+        fullName: 'Ada',
+        createdAt: '2026-10-01T00:00:00Z',
+      },
+    ]);
+  });
+
+  it('adds an organizer by email and maps errors to friendly copy', async () => {
+    supabase.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'user_not_found' },
+    });
+
+    const { error } = await addOrganizer('ghost@example.com');
+
+    expect(supabase.rpc).toHaveBeenCalledWith('add_organizer', {
+      target_email: 'ghost@example.com',
+    });
+    expect(error).toMatchObject({
+      code: 'user_not_found',
+      message: ORGANIZER_ERRORS.user_not_found,
+    });
+  });
+
+  it('removes an organizer by user id', async () => {
+    supabase.rpc.mockResolvedValueOnce({ data: null, error: null });
+
+    const { error } = await removeOrganizer('u2');
+
+    expect(supabase.rpc).toHaveBeenCalledWith('remove_organizer', {
+      target_user_id: 'u2',
+    });
+    expect(error).toBeNull();
   });
 });

@@ -1,5 +1,9 @@
 import React from 'react';
-import { STATUS_LABELS } from '../../portal/applicationStatus';
+import {
+  EMAIL_STATE_LABELS,
+  STATUS_LABELS,
+  getEmailState,
+} from '../../portal/applicationStatus';
 import { formatDateTime } from '../../portal/formatDateTime';
 import '../../styles/portal/PortalReview.css';
 
@@ -16,6 +20,7 @@ export default function ReviewTable({
             <th scope="col">Applicant</th>
             <th scope="col">Program</th>
             <th scope="col">Status</th>
+            <th scope="col">Result email</th>
             <th scope="col">Last reviewed</th>
             <th scope="col">Review</th>
           </tr>
@@ -48,6 +53,7 @@ export default function ReviewTable({
                 <td>
                   {STATUS_LABELS[application.status] || application.status}
                 </td>
+                <td>{EMAIL_STATE_LABELS[getEmailState(application)]}</td>
                 <td>
                   {latest ? (
                     <>

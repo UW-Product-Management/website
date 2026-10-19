@@ -23,7 +23,7 @@ so they are run by a person, in order.
 ```bash
 npx supabase login
 npx supabase link --project-ref <project-ref>
-npx supabase db push --dry-run   # expect 4 migrations
+npx supabase db push --dry-run
 npx supabase db push
 ```
 
@@ -87,9 +87,19 @@ serves both.
 ## 5. Deploy the "application received" function
 
 ```bash
-npx supabase secrets set RESEND_API_KEY=<key> EMAIL_FROM="UWPM <portal@uwproduct.com>"
+npx supabase secrets list   # expect RESEND_API_KEY, EMAIL_FROM, EMAIL_ENV
+npx supabase secrets set RESEND_API_KEY=<key> EMAIL_FROM="UWPM <portal@uwproduct.com>" EMAIL_ENV=production
 npx supabase functions deploy send-application-received
+npx supabase functions deploy send-application-decisions
 ```
+
+`EMAIL_ENV=production` is required: without it the functions refuse to email
+real inboxes (they fail with `email_environment_not_configured`, or redirect
+to `EMAIL_SANDBOX_REDIRECT` when that is set). **Set it before redeploying
+`send-application-received`, or applicants stop getting their received
+email.** A staging project must never set `EMAIL_ENV`; give it
+`EMAIL_SANDBOX_REDIRECT=<your address>` so every email lands with you, tagged
+`[STAGING]`.
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected by the platform.
 The function requires a signed-in user's JWT; it emails only that user, only
@@ -113,9 +123,35 @@ select id from auth.users where email in ('organizer1@uwaterloo.ca', 'organizer2
 
 They review at `https://uwproduct.com/portal/admin`: filter by status, open an
 applicant's answers, choose Accepted / Waitlisted / Not selected, or export a
-CSV. Applicants see the result on their dashboard. To revoke access, delete the
-row from `public.organizers`. Applicants are **not** emailed when a decision is
-recorded (plan §12 #12).
+CSV. Recording a decision is private: applicants keep seeing "Under review" until
+results are sent (section 6a). To revoke access, delete the row from
+`public.organizers`.
+
+### 6a. Sending results
+
+Organizers send results from the "Send results" panel on `/portal/admin`.
+The Edge Function enforces every step; the UI cannot skip them:
+
+1. Record a decision for every submitted application. The panel warns about
+   applications with no decision and requires an explicit acknowledgement.
+2. Send yourself a test email (all three templates are available). A test by
+   the same organizer within 24 hours is required before approving.
+3. Type `SEND <n>` exactly, where `<n>` is the number of emails. The function
+   rejects the approval if the counts changed since the page loaded.
+4. The release sends in batches of 20 (Resend allows 10 requests/second;
+   functions run up to 150 s). Each applicant is stamped before sending, so
+   an interrupted release can be resumed by approving again and nobody is
+   emailed twice. A failed send is un-stamped and retried.
+
+A decision changed after its email went out is shown as "Changed since email"
+and is never re-sent unless the organizer ticks "Also re-send ... changed".
+Every test and release is recorded in `decision_email_runs`.
+
+The panel shows which mode the function is in: **Local** (Mailpit),
+**Staging** (everything redirected to the sandbox address) or **Live**.
+Review the wording in `supabase/functions/send-application-decisions/messages.ts`
+before the first release; it promises a follow-up email with logistics because
+the schedule is not stored anywhere.
 
 ## 7. Frontend environment variables
 
@@ -142,5 +178,6 @@ On the production URL with a real inbox:
 - [ ] Sign up → confirmation email arrives with UWPM branding → link lands on Register signed in
 - [ ] Complete and submit the application → "application received" email arrives once
 - [ ] Forgot password → reset email → `/portal/update-password` works
-- [ ] An organizer opens `/portal/admin`, sees the application, records a decision; the applicant's dashboard shows it; a non-organizer visiting `/portal/admin` is sent to their dashboard
+- [ ] An organizer opens `/portal/admin`, sees the application, records a decision; the applicant's dashboard still says "Under review"; a non-organizer visiting `/portal/admin` is sent to their dashboard
+- [ ] On staging (`EMAIL_SANDBOX_REDIRECT`), send a test and a full release; every email lands at the sandbox address tagged `[STAGING]`, and only then release on production
 - [ ] Studio shows one `applications` row with `status = submitted` and `confirmation_email_sent_at` set

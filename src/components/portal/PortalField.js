@@ -95,23 +95,20 @@ export function PortalSelect({
   );
 }
 
-export function PortalTextarea({
-  id,
-  label,
-  required = false,
-  counter,
-  ...rest
-}) {
+export const PortalTextarea = React.forwardRef(function PortalTextarea(
+  { id, label, required = false, counter, ...rest },
+  ref,
+) {
   return (
     <div className="portal-field">
       <FieldLabel id={id} label={label} required={required} />
-      <textarea id={id} required={required} {...rest} />
+      <textarea id={id} ref={ref} required={required} {...rest} />
       {counter !== undefined && (
         <span className="portal-apply__char-count">{counter}</span>
       )}
     </div>
   );
-}
+});
 
 export function PortalCheckbox({ id, children, ...rest }) {
   return (

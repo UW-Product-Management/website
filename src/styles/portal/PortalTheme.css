@@ -1,5 +1,6 @@
 .auth-layout,
-.portal-shell {
+.portal-shell,
+.portal-answer-dialog__backdrop {
   --auth-coral: #f05c5b;
   --auth-maroon: #7b2d2f;
   --auth-card: #fefdfd;

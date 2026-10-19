@@ -426,3 +426,7 @@ enabled = true
 [functions.send-application-received]
 enabled = true
 verify_jwt = true
+
+[functions.send-application-decisions]
+enabled = true
+verify_jwt = true
