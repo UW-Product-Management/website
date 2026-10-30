@@ -79,8 +79,7 @@ test('organizers record decisions that stay hidden from applicants until results
       event_id: event.id,
       program: 'Business',
       year_of_study: '2nd year',
-      product_idea: 'Idea',
-      great_team: 'Trust',
+      favourite_product: 'Idea',
     })
     .select()
     .single();

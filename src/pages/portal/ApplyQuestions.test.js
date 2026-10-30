@@ -8,14 +8,13 @@ function renderApplyQuestions(contextOverrides = {}) {
   const defaultContext = {
     application: {
       id: 'app-1',
-      productIdea: '',
-      greatTeam: '',
+      favouriteProduct: '',
       status: 'draft',
       submittedAt: null,
     },
     state: {
       application: {
-        answers: { productIdea: '', greatTeam: '' },
+        answers: { favouriteProduct: '' },
       },
       submittedAt: null,
     },
@@ -53,39 +52,47 @@ function renderApplyQuestions(contextOverrides = {}) {
 }
 
 describe('ApplyQuestions', () => {
-  it('displays word counts for both questions', () => {
+  it('asks only for a favourite product', () => {
+    renderApplyQuestions();
+
+    expect(screen.getAllByRole('textbox')).toHaveLength(1);
+    expect(
+      screen.getByLabelText(/what is your favourite product/i),
+    ).toBeInTheDocument();
+  });
+
+  it('limits the answer to 200 characters', () => {
+    renderApplyQuestions();
+
+    expect(
+      screen.getByLabelText(/what is your favourite product/i),
+    ).toHaveAttribute('maxLength', '200');
+  });
+
+  it('displays the character count for the saved answer', () => {
     renderApplyQuestions({
       application: {
         id: 'app-1',
-        productIdea: 'Test Idea',
-        greatTeam: 'Test Team',
+        favouriteProduct: 'Notion',
         status: 'draft',
       },
     });
 
-    expect(screen.getAllByText('2/150 words')).toHaveLength(2);
+    expect(screen.getByText('6/200 characters')).toBeInTheDocument();
   });
 
   it('saves questions draft and navigates to consent on next', async () => {
     const { context } = renderApplyQuestions();
 
-    const q1 = screen.getByLabelText(/what product or service/i);
-    const q2 = screen.getByLabelText(/what makes a great product team/i);
-    const q3 = screen.getByLabelText(/one product you.ve worked on/i);
-
-    fireEvent.change(q1, { target: { value: 'Autonomous food delivery' } });
-    fireEvent.change(q2, { target: { value: 'Cross-functional trust' } });
-    fireEvent.change(q3, {
-      target: { value: 'Led onboarding for a campus app' },
+    fireEvent.change(screen.getByLabelText(/what is your favourite product/i), {
+      target: { value: 'Notion' },
     });
 
     fireEvent.click(screen.getByRole('button', { name: /next/i }));
 
     await waitFor(() => {
       expect(context.saveDraft).toHaveBeenCalledWith({
-        productIdea: 'Autonomous food delivery',
-        greatTeam: 'Cross-functional trust',
-        productExperience: 'Led onboarding for a campus app',
+        favouriteProduct: 'Notion',
       });
       expect(screen.getByText('Consent Page')).toBeInTheDocument();
     });
@@ -108,11 +115,9 @@ describe('ApplyQuestions', () => {
       }),
     });
 
-    const q1 = screen.getByLabelText(/what product or service/i);
-    const q2 = screen.getByLabelText(/what makes a great product team/i);
-
-    fireEvent.change(q1, { target: { value: 'Product idea' } });
-    fireEvent.change(q2, { target: { value: 'Great team' } });
+    fireEvent.change(screen.getByLabelText(/what is your favourite product/i), {
+      target: { value: 'Notion' },
+    });
 
     fireEvent.click(screen.getByRole('button', { name: /next/i }));
 

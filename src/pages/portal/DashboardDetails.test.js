@@ -12,8 +12,7 @@ function renderDashboardDetails(contextOverrides = {}) {
       id: 'app-1',
       program: 'Engineering',
       yearOfStudy: '3rd year',
-      productIdea: 'Smart Campus Map',
-      greatTeam: 'Deep trust and rapid feedback',
+      favouriteProduct: 'Smart Campus Map',
       mediaConsent: true,
       dietaryRestrictions: 'Gluten-free',
       status: 'submitted',
@@ -24,10 +23,7 @@ function renderDashboardDetails(contextOverrides = {}) {
       application: {
         program: 'Engineering',
         yearOfStudy: '3rd year',
-        answers: {
-          productIdea: 'Smart Campus Map',
-          greatTeam: 'Deep trust and rapid feedback',
-        },
+        answers: { favouriteProduct: 'Smart Campus Map' },
         consent: {
           mediaConsent: true,
           dietaryRestrictions: 'Gluten-free',
@@ -65,10 +61,10 @@ describe('DashboardDetails', () => {
     expect(screen.getByText('alex@example.com')).toBeInTheDocument();
     expect(screen.getByText('Engineering')).toBeInTheDocument();
     expect(screen.getByText('3rd year')).toBeInTheDocument();
-    expect(screen.getByText('Smart Campus Map')).toBeInTheDocument();
     expect(
-      screen.getByText('Deep trust and rapid feedback'),
+      screen.getByText('What is your favourite product?'),
     ).toBeInTheDocument();
+    expect(screen.getByText('Smart Campus Map')).toBeInTheDocument();
     expect(screen.getByText('Gluten-free')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /download confirmation/i }),

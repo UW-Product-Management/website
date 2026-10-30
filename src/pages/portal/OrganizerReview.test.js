@@ -20,9 +20,7 @@ const applications = [
     email: 'alex@example.com',
     program: 'Business',
     yearOfStudy: '2nd year',
-    productIdea: 'Food waste tracker',
-    greatTeam: 'Trust',
-    productExperience: 'Ran a club',
+    favouriteProduct: 'Food waste tracker',
     status: 'submitted',
     reviews: [],
   },
@@ -32,8 +30,7 @@ const applications = [
     email: 'blair@example.com',
     program: 'Engineering',
     yearOfStudy: '3rd year',
-    productIdea: 'Study planner',
-    greatTeam: 'Curiosity',
+    favouriteProduct: 'Study planner',
     status: 'rejected',
     reviews: [
       {

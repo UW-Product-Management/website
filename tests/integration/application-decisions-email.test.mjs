@@ -82,8 +82,7 @@ async function submittedApplication(applicant, eventId) {
       event_id: eventId,
       program: 'Business',
       year_of_study: '2nd year',
-      product_idea: 'Idea',
-      great_team: 'Trust',
+      favourite_product: 'Notion',
     })
     .select()
     .single();
