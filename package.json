@@ -43,7 +43,8 @@
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
     "db:env": "supabase status -o env --override-name api.url=REACT_APP_SUPABASE_URL --override-name auth.publishable_key=REACT_APP_SUPABASE_PUBLISHABLE_KEY",
-    "test:integration": "node scripts/test-integration.mjs"
+    "test:integration": "node scripts/test-integration.mjs",
+    "prepare": "husky"
   },
   "jest": {
     "resetMocks": false
@@ -72,7 +73,21 @@
     "@babel/preset-react": "^7.22.15",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.0.3",
     "supabase": "^2.120.0"
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "{scripts,tests}/**/*.{js,mjs}": [
+      "prettier --write"
+    ],
+    "**/*.{css,json,md}": [
+      "prettier --write"
+    ]
   }
 }
