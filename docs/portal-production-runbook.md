@@ -44,7 +44,7 @@ values (
   'prodcon-2026',                  -- must equal REACT_APP_PORTAL_EVENT_SLUG
   'ProdCon 2026',                  -- used in the "application received" email
   '<open, e.g. 2026-10-15 00:00-04>',
-  '<close, e.g. 2026-11-02 23:59-05>'
+  '<close, e.g. 2026-11-04 23:59-05>'
 );
 ```
 
