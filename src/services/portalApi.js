@@ -102,9 +102,7 @@ export function mapApplicationFromRow(row) {
     eventId: row.event_id,
     program: row.program || '',
     yearOfStudy: row.year_of_study || '',
-    productIdea: row.product_idea || '',
-    greatTeam: row.great_team || '',
-    productExperience: row.product_experience || '',
+    favouriteProduct: row.favourite_product || '',
     mediaConsent: Boolean(row.media_consent),
     dietaryRestriction: row.dietary_restriction || '',
     dietaryRestrictions: row.dietary_restriction || '',
@@ -117,9 +115,7 @@ export function mapApplicationFromRow(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     answers: {
-      productIdea: row.product_idea || '',
-      greatTeam: row.great_team || '',
-      productExperience: row.product_experience || '',
+      favouriteProduct: row.favourite_product || '',
     },
     consent: {
       mediaConsent: Boolean(row.media_consent),
@@ -143,28 +139,12 @@ export function mapApplicationFormToRow(fields = {}) {
       fields.year_of_study === '' ? null : fields.year_of_study;
   }
 
-  if ('productIdea' in fields) {
-    row.product_idea = fields.productIdea;
-  } else if (fields.answers && 'productIdea' in fields.answers) {
-    row.product_idea = fields.answers.productIdea;
-  } else if ('product_idea' in fields) {
-    row.product_idea = fields.product_idea;
-  }
-
-  if ('greatTeam' in fields) {
-    row.great_team = fields.greatTeam;
-  } else if (fields.answers && 'greatTeam' in fields.answers) {
-    row.great_team = fields.answers.greatTeam;
-  } else if ('great_team' in fields) {
-    row.great_team = fields.great_team;
-  }
-
-  if ('productExperience' in fields) {
-    row.product_experience = fields.productExperience;
-  } else if (fields.answers && 'productExperience' in fields.answers) {
-    row.product_experience = fields.answers.productExperience;
-  } else if ('product_experience' in fields) {
-    row.product_experience = fields.product_experience;
+  if ('favouriteProduct' in fields) {
+    row.favourite_product = fields.favouriteProduct;
+  } else if (fields.answers && 'favouriteProduct' in fields.answers) {
+    row.favourite_product = fields.answers.favouriteProduct;
+  } else if ('favourite_product' in fields) {
+    row.favourite_product = fields.favourite_product;
   }
 
   if ('mediaConsent' in fields) {

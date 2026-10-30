@@ -7,11 +7,10 @@ const application = {
   yearOfStudy: '2nd year',
   status: 'accepted',
   submittedAt: '2026-10-01T14:30:00.000Z',
-  productIdea: 'A tracker, "for" food',
-  greatTeam: 'Trust\nand curiosity',
+  favouriteProduct: 'A tracker, "for" food',
   mediaConsent: true,
-  dietaryRestriction: 'None',
-  dietaryDetails: '',
+  dietaryRestriction: 'Other',
+  dietaryDetails: 'No peanuts\nor shellfish',
 };
 
 describe('applicationsToCsv', () => {
@@ -26,12 +25,12 @@ describe('applicationsToCsv', () => {
     const csv = applicationsToCsv([application]);
 
     expect(csv).toContain('"A tracker, ""for"" food"');
-    expect(csv).toContain('"Trust\nand curiosity"');
+    expect(csv).toContain('"No peanuts\nor shellfish"');
   });
 
   it('neutralises cells that spreadsheets would run as formulas', () => {
     const csv = applicationsToCsv([
-      { ...application, productIdea: '=HYPERLINK("http://evil")' },
+      { ...application, favouriteProduct: '=HYPERLINK("http://evil")' },
     ]);
 
     expect(csv).toContain(`"'=HYPERLINK(""http://evil"")"`);

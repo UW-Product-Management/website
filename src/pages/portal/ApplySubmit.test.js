@@ -18,8 +18,7 @@ function renderApplySubmit(contextOverrides = {}) {
       id: 'app-1',
       program: 'Computer Science',
       yearOfStudy: '2nd year',
-      productIdea: 'Campus grocery delivery',
-      greatTeam: 'Curiosity and trust',
+      favouriteProduct: 'Campus grocery delivery',
       mediaConsent: true,
       dietaryRestrictions: 'Vegetarian',
       status: 'draft',
@@ -30,10 +29,7 @@ function renderApplySubmit(contextOverrides = {}) {
       application: {
         program: 'Computer Science',
         yearOfStudy: '2nd year',
-        answers: {
-          productIdea: 'Campus grocery delivery',
-          greatTeam: 'Curiosity and trust',
-        },
+        answers: { favouriteProduct: 'Campus grocery delivery' },
         consent: {
           mediaConsent: true,
           dietaryRestrictions: 'Vegetarian',
@@ -81,8 +77,10 @@ describe('ApplySubmit', () => {
     expect(screen.getByText('Computer Science')).toBeInTheDocument();
     expect(screen.getByText('2nd year')).toBeInTheDocument();
     expect(screen.getByText('Vegetarian')).toBeInTheDocument();
+    expect(
+      screen.getByText('What is your favourite product?'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Campus grocery delivery')).toBeInTheDocument();
-    expect(screen.getByText('Curiosity and trust')).toBeInTheDocument();
   });
 
   it('keeps submit button disabled until confirmation checkbox is checked', () => {
@@ -151,21 +149,21 @@ describe('ApplySubmit', () => {
     expect(within(dialog).getByRole('textbox')).toHaveValue(
       'Campus grocery delivery',
     );
-    expect(within(dialog).getByText('3/150 words')).toBeInTheDocument();
+    expect(within(dialog).getByText('23/200 characters')).toBeInTheDocument();
   });
 
   it('saves only the edited answer and closes the dialog', async () => {
     const { context } = renderApplySubmit();
 
-    openEditor(2);
+    openEditor(1);
     fireEvent.change(screen.getByRole('textbox'), {
-      target: { value: 'Trust and clarity' },
+      target: { value: 'Notion' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
       expect(context.saveDraft).toHaveBeenCalledWith({
-        greatTeam: 'Trust and clarity',
+        favouriteProduct: 'Notion',
       });
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
