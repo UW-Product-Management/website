@@ -43,20 +43,10 @@ export default function ApplySubmit() {
     state?.application?.consent?.dietaryRestrictions ||
     'None';
   const answers = {
-    productIdea:
-      application?.productIdea ||
-      application?.answers?.productIdea ||
-      state?.application?.answers?.productIdea ||
-      '',
-    greatTeam:
-      application?.greatTeam ||
-      application?.answers?.greatTeam ||
-      state?.application?.answers?.greatTeam ||
-      '',
-    productExperience:
-      application?.productExperience ||
-      application?.answers?.productExperience ||
-      state?.application?.answers?.productExperience ||
+    favouriteProduct:
+      application?.favouriteProduct ||
+      application?.answers?.favouriteProduct ||
+      state?.application?.answers?.favouriteProduct ||
       '',
   };
 

@@ -4,11 +4,7 @@ import { formatDateTime } from '../../portal/formatDateTime';
 import ReviewDecisionForm from './ReviewDecisionForm';
 import ReviewHistory from './ReviewHistory';
 
-const ANSWERS = [
-  ['Product idea', 'productIdea'],
-  ['What makes a great team', 'greatTeam'],
-  ['Product experience', 'productExperience'],
-];
+const ANSWERS = [['Favourite product', 'favouriteProduct']];
 
 export default function ReviewDetailPanel({
   application,

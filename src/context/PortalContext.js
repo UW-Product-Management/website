@@ -23,9 +23,7 @@ const defaultApplication = {
   id: null,
   program: '',
   yearOfStudy: '',
-  productIdea: '',
-  greatTeam: '',
-  productExperience: '',
+  favouriteProduct: '',
   mediaConsent: false,
   dietaryRestriction: '',
   dietaryRestrictions: '',
@@ -33,7 +31,7 @@ const defaultApplication = {
   specify: '',
   status: 'draft',
   submittedAt: null,
-  answers: { productIdea: '', greatTeam: '', productExperience: '' },
+  answers: { favouriteProduct: '' },
   consent: { mediaConsent: false, dietaryRestrictions: '', specify: '' },
 };
 
@@ -244,14 +242,8 @@ export function PortalProvider({ children, value: customValue }) {
       const merged = { ...current, ...fields };
       if (fields.answers) {
         merged.answers = { ...current.answers, ...fields.answers };
-        if (fields.answers.productIdea !== undefined) {
-          merged.productIdea = fields.answers.productIdea;
-        }
-        if (fields.answers.greatTeam !== undefined) {
-          merged.greatTeam = fields.answers.greatTeam;
-        }
-        if (fields.answers.productExperience !== undefined) {
-          merged.productExperience = fields.answers.productExperience;
+        if (fields.answers.favouriteProduct !== undefined) {
+          merged.favouriteProduct = fields.answers.favouriteProduct;
         }
       }
       if (fields.consent) {
@@ -279,13 +271,9 @@ export function PortalProvider({ children, value: customValue }) {
         answers: {
           ...defaultApplication.answers,
           ...(application.answers || {}),
-          productIdea:
-            application.productIdea || application.answers?.productIdea || '',
-          greatTeam:
-            application.greatTeam || application.answers?.greatTeam || '',
-          productExperience:
-            application.productExperience ||
-            application.answers?.productExperience ||
+          favouriteProduct:
+            application.favouriteProduct ||
+            application.answers?.favouriteProduct ||
             '',
         },
         consent: {

@@ -103,7 +103,7 @@ test('applicant can sign up, confirm, apply, and submit', async () => {
 
   const answers = await supabase
     .from('applications')
-    .update({ product_idea: 'Idea', great_team: 'Trust' })
+    .update({ favourite_product: 'Idea' })
     .eq('id', draft.data.id)
     .select()
     .single();

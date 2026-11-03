@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { PortalTextarea } from './PortalField';
-import { MAX_WORDS, countWords } from '../../portal/applicationQuestions';
+import { MAX_CHARACTERS } from '../../portal/applicationQuestions';
 
 export default function EditAnswerDialog({
   number,
@@ -31,11 +31,6 @@ export default function EditAnswerDialog({
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
-
-  const handleChange = (event) => {
-    const { value: nextValue } = event.target;
-    if (countWords(nextValue) <= MAX_WORDS) setValue(nextValue);
-  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -69,8 +64,9 @@ export default function EditAnswerDialog({
           label={`${number}. ${question}`}
           ref={textareaRef}
           value={value}
-          onChange={handleChange}
-          counter={`${countWords(value)}/${MAX_WORDS} words`}
+          onChange={(event) => setValue(event.target.value)}
+          maxLength={MAX_CHARACTERS}
+          counter={`${value.length}/${MAX_CHARACTERS} characters`}
           required
         />
         {errorMessage && (

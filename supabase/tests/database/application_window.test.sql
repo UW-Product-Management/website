@@ -11,10 +11,9 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
 insert into public.applications (
-  event_id, program, year_of_study, product_idea, great_team
+  event_id, program, year_of_study, favourite_product
 ) values (
-  'aaaaaaaa-0000-0000-0000-000000000001', 'Business', '2nd year',
-  'A campus food-waste tracker', 'Trust and curiosity'
+  'aaaaaaaa-0000-0000-0000-000000000001', 'Business', '2nd year', 'Notion'
 );
 
 do $$ begin perform set_config('test.application_id', (select id::text from public.applications), true); end $$;

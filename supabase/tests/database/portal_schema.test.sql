@@ -1,5 +1,5 @@
 begin;
-select plan(19);
+select plan(20);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('11111111-1111-1111-1111-111111111111', 'alex@test.local', '{"full_name":"Alex Chen"}'),
@@ -65,6 +65,12 @@ select throws_ok(
 );
 
 select throws_ok(
+  $$ update public.applications set favourite_product = repeat('a', 201) $$,
+  '23514', null,
+  'favourite product answers over 200 characters are rejected'
+);
+
+select throws_ok(
   $$ update public.applications set program = 'Underwater Basket Weaving' $$,
   '23514', null,
   'unknown programs are rejected'
@@ -83,7 +89,7 @@ select throws_ok(
 );
 
 update public.applications
-set product_idea = 'A campus food-waste tracker', great_team = 'Trust and curiosity'
+set favourite_product = 'Notion'
 where id = current_setting('test.application_id')::uuid;
 
 select is(

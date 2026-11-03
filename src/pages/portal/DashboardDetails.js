@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
 import PortalShell from '../../components/portal/PortalShell';
+import { QUESTIONS } from '../../portal/applicationQuestions';
 import '../../styles/portal/Portal.css';
 
 export default function DashboardDetails() {
@@ -18,20 +19,10 @@ export default function DashboardDetails() {
   const program = application?.program || state?.application?.program || '';
   const yearOfStudy =
     application?.yearOfStudy || state?.application?.yearOfStudy || '';
-  const productIdea =
-    application?.productIdea ||
-    application?.answers?.productIdea ||
-    state?.application?.answers?.productIdea ||
-    '';
-  const greatTeam =
-    application?.greatTeam ||
-    application?.answers?.greatTeam ||
-    state?.application?.answers?.greatTeam ||
-    '';
-  const productExperience =
-    application?.productExperience ||
-    application?.answers?.productExperience ||
-    state?.application?.answers?.productExperience ||
+  const favouriteProduct =
+    application?.favouriteProduct ||
+    application?.answers?.favouriteProduct ||
+    state?.application?.answers?.favouriteProduct ||
     '';
   const dietaryRestrictions =
     application?.dietaryRestrictions ||
@@ -51,16 +42,7 @@ export default function DashboardDetails() {
     { label: 'Year of study', value: yearOfStudy || '—' },
   ];
   const questionRows = [
-    {
-      label: '1. What product or service do you wish existed, and why?',
-      value: productIdea || '—',
-    },
-    { label: '2. What makes a great product team?', value: greatTeam || '—' },
-    {
-      label:
-        '3. What is one product you’ve worked on or contributed to, and what was your role?',
-      value: productExperience || '—',
-    },
+    { label: QUESTIONS[0].label, value: favouriteProduct || '—' },
   ];
 
   return (

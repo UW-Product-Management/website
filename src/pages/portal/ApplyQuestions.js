@@ -4,11 +4,7 @@ import { usePortal } from '../../context/PortalContext';
 import { hasSubmitted } from '../../portal/applicationStatus';
 import ApplyActions from '../../components/portal/ApplyActions';
 import { PortalTextarea } from '../../components/portal/PortalField';
-import {
-  MAX_WORDS,
-  QUESTIONS,
-  countWords,
-} from '../../portal/applicationQuestions';
+import { MAX_CHARACTERS, QUESTIONS } from '../../portal/applicationQuestions';
 import '../../styles/portal/Portal.css';
 
 export default function ApplyQuestions() {
@@ -17,48 +13,21 @@ export default function ApplyQuestions() {
 
   const isSubmitted = hasSubmitted(application) || Boolean(state?.submittedAt);
 
-  const initialProductIdea =
-    application?.productIdea ||
-    application?.answers?.productIdea ||
-    state?.application?.answers?.productIdea ||
-    '';
-  const initialGreatTeam =
-    application?.greatTeam ||
-    application?.answers?.greatTeam ||
-    state?.application?.answers?.greatTeam ||
+  const initialFavouriteProduct =
+    application?.favouriteProduct ||
+    application?.answers?.favouriteProduct ||
+    state?.application?.answers?.favouriteProduct ||
     '';
 
-  const initialProductExperience =
-    application?.productExperience ||
-    application?.answers?.productExperience ||
-    state?.application?.answers?.productExperience ||
-    '';
-
-  const [productIdea, setProductIdea] = useState(initialProductIdea);
-  const [greatTeam, setGreatTeam] = useState(initialGreatTeam);
-  const [productExperience, setProductExperience] = useState(
-    initialProductExperience,
+  const [favouriteProduct, setFavouriteProduct] = useState(
+    initialFavouriteProduct,
   );
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleAnswerChange = (setter) => (event) => {
-    const { value } = event.target;
-    if (countWords(value) <= MAX_WORDS) setter(value);
-  };
-
   useEffect(() => {
-    if (initialProductIdea) setProductIdea(initialProductIdea);
-  }, [initialProductIdea]);
-
-  useEffect(() => {
-    if (initialGreatTeam) setGreatTeam(initialGreatTeam);
-  }, [initialGreatTeam]);
-
-  useEffect(() => {
-    if (initialProductExperience)
-      setProductExperience(initialProductExperience);
-  }, [initialProductExperience]);
+    if (initialFavouriteProduct) setFavouriteProduct(initialFavouriteProduct);
+  }, [initialFavouriteProduct]);
 
   if (isSubmitted) {
     return <Navigate to="/portal/dashboard" replace />;
@@ -70,11 +39,7 @@ export default function ApplyQuestions() {
     setErrorMessage('');
 
     try {
-      const result = await saveDraft({
-        productIdea,
-        greatTeam,
-        productExperience,
-      });
+      const result = await saveDraft({ favouriteProduct });
       if (result?.error) {
         setErrorMessage(
           result.error.message || 'Failed to save question responses.',
@@ -94,8 +59,8 @@ export default function ApplyQuestions() {
     <>
       <h1>Fun Questions</h1>
       <p>
-        Show us your creativity! Answer the following questions (150 words max
-        each).
+        Show us your creativity! Answer the following question ({MAX_CHARACTERS}
+        characters max).
       </p>
       {errorMessage && (
         <div className="portal-apply__error" role="alert">
@@ -107,29 +72,12 @@ export default function ApplyQuestions() {
         <div className="portal-apply__scroll">
           <PortalTextarea
             id={QUESTIONS[0].id}
-            label={`1. ${QUESTIONS[0].label}`}
+            label={QUESTIONS[0].label}
             placeholder="Type your answer here..."
-            value={productIdea}
-            onChange={handleAnswerChange(setProductIdea)}
-            counter={`${countWords(productIdea)}/${MAX_WORDS} words`}
-            required
-          />
-          <PortalTextarea
-            id={QUESTIONS[1].id}
-            label={`2. ${QUESTIONS[1].label}`}
-            placeholder="Type your answer here..."
-            value={greatTeam}
-            onChange={handleAnswerChange(setGreatTeam)}
-            counter={`${countWords(greatTeam)}/${MAX_WORDS} words`}
-            required
-          />
-          <PortalTextarea
-            id={QUESTIONS[2].id}
-            label={`3. ${QUESTIONS[2].label}`}
-            placeholder="Type your answer here..."
-            value={productExperience}
-            onChange={handleAnswerChange(setProductExperience)}
-            counter={`${countWords(productExperience)}/${MAX_WORDS} words`}
+            value={favouriteProduct}
+            onChange={(event) => setFavouriteProduct(event.target.value)}
+            maxLength={MAX_CHARACTERS}
+            counter={`${favouriteProduct.length}/${MAX_CHARACTERS} characters`}
             required
           />
         </div>

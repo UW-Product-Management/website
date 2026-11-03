@@ -73,8 +73,7 @@ async function draftApplication(supabase) {
       event_id: event.id,
       program: 'Business',
       year_of_study: '2nd year',
-      product_idea: 'A campus food-waste tracker',
-      great_team: 'Trust and curiosity',
+      favourite_product: 'A campus food-waste tracker',
     })
     .select()
     .single();

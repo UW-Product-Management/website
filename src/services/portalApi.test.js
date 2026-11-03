@@ -361,8 +361,7 @@ describe('portalApi row & form mappings', () => {
       event_id: 'evt-1',
       program: 'Computer Science',
       year_of_study: '2nd year',
-      product_idea: 'Campus tracker',
-      great_team: 'High trust',
+      favourite_product: 'Campus tracker',
       media_consent: true,
       dietary_restriction: 'Vegetarian',
       dietary_details: 'No peanuts',
@@ -378,8 +377,7 @@ describe('portalApi row & form mappings', () => {
     expect(mapped.eventId).toBe('evt-1');
     expect(mapped.program).toBe('Computer Science');
     expect(mapped.yearOfStudy).toBe('2nd year');
-    expect(mapped.productIdea).toBe('Campus tracker');
-    expect(mapped.greatTeam).toBe('High trust');
+    expect(mapped.favouriteProduct).toBe('Campus tracker');
     expect(mapped.mediaConsent).toBe(true);
     expect(mapped.dietaryRestriction).toBe('Vegetarian');
     expect(mapped.dietaryRestrictions).toBe('Vegetarian');
@@ -387,11 +385,7 @@ describe('portalApi row & form mappings', () => {
     expect(mapped.specify).toBe('No peanuts');
     expect(mapped.status).toBe('submitted');
     expect(mapped.submittedAt).toBe('2026-10-01T12:00:00Z');
-    expect(mapped.answers).toEqual({
-      productIdea: 'Campus tracker',
-      greatTeam: 'High trust',
-      productExperience: '',
-    });
+    expect(mapped.answers).toEqual({ favouriteProduct: 'Campus tracker' });
     expect(mapped.consent).toEqual({
       mediaConsent: true,
       dietaryRestrictions: 'Vegetarian',
@@ -405,8 +399,7 @@ describe('portalApi row & form mappings', () => {
       yearOfStudy: '',
       dietaryRestrictions: '',
       dietaryDetails: '',
-      productIdea: 'Idea',
-      greatTeam: 'Team',
+      favouriteProduct: 'Notion',
       mediaConsent: true,
     };
 
@@ -415,8 +408,7 @@ describe('portalApi row & form mappings', () => {
     expect(row.year_of_study).toBeNull();
     expect(row.dietary_restriction).toBeNull();
     expect(row.dietary_details).toBeNull();
-    expect(row.product_idea).toBe('Idea');
-    expect(row.great_team).toBe('Team');
+    expect(row.favourite_product).toBe('Notion');
     expect(row.media_consent).toBe(true);
   });
 
@@ -430,10 +422,7 @@ describe('portalApi row & form mappings', () => {
 
   it('maps nested form fields from answers and consent objects', () => {
     const fields = {
-      answers: {
-        productIdea: 'Nested idea',
-        greatTeam: 'Nested team',
-      },
+      answers: { favouriteProduct: 'Nested answer' },
       consent: {
         mediaConsent: false,
         dietaryRestrictions: 'Vegan',
@@ -442,16 +431,15 @@ describe('portalApi row & form mappings', () => {
     };
 
     const row = mapApplicationFormToRow(fields);
-    expect(row.product_idea).toBe('Nested idea');
-    expect(row.great_team).toBe('Nested team');
+    expect(row.favourite_product).toBe('Nested answer');
     expect(row.media_consent).toBe(false);
     expect(row.dietary_restriction).toBe('Vegan');
     expect(row.dietary_details).toBe('Soy allergy');
   });
 
   it('only populates provided fields in row payload', () => {
-    const row = mapApplicationFormToRow({ productIdea: 'Solo idea' });
-    expect(row).toEqual({ product_idea: 'Solo idea' });
+    const row = mapApplicationFormToRow({ favouriteProduct: 'Solo answer' });
+    expect(row).toEqual({ favourite_product: 'Solo answer' });
     expect('program' in row).toBe(false);
     expect('year_of_study' in row).toBe(false);
   });
@@ -742,8 +730,7 @@ describe('portalApi application service', () => {
       mockChain.single.mockResolvedValueOnce({
         data: {
           id: 'existing-app-1',
-          product_idea: 'New idea',
-          great_team: 'Great synergy',
+          favourite_product: 'Notion',
           status: 'draft',
         },
         error: null,
@@ -752,19 +739,15 @@ describe('portalApi application service', () => {
       const result = await saveApplicationDraft({
         applicationId: 'existing-app-1',
         eventId: 'evt-1',
-        fields: {
-          productIdea: 'New idea',
-          greatTeam: 'Great synergy',
-        },
+        fields: { favouriteProduct: 'Notion' },
       });
 
       expect(mockChain.update).toHaveBeenCalledWith({
-        product_idea: 'New idea',
-        great_team: 'Great synergy',
+        favourite_product: 'Notion',
       });
       expect(mockChain.eq).toHaveBeenCalledWith('id', 'existing-app-1');
       expect(mockChain.insert).not.toHaveBeenCalled();
-      expect(result.data.productIdea).toBe('New idea');
+      expect(result.data.favouriteProduct).toBe('Notion');
     });
 
     it('returns error when insert fails', async () => {
