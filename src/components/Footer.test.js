@@ -55,9 +55,8 @@ describe('Footer', () => {
     expect(
       screen.getByText(/fostering the creative product management community/i),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'hello@uwpm.ca' })).toHaveAttribute(
-      'href',
-      'mailto:hello@uwpm.ca',
-    );
+    expect(
+      screen.getByRole('link', { name: 'uwpmwaterloo@gmail.com' }),
+    ).toHaveAttribute('href', 'mailto:uwpmwaterloo@gmail.com');
   });
 });

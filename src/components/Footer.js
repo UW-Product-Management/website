@@ -49,8 +49,11 @@ export default function Footer() {
             Fostering the creative product management community at the
             University of Waterloo.
           </p>
-          <a className="site-footer__email" href="mailto:hello@uwpm.ca">
-            hello@uwpm.ca
+          <a
+            className="site-footer__email"
+            href="mailto:uwpmwaterloo@gmail.com"
+          >
+            uwpmwaterloo@gmail.com
           </a>
         </div>
 
