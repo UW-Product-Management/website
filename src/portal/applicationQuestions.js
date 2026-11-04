@@ -4,6 +4,6 @@ export const QUESTIONS = [
   {
     field: 'favouriteProduct',
     id: 'question-favourite-product',
-    label: 'What is your favourite product?',
+    label: 'What is your favourite product and why?',
   },
 ];
