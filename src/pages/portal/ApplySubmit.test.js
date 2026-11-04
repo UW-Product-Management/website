@@ -78,7 +78,7 @@ describe('ApplySubmit', () => {
     expect(screen.getByText('2nd year')).toBeInTheDocument();
     expect(screen.getByText('Vegetarian')).toBeInTheDocument();
     expect(
-      screen.getByText('What is your favourite product?'),
+      screen.getByText('What is your favourite product and why?'),
     ).toBeInTheDocument();
     expect(screen.getByText('Campus grocery delivery')).toBeInTheDocument();
   });

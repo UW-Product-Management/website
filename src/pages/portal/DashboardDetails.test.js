@@ -62,7 +62,7 @@ describe('DashboardDetails', () => {
     expect(screen.getByText('Engineering')).toBeInTheDocument();
     expect(screen.getByText('3rd year')).toBeInTheDocument();
     expect(
-      screen.getByText('What is your favourite product?'),
+      screen.getByText('What is your favourite product and why?'),
     ).toBeInTheDocument();
     expect(screen.getByText('Smart Campus Map')).toBeInTheDocument();
     expect(screen.getByText('Gluten-free')).toBeInTheDocument();
