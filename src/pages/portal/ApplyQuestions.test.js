@@ -61,12 +61,12 @@ describe('ApplyQuestions', () => {
     ).toBeInTheDocument();
   });
 
-  it('limits the answer to 200 characters', () => {
+  it('limits the answer to 300 characters', () => {
     renderApplyQuestions();
 
     expect(
       screen.getByLabelText(/what is your favourite product/i),
-    ).toHaveAttribute('maxLength', '200');
+    ).toHaveAttribute('maxLength', '300');
   });
 
   it('displays the character count for the saved answer', () => {
@@ -78,7 +78,7 @@ describe('ApplyQuestions', () => {
       },
     });
 
-    expect(screen.getByText('6/200 characters')).toBeInTheDocument();
+    expect(screen.getByText('6/300 characters')).toBeInTheDocument();
   });
 
   it('saves questions draft and navigates to consent on next', async () => {

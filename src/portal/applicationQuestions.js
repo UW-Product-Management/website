@@ -1,4 +1,4 @@
-export const MAX_CHARACTERS = 200;
+export const MAX_CHARACTERS = 300;
 
 export const QUESTIONS = [
   {

@@ -33,7 +33,7 @@ export const PORTAL_TIPS = {
 export function getPortalTip(step, event) {
   if (step === 2) {
     return event?.applications_close_at
-      ? `ProdCon application deadline is ${formatDeadline(
+      ? `ProdCon application deadline is extended to ${formatDeadline(
           event.applications_close_at,
         )}, don't forget!!`
       : "Keep an eye on the ProdCon application deadline, don't forget!!";

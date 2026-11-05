@@ -27,7 +27,9 @@ describe('PortalShell', () => {
   it('shows the deadline from the event window in the sidebar tip', () => {
     renderShell(openEvent);
     expect(
-      screen.getByText(/application deadline is November 2nd @ 11:59PM/i),
+      screen.getByText(
+        /application deadline is extended to November 2nd @ 11:59PM/i,
+      ),
     ).toBeInTheDocument();
   });
 
