@@ -59,7 +59,7 @@ export default function ApplyQuestions() {
     <>
       <h1>Fun Questions</h1>
       <p>
-        Show us your creativity! Answer the following question ({MAX_CHARACTERS}
+        Show us your creativity! Answer the following question ({MAX_CHARACTERS}{' '}
         characters max).
       </p>
       {errorMessage && (

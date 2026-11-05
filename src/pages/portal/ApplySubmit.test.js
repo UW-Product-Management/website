@@ -149,7 +149,7 @@ describe('ApplySubmit', () => {
     expect(within(dialog).getByRole('textbox')).toHaveValue(
       'Campus grocery delivery',
     );
-    expect(within(dialog).getByText('23/200 characters')).toBeInTheDocument();
+    expect(within(dialog).getByText('23/300 characters')).toBeInTheDocument();
   });
 
   it('saves only the edited answer and closes the dialog', async () => {
