@@ -65,9 +65,9 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ update public.applications set favourite_product = repeat('a', 201) $$,
+  $$ update public.applications set favourite_product = repeat('a', 301) $$,
   '23514', null,
-  'favourite product answers over 200 characters are rejected'
+  'favourite product answers over 300 characters are rejected'
 );
 
 select throws_ok(
