@@ -36,6 +36,7 @@ export default function ReviewTable({
             const latest = application.reviews?.[0];
             const label = application.fullName || application.email;
             const isSelected = selectedId === application.id;
+            const detailRowId = `review-detail-${application.id}`;
             return (
               <React.Fragment key={application.id}>
                 <tr
@@ -76,15 +77,18 @@ export default function ReviewTable({
                       type="button"
                       className="portal-button portal-button--outline"
                       aria-label={`Review ${label}`}
-                      aria-pressed={isSelected}
-                      onClick={() => onSelect(application.id)}
+                      aria-expanded={isSelected}
+                      aria-controls={isSelected ? detailRowId : undefined}
+                      onClick={() =>
+                        onSelect(isSelected ? null : application.id)
+                      }
                     >
                       Review
                     </button>
                   </td>
                 </tr>
                 {isSelected && (
-                  <tr className="portal-review__detail-row">
+                  <tr id={detailRowId} className="portal-review__detail-row">
                     <td colSpan={COLUMN_COUNT}>
                       <ReviewDetailPanel
                         application={application}
