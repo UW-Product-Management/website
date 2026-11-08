@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import ManageAdminsPanel from '../../components/portal/ManageAdminsPanel';
 import PortalHeader from '../../components/portal/PortalHeader';
 import ReleaseResultsPanel from '../../components/portal/ReleaseResultsPanel';
-import ReviewDetailPanel from '../../components/portal/ReviewDetailPanel';
 import ReviewTable from '../../components/portal/ReviewTable';
 import { usePortal } from '../../context/PortalContext';
 import { STATUS_LABELS } from '../../portal/applicationStatus';
@@ -59,8 +58,6 @@ export default function OrganizerReview() {
         : applications.filter((a) => a.status === statusFilter),
     [applications, statusFilter],
   );
-
-  const selectedApplication = applications.find((a) => a.id === selectedId);
 
   const handleDecide = useCallback(async (applicationId, decision, note) => {
     setPendingId(applicationId);
@@ -168,16 +165,9 @@ export default function OrganizerReview() {
             applications={visibleApplications}
             selectedId={selectedId}
             onSelect={setSelectedId}
-          />
-        )}
-        {selectedApplication && (
-          <ReviewDetailPanel
-            application={selectedApplication}
-            isPending={pendingId === selectedApplication.id}
-            onDecide={(decision, note) =>
-              handleDecide(selectedApplication.id, decision, note)
-            }
-            onClose={() => setSelectedId(null)}
+            pendingId={pendingId}
+            onDecide={handleDecide}
+            onCloseDetail={() => setSelectedId(null)}
           />
         )}
       </section>
