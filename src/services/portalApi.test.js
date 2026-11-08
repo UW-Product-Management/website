@@ -27,6 +27,9 @@ import {
   DECISION_EMAIL_ERRORS,
   approveDecisionEmails,
   previewDecisionEmails,
+  listEmailAudience,
+  createCustomEmail,
+  CUSTOM_EMAIL_ERRORS,
 } from './portalApi';
 
 describe('portalApi auth service', () => {
@@ -1081,5 +1084,113 @@ describe('organizer management', () => {
       target_user_id: 'u2',
     });
     expect(error).toBeNull();
+  });
+});
+
+describe('custom email service', () => {
+  const pagedResult = (result) => {
+    const chain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      range: jest.fn(() => Promise.resolve(result)),
+    };
+    return chain;
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('groups every account by its application and decision', async () => {
+    supabase.from
+      .mockReturnValueOnce(
+        pagedResult({
+          data: [
+            { id: 'u1', full_name: 'Ada', email: 'ada@example.com' },
+            { id: 'u2', full_name: 'Bo', email: 'bo@example.com' },
+          ],
+          error: null,
+        }),
+      )
+      .mockReturnValueOnce(
+        pagedResult({
+          data: [{ id: 'a2', user_id: 'u2', status: 'submitted' }],
+          error: null,
+        }),
+      )
+      .mockReturnValueOnce(
+        pagedResult({
+          data: [{ application_id: 'a2', decision: 'waitlisted' }],
+          error: null,
+        }),
+      );
+
+    const result = await listEmailAudience('evt-1');
+
+    expect(result.error).toBeNull();
+    expect(result.data).toEqual([
+      {
+        userId: 'u1',
+        fullName: 'Ada',
+        email: 'ada@example.com',
+        group: 'no_application',
+      },
+      {
+        userId: 'u2',
+        fullName: 'Bo',
+        email: 'bo@example.com',
+        group: 'waitlisted',
+      },
+    ]);
+  });
+
+  it('returns the error when a table cannot be read', async () => {
+    supabase.from
+      .mockReturnValueOnce(pagedResult({ data: [], error: null }))
+      .mockReturnValueOnce(
+        pagedResult({ data: null, error: { message: 'denied' } }),
+      )
+      .mockReturnValueOnce(pagedResult({ data: [], error: null }));
+
+    const result = await listEmailAudience('evt-1');
+
+    expect(result).toEqual({ data: [], error: { message: 'denied' } });
+  });
+
+  it('invokes the function and maps error codes to friendly copy', async () => {
+    supabase.functions.invoke.mockResolvedValueOnce({
+      data: null,
+      error: {
+        context: {
+          json: () => Promise.resolve({ error: 'recipients_changed' }),
+        },
+      },
+    });
+
+    const result = await createCustomEmail('evt-1', {
+      subject: 'Hi',
+      body: 'Hello',
+      recipientIds: ['u1'],
+      confirmation: 'SEND 1',
+    });
+
+    expect(supabase.functions.invoke).toHaveBeenCalledWith(
+      'send-custom-email',
+      {
+        body: {
+          action: 'create',
+          eventId: 'evt-1',
+          subject: 'Hi',
+          body: 'Hello',
+          recipientIds: ['u1'],
+          confirmation: 'SEND 1',
+        },
+      },
+    );
+    expect(result.error).toEqual({
+      code: 'recipients_changed',
+      message: CUSTOM_EMAIL_ERRORS.recipients_changed,
+    });
   });
 });

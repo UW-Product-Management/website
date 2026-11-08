@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { buildAudience } from '../portal/emailRecipients';
 
 function getOrigin() {
   if (
@@ -52,6 +53,26 @@ export const ORGANIZER_ERRORS = {
   already_organizer: 'That person is already an admin.',
   cannot_remove_self: 'You cannot remove your own admin access.',
   organizer_not_found: 'That person is not an admin.',
+};
+
+export const CUSTOM_EMAIL_ERRORS = {
+  not_organizer: 'Only admins can send emails.',
+  content_required: 'Add a subject and a message.',
+  content_too_long:
+    'Subjects can be at most 200 characters and messages at most 10000.',
+  no_recipients: 'Choose at least one recipient.',
+  invalid_recipients: 'The recipient list is invalid. Refresh and try again.',
+  too_many_recipients: 'You can email at most 2000 people at once.',
+  recipients_changed:
+    'Some recipients no longer have an account. Refresh the list and confirm again.',
+  confirmation_mismatch: 'The confirmation text does not match.',
+  run_expired: 'This send expired. Confirm and send again.',
+  run_finished: 'This email has already been sent to everyone.',
+  mode_changed: 'The email environment changed. Confirm and send again.',
+  email_environment_not_configured:
+    'Email is not configured for this environment (set EMAIL_ENV or EMAIL_SANDBOX_REDIRECT).',
+  no_email_transport_configured: 'No email provider is configured.',
+  send_failed: 'Sending failed. Nothing was lost; try again.',
 };
 
 export const DRAFT_ERRORS = {
@@ -549,3 +570,76 @@ export async function removeOrganizer(userId) {
   });
   return { error: error ? mapOrganizerError(error) : null };
 }
+
+// PostgREST caps a response at max_rows (1000), so larger tables are paged.
+const PAGE_SIZE = 1000;
+
+async function selectAll(buildQuery) {
+  const rows = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await buildQuery().range(
+      from,
+      from + PAGE_SIZE - 1,
+    );
+    if (error) return { data: [], error };
+    rows.push(...(data || []));
+    if ((data?.length ?? 0) < PAGE_SIZE) return { data: rows, error: null };
+  }
+}
+
+export async function listEmailAudience(eventId) {
+  const [profiles, applications, decisions] = await Promise.all([
+    selectAll(() =>
+      supabase.from('profiles').select('id, full_name, email').order('id'),
+    ),
+    selectAll(() =>
+      supabase
+        .from('applications')
+        .select('id, user_id, status')
+        .eq('event_id', eventId)
+        .order('id'),
+    ),
+    selectAll(() =>
+      supabase
+        .from('application_decisions')
+        .select('application_id, decision')
+        .eq('event_id', eventId)
+        .order('application_id'),
+    ),
+  ]);
+
+  const error = profiles.error || applications.error || decisions.error;
+  if (error) return { data: [], error };
+  return {
+    data: buildAudience(profiles.data, applications.data, decisions.data),
+    error: null,
+  };
+}
+
+async function invokeCustomEmail(body) {
+  const { data, error } = await supabase.functions.invoke('send-custom-email', {
+    body,
+  });
+  if (!error) return { data, error: null };
+
+  const payload = await error.context?.json?.().catch(() => null);
+  const code = payload?.error || 'send_failed';
+  return {
+    data: null,
+    error: {
+      code,
+      message: CUSTOM_EMAIL_ERRORS[code] || CUSTOM_EMAIL_ERRORS.send_failed,
+    },
+  };
+}
+
+export const getCustomEmailMode = () => invokeCustomEmail({ action: 'mode' });
+
+export const sendTestCustomEmail = ({ subject, body }) =>
+  invokeCustomEmail({ action: 'test', subject, body });
+
+export const createCustomEmail = (eventId, options) =>
+  invokeCustomEmail({ action: 'create', eventId, ...options });
+
+export const sendCustomEmailBatch = (campaignId) =>
+  invokeCustomEmail({ action: 'send', campaignId });

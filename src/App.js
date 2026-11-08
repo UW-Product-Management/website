@@ -26,6 +26,7 @@ import ApplyLayout from './components/portal/ApplyLayout';
 import RequireAuth from './components/portal/RequireAuth';
 import RequireOrganizer from './components/portal/RequireOrganizer';
 import OrganizerReview from './pages/portal/OrganizerReview';
+import OrganizerMessages from './pages/portal/OrganizerMessages';
 
 function PortalLayout() {
   return (
@@ -100,6 +101,16 @@ function App() {
               <RequireAuth>
                 <RequireOrganizer>
                   <OrganizerReview />
+                </RequireOrganizer>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/portal/admin/messages"
+            element={
+              <RequireAuth>
+                <RequireOrganizer>
+                  <OrganizerMessages />
                 </RequireOrganizer>
               </RequireAuth>
             }
