@@ -141,7 +141,15 @@ describe('OrganizerReview', () => {
     fireEvent.change(screen.getByLabelText(/internal note/i), {
       target: { value: 'Strong pitch' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Accept' }));
+    fireEvent.click(
+      screen
+        .getByRole('complementary', { name: 'Review Alex Chen' })
+        .querySelector('button.portal-button--primary'),
+    );
+
+    expect(reviewApplication).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm accept' }));
 
     expect(reviewApplication).toHaveBeenCalledWith(
       'app-1',
@@ -151,7 +159,7 @@ describe('OrganizerReview', () => {
     const panel = await screen.findByRole('complementary');
     await waitFor(() => expect(panel).toHaveTextContent('Pat Admin'));
     expect(panel).toHaveTextContent('Strong pitch');
-    expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
+    expect(panel.querySelector('button.portal-button--primary')).toBeDisabled();
     expect(screen.getByLabelText(/internal note/i)).toHaveValue('');
   });
 

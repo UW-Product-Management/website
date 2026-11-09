@@ -126,6 +126,41 @@ export default function OrganizerReview() {
 
         <ManageAdminsPanel />
 
+        <div className="portal-review__actions">
+          <button
+            type="button"
+            className={`portal-button ${
+              statusFilter === 'all'
+                ? 'portal-button--primary'
+                : 'portal-button--outline'
+            }`}
+            aria-pressed={statusFilter === 'all'}
+            onClick={() => {
+              setStatusFilter('all');
+              setSelectedId(null);
+            }}
+          >
+            All Applications ({applications.length})
+          </button>
+
+          <button
+            type="button"
+            className={`portal-button ${
+              statusFilter === 'accepted'
+                ? 'portal-button--primary'
+                : 'portal-button--outline'
+            }`}
+            aria-pressed={statusFilter === 'accepted'}
+            onClick={() => {
+              setStatusFilter('accepted');
+              setSelectedId(null);
+            }}
+          >
+            Accepted Participants (
+            {applications.filter((app) => app.status === 'accepted').length})
+          </button>
+        </div>
+
         <div className="portal-review__toolbar">
           <label htmlFor="review-status-filter">
             Status
@@ -168,6 +203,10 @@ export default function OrganizerReview() {
             applications={visibleApplications}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            onAccept={(applicationId) =>
+              handleDecide(applicationId, 'accepted', '')
+            }
+            pendingId={pendingId}
           />
         )}
         {selectedApplication && (

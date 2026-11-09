@@ -11,6 +11,8 @@ export default function ReviewTable({
   applications = [],
   selectedId = null,
   onSelect,
+  onAccept,
+  pendingId = null,
 }) {
   return (
     <div className="portal-review__table-wrapper">
@@ -67,15 +69,36 @@ export default function ReviewTable({
                   )}
                 </td>
                 <td>
-                  <button
-                    type="button"
-                    className="portal-button portal-button--outline"
-                    aria-label={`Review ${label}`}
-                    aria-pressed={selectedId === application.id}
-                    onClick={() => onSelect(application.id)}
-                  >
-                    Review
-                  </button>
+                  <div className="portal-review__actions">
+                    <button
+                      type="button"
+                      className="portal-button portal-button--outline"
+                      aria-label={`Review ${label}`}
+                      aria-pressed={selectedId === application.id}
+                      onClick={() => onSelect(application.id)}
+                    >
+                      Review
+                    </button>
+
+                    <button
+                      type="button"
+                      className="portal-button portal-button--primary"
+                      disabled={
+                        application.status === 'accepted' || pendingId !== null
+                      }
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Are you sure you want to accept ${label}? No email will be sent yet.`,
+                          )
+                        ) {
+                          onAccept(application.id);
+                        }
+                      }}
+                    >
+                      {pendingId === application.id ? 'Accepting...' : 'Accept'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             );
