@@ -10,6 +10,9 @@ export type Decision = 'accepted' | 'waitlisted' | 'rejected';
 export const DECISIONS: Decision[] = ['accepted', 'waitlisted', 'rejected'];
 
 const DASHBOARD_URL = `${SITE_URL}/portal/dashboard`;
+// Applicants are told the 11th while events.confirm_by runs to the end of the
+// 12th, so a late confirmation still lands rather than silently failing.
+const CONFIRM_DEADLINE = 'November 11th @ 11:59PM';
 const DISCORD_INVITE_URL = 'https://discord.gg/EwkG8T9eff';
 const TEAM_FORM_URL = 'https://docs.google.com/forms/u/1/d/e/1FAIpQLScXDfyw2-SJvgZH706SxyCeifZDfYbKkZhq2NzWDM8bdWSrDg/viewform?usp=send_form';
 
@@ -42,7 +45,7 @@ const COPY: Record<Decision, Copy> = {
       'Please note that ProdCon is in person this year and we will not be offering travel reimbursements.',
       'To confirm your spot and prepare for the event, please complete the following:',
       '1. Confirm your spot on the dashboard',
-      `Please head over to your ProdCon Portal Dashboard (${DASHBOARD_URL}) and click confirm so that we know that you will be attending!`,
+      `Please head over to your ProdCon Portal Dashboard (${DASHBOARD_URL}) and click confirm by ${CONFIRM_DEADLINE} so that we know that you will be attending!`,
       '2. Join our Discord server',
       `Please join the ProdCon Discord Server (${DISCORD_INVITE_URL}) to stay updated on event announcements and logistics. Please set your Discord nickname as your name.`,
       '3. Form your teams',
@@ -69,7 +72,7 @@ const COPY: Record<Decision, Copy> = {
           `<strong>1. Confirm your spot on the dashboard</strong><br />Please head over to your ${link(
             DASHBOARD_URL,
             'ProdCon Portal Dashboard',
-          )} and click confirm so that we know that you will be attending!`,
+          )} and click confirm by <strong>${CONFIRM_DEADLINE}</strong> so that we know that you will be attending!`,
         ),
         p(
           `<strong>2. Join our Discord server</strong><br />Please join the ${link(
