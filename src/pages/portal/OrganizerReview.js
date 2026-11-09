@@ -6,7 +6,10 @@ import ReleaseResultsPanel from '../../components/portal/ReleaseResultsPanel';
 import ReviewDetailPanel from '../../components/portal/ReviewDetailPanel';
 import ReviewTable from '../../components/portal/ReviewTable';
 import { usePortal } from '../../context/PortalContext';
-import { STATUS_LABELS } from '../../portal/applicationStatus';
+import {
+  STATUS_LABELS,
+  isConfirmedAttendee,
+} from '../../portal/applicationStatus';
 import { applicationsToCsv } from '../../portal/applicationsCsv';
 import {
   listApplicationsForReview,
@@ -52,13 +55,16 @@ export default function OrganizerReview() {
     };
   }, [eventId, status]);
 
-  const visibleApplications = useMemo(
-    () =>
-      statusFilter === 'all'
-        ? applications
-        : applications.filter((a) => a.status === statusFilter),
-    [applications, statusFilter],
+  const confirmedApplications = useMemo(
+    () => applications.filter(isConfirmedAttendee),
+    [applications],
   );
+
+  const visibleApplications = useMemo(() => {
+    if (statusFilter === 'all') return applications;
+    if (statusFilter === 'confirmed') return confirmedApplications;
+    return applications.filter((a) => a.status === statusFilter);
+  }, [applications, confirmedApplications, statusFilter]);
 
   const selectedApplication = applications.find((a) => a.id === selectedId);
 
@@ -159,6 +165,22 @@ export default function OrganizerReview() {
             Accepted Participants (
             {applications.filter((app) => app.status === 'accepted').length})
           </button>
+
+          <button
+            type="button"
+            className={`portal-button ${
+              statusFilter === 'confirmed'
+                ? 'portal-button--primary'
+                : 'portal-button--outline'
+            }`}
+            aria-pressed={statusFilter === 'confirmed'}
+            onClick={() => {
+              setStatusFilter('confirmed');
+              setSelectedId(null);
+            }}
+          >
+            Confirmed Attending ({confirmedApplications.length})
+          </button>
         </div>
 
         <div className="portal-review__toolbar">
@@ -170,6 +192,7 @@ export default function OrganizerReview() {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="all">All</option>
+              <option value="confirmed">Confirmed attending</option>
               {Object.entries(STATUS_LABELS)
                 .filter(([key]) => key !== 'draft')
                 .map(([key, label]) => (
