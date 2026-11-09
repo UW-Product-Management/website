@@ -25,7 +25,7 @@ export interface Message {
 }
 
 export const SITE_URL = (
-  Deno.env.get('SITE_URL') ?? 'https://uwaterloopm.com'
+  Deno.env.get('SITE_URL') ?? 'https://uwproduct.com'
 ).replace(/\/+$/, '');
 export const LOGO_URL = `${SITE_URL}/email/uwpm-logo.png`;
 export const STICKER_URL = `${SITE_URL}/email/hex-sticker.png`;

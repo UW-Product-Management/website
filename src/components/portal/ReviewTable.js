@@ -1,19 +1,23 @@
 import React from 'react';
 import {
+  CONFIRMATION_LABELS,
   EMAIL_STATE_LABELS,
   STATUS_LABELS,
+  getConfirmation,
   getEmailState,
+  isAccepted,
 } from '../../portal/applicationStatus';
 import { formatDateTime } from '../../portal/formatDateTime';
 import ReviewDetailPanel from './ReviewDetailPanel';
 import '../../styles/portal/PortalReview.css';
 
-const COLUMN_COUNT = 6;
+const COLUMN_COUNT = 7;
 
 export default function ReviewTable({
   applications = [],
   selectedId = null,
   onSelect,
+  onAccept,
   pendingId = null,
   onDecide,
   onCloseDetail,
@@ -26,6 +30,7 @@ export default function ReviewTable({
             <th scope="col">Applicant</th>
             <th scope="col">Program</th>
             <th scope="col">Status</th>
+            <th scope="col">Attending</th>
             <th scope="col">Result email</th>
             <th scope="col">Last reviewed</th>
             <th scope="col">Review</th>
@@ -59,6 +64,11 @@ export default function ReviewTable({
                   <td>
                     {STATUS_LABELS[application.status] || application.status}
                   </td>
+                  <td>
+                    {isAccepted(application)
+                      ? CONFIRMATION_LABELS[getConfirmation(application)]
+                      : '—'}
+                  </td>
                   <td>{EMAIL_STATE_LABELS[getEmailState(application)]}</td>
                   <td>
                     {latest ? (
@@ -73,18 +83,42 @@ export default function ReviewTable({
                     )}
                   </td>
                   <td>
-                    <button
-                      type="button"
-                      className="portal-button portal-button--outline"
-                      aria-label={`Review ${label}`}
-                      aria-expanded={isSelected}
-                      aria-controls={isSelected ? detailRowId : undefined}
-                      onClick={() =>
-                        onSelect(isSelected ? null : application.id)
-                      }
-                    >
-                      Review
-                    </button>
+                    <div className="portal-review__actions">
+                      <button
+                        type="button"
+                        className="portal-button portal-button--outline"
+                        aria-label={`Review ${label}`}
+                        aria-expanded={isSelected}
+                        aria-controls={isSelected ? detailRowId : undefined}
+                        onClick={() =>
+                          onSelect(isSelected ? null : application.id)
+                        }
+                      >
+                        Review
+                      </button>
+
+                      {!isAccepted(application) && (
+                        <button
+                          type="button"
+                          className="portal-button portal-button--primary"
+                          aria-label={`Accept ${label}`}
+                          disabled={pendingId !== null}
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Are you sure you want to accept ${label}? No email will be sent yet.`,
+                              )
+                            ) {
+                              onAccept(application.id);
+                            }
+                          }}
+                        >
+                          {pendingId === application.id
+                            ? 'Accepting...'
+                            : 'Accept'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
                 {isSelected && (

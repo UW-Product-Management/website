@@ -8,10 +8,25 @@ export type Decision = 'accepted' | 'waitlisted' | 'rejected';
 
 export const DECISIONS: Decision[] = ['accepted', 'waitlisted', 'rejected'];
 
+const DISCORD_INVITE_URL = 'https://discord.gg/EwkG8T9eff';
+const TEAM_FORM_URL = 'https://docs.google.com/forms/u/1/d/e/1FAIpQLScXDfyw2-SJvgZH706SxyCeifZDfYbKkZhq2NzWDM8bdWSrDg/viewform?usp=send_form';
+
+const PARAGRAPH_STYLE = 'margin:0 0 20px;font-size:16px;line-height:1.6;color:#535361';
+const HIGHLIGHT_STYLE = 'background-color:#fff3a3';
+
+const p = (inner: string) =>
+  `                <p style="${PARAGRAPH_STYLE}">${inner}</p>`;
+
+const link = (href: string, label: string) =>
+  `<a href="${href}" style="color:#f05c5b;text-decoration:underline">${label}</a>`;
+
 interface Copy {
   subject: (eventName: string) => string;
   heading: string;
+  // The plain-text body, and the HTML body too unless bodyHtml overrides it.
   paragraphs: (eventName: string) => string[];
+  // Accepted needs bold, a highlight and links, which escapeHtml would eat.
+  bodyHtml?: (eventName: string, name: string) => string;
 }
 
 // Event logistics (dates, venue, RSVP deadline) are not stored anywhere, so the
@@ -21,9 +36,49 @@ const COPY: Record<Decision, Copy> = {
     subject: (eventName) => `You're in for ${eventName}!`,
     heading: "You're in!",
     paragraphs: (eventName) => [
-      `Congratulations! We're excited to let you know that your application to ${eventName} has been accepted.`,
-      "We'll email you the schedule and everything you need to know before the event.",
+      `Congratulations! You're officially in for ${eventName}! 🎉 We're excited to have you join us!`,
+      'Please note that ProdCon is in person this year and we will not be offering travel reimbursements.',
+      'To confirm your spot and prepare for the event, please complete the following:',
+      '1. Join our Discord server',
+      `Please join the ProdCon Discord Server (${DISCORD_INVITE_URL}) to accept your invitation and stay updated on event announcements and logistics. Please set your Discord nickname as your name.`,
+      '2. Form your teams',
+      'Teams should consist of 4 members (teams of 3 are also acceptable, but 4 is preferred to allow for better workload distribution and collaboration).',
+      `Please fill out this Team Formation Form (${TEAM_FORM_URL}) with your team details.`,
+      "If you don't have a team yet, no worries! You can connect with other participants and form teams through the designated channel in our Discord server.",
+      `We look forward to seeing you all at ${eventName}! Best of luck, and get ready for an exciting day of product management!`,
     ],
+    bodyHtml: (eventName, name) =>
+      [
+        p(`Hi ${escapeHtml(name)},`),
+        p(
+          `<strong>Congratulations! You're officially in for ${escapeHtml(
+            eventName,
+          )}! 🎉</strong> We're excited to have you join us!`,
+        ),
+        p(
+          `<span style="${HIGHLIGHT_STYLE}">Please note that ProdCon is <strong>in person</strong> this year and we will <strong>not</strong> be offering travel reimbursements.</span>`,
+        ),
+        p(
+          'To confirm your spot and prepare for the event, please complete the following:',
+        ),
+        p(
+          `<strong>1. Join our Discord server</strong><br />Please join the ${link(
+            DISCORD_INVITE_URL,
+            'ProdCon Discord Server',
+          )} to accept your invitation and stay updated on event announcements and logistics. Please set your Discord nickname as your name.`,
+        ),
+        p(
+          `<strong>2. Form your teams</strong><br />Teams should consist of 4 members (teams of 3 are also acceptable, but 4 is preferred to allow for better workload distribution and collaboration).<br /><br />Please fill out this ${link(
+            TEAM_FORM_URL,
+            'Team Formation Form',
+          )} with your team details.<br /><br />If you don't have a team yet, no worries! You can connect with other participants and form teams through the designated channel in our Discord server.`,
+        ),
+        p(
+          `We look forward to seeing you all at ${escapeHtml(
+            eventName,
+          )}! Best of luck, and get ready for an exciting day of product management!`,
+        ),
+      ].join('\n'),
   },
   waitlisted: {
     subject: (eventName) => `You're on the ${eventName} waitlist`,
@@ -60,14 +115,16 @@ export function buildDecisionMessage(
 
   const html = renderEmailFrame(
     copy.heading,
-    paragraphs
-      .map(
-        (paragraph) =>
-          `                <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#535361">${escapeHtml(
-            paragraph,
-          )}</p>`,
-      )
-      .join('\n'),
+    copy.bodyHtml
+      ? copy.bodyHtml(eventName, name)
+      : paragraphs
+          .map(
+            (paragraph) =>
+              `                <p style="${PARAGRAPH_STYLE}">${escapeHtml(
+                paragraph,
+              )}</p>`,
+          )
+          .join('\n'),
   );
 
   return { to, subject: copy.subject(eventName), html, text };

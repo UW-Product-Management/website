@@ -21,6 +21,17 @@ export const INSTAGRAM = {
   href: 'https://www.instagram.com/uwaterloopm/',
 };
 
+// Applicants are told the 11th while events.confirm_by runs to the end of the
+// 12th, so a late confirmation still lands rather than silently failing.
+export const EVENT_DETAILS = {
+  date: 'November 14, 2026',
+  confirmDeadline: 'November 11th @ 11:59PM',
+  venue: {
+    name: "Builder's Club Kitchener",
+    href: 'https://maps.app.goo.gl/uMVW9YhPGMsHzzMq9',
+  },
+};
+
 const GOOD_PRODUCTS_TIP =
   'Good products solve problems. Great products make you wonder how you lived without them.';
 

@@ -23,6 +23,12 @@ export const SUBMISSION_ERRORS = {
     'Only submitted applications can be given a decision.',
   decision_unchanged: 'The application already has that decision.',
   note_too_long: 'Review notes can be at most 2000 characters.',
+  not_accepted: 'Only accepted applicants can confirm a spot.',
+  confirmation_closed: 'The deadline to confirm your spot has passed.',
+  logistics_not_acknowledged:
+    'Please acknowledge the event logistics before confirming.',
+  confirmation_unchanged: 'Your spot is already in that state.',
+  invalid_confirmation: 'That confirmation is not recognised.',
 };
 
 export const DECISION_EMAIL_ERRORS = {
@@ -109,6 +115,8 @@ export function mapApplicationFromRow(row) {
     dietaryDetails: row.dietary_details || '',
     specify: row.dietary_details || '',
     status: row.status,
+    confirmation: row.confirmation || 'pending',
+    confirmationUpdatedAt: row.confirmation_updated_at,
     submittedAt: row.submitted_at,
     reviewedAt: row.reviewed_at,
     reviewedBy: row.reviewed_by || null,
@@ -253,7 +261,9 @@ export async function updatePassword(password) {
 export async function getEvent(slug) {
   return supabase
     .from('events')
-    .select('id, slug, name, applications_open_at, applications_close_at')
+    .select(
+      'id, slug, name, applications_open_at, applications_close_at, confirm_by',
+    )
     .eq('slug', slug)
     .maybeSingle();
 }
@@ -370,6 +380,34 @@ export async function submitApplication(applicationId) {
 
 export async function sendApplicationReceivedEmail() {
   return supabase.functions.invoke('send-application-received');
+}
+
+export async function setApplicationConfirmation(
+  applicationId,
+  confirmation,
+  acknowledged = false,
+) {
+  const { data, error } = await supabase.rpc('set_application_confirmation', {
+    target_application_id: applicationId,
+    confirmation,
+    acknowledged,
+  });
+
+  if (error) {
+    return {
+      data: null,
+      error: {
+        ...error,
+        code: error.message,
+        message: SUBMISSION_ERRORS[error.message] || error.message,
+      },
+    };
+  }
+
+  return {
+    data: data ? mapApplicationFromRow(data) : null,
+    error: null,
+  };
 }
 
 export function mapReviewLogRow(row) {

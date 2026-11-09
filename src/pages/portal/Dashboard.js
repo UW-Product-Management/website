@@ -1,11 +1,18 @@
 import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { usePortal } from '../../context/PortalContext';
-import { hasSubmitted, STATUS_LABELS } from '../../portal/applicationStatus';
+import {
+  getConfirmation,
+  hasSubmitted,
+  isAccepted,
+  isConfirmationOpen,
+  STATUS_LABELS,
+} from '../../portal/applicationStatus';
 import PortalShell from '../../components/portal/PortalShell';
 import PortalSummary from '../../components/portal/PortalSummary';
+import AcceptedPanel from '../../components/portal/AcceptedPanel';
 import { CheckIcon } from '../../components/portal/PortalIcons';
-import { DASHBOARD_MASCOTS } from '../../data/portalContent';
+import { DASHBOARD_MASCOTS, EVENT_DETAILS } from '../../data/portalContent';
 import '../../styles/portal/Portal.css';
 
 const CHECKLIST = [
@@ -29,8 +36,58 @@ const formatCompletedOn = (value) => {
   return `${day}, at ${time}`;
 };
 
+function confirmationStep(application) {
+  const confirmation = getConfirmation(application);
+  const changedOn = application?.confirmationUpdatedAt;
+
+  if (confirmation === 'confirmed') {
+    return {
+      key: 'confirm',
+      label: 'Confirm acceptance',
+      detail: changedOn
+        ? `Confirmed on ${formatCompletedOn(changedOn)}`
+        : 'Confirmed',
+      isComplete: true,
+    };
+  }
+
+  return {
+    key: 'confirm',
+    label: 'Confirm acceptance',
+    detail: `Waiting on you — confirm by ${EVENT_DETAILS.confirmDeadline}`,
+    isComplete: false,
+  };
+}
+
+function buildSteps(application, completedOn) {
+  const steps = CHECKLIST.map((step) => ({
+    ...step,
+    detail: `Completed on ${completedOn}`,
+    isComplete: true,
+  }));
+
+  const status = application?.status;
+  if (!status || status === 'submitted') return steps;
+
+  steps.push({
+    key: 'decision',
+    label: 'Decision',
+    pill: STATUS_LABELS[status],
+    detail: application.reviewedAt
+      ? `${STATUS_LABELS[status]} on ${formatCompletedOn(
+          application.reviewedAt,
+        )}`
+      : STATUS_LABELS[status],
+    isComplete: true,
+  });
+
+  if (isAccepted(application)) steps.push(confirmationStep(application));
+
+  return steps;
+}
+
 export default function Dashboard() {
-  const { application, state } = usePortal();
+  const { application, event, state, setConfirmation } = usePortal();
   const submittedAt = application?.submittedAt || state?.submittedAt;
 
   if (!submittedAt && !hasSubmitted(application)) {
@@ -38,37 +95,54 @@ export default function Dashboard() {
   }
 
   const completedOn = submittedAt ? formatCompletedOn(submittedAt) : 'Recently';
-
-  const { grad } = DASHBOARD_MASCOTS;
+  const accepted = isAccepted(application);
+  const steps = buildSteps(application, completedOn);
 
   return (
     <PortalShell variant="dashboard">
       <h1>My Application</h1>
 
       <div className="portal-dashboard__card">
-        <PortalSummary mascot={grad}>
-          <p className="portal-dashboard__headline">Application submitted!</p>
-          {application?.status && application.status !== 'submitted' && (
-            <p className="portal-dashboard__decision">
-              Status: {STATUS_LABELS[application.status]}
+        {accepted ? (
+          <AcceptedPanel
+            confirmation={getConfirmation(application)}
+            isWindowOpen={isConfirmationOpen(event)}
+            onSetConfirmation={setConfirmation}
+          />
+        ) : (
+          <PortalSummary mascot={DASHBOARD_MASCOTS.grad}>
+            <p className="portal-dashboard__headline">Application submitted!</p>
+            {application?.status && application.status !== 'submitted' && (
+              <p className="portal-dashboard__decision">
+                Status: {STATUS_LABELS[application.status]}
+              </p>
+            )}
+            <p>
+              You&apos;re all set! We&apos;ll be in touch with next steps via
+              email.
             </p>
-          )}
-          <p>
-            You&apos;re all set! We&apos;ll be in touch with next steps via
-            email.
-          </p>
-        </PortalSummary>
+          </PortalSummary>
+        )}
 
         <ol className="portal-dashboard__checklist">
-          {CHECKLIST.map((step) => (
+          {steps.map((step) => (
             <li key={step.key}>
-              <span className="portal-dashboard__check">
-                <CheckIcon />
+              <span
+                className={
+                  step.isComplete
+                    ? 'portal-dashboard__check'
+                    : 'portal-dashboard__check portal-dashboard__check--pending'
+                }
+              >
+                {step.isComplete && <CheckIcon />}
               </span>
-              <span className="portal-dashboard__step">{step.label}</span>
-              <span className="portal-dashboard__completed">
-                Completed on {completedOn}
+              <span className="portal-dashboard__step">
+                {step.label}
+                {step.pill && (
+                  <span className="portal-dashboard__pill">{step.pill}</span>
+                )}
               </span>
+              <span className="portal-dashboard__completed">{step.detail}</span>
             </li>
           ))}
         </ol>

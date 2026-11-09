@@ -9,6 +9,8 @@
   --auth-subtext: #728896;
   --auth-muted: #756b6a;
   --auth-ink: #1a1a1a;
+  --portal-green: #1f7a4d;
+  --portal-green-dark: #186040;
   --portal-fs-title: clamp(1.75rem, 2.6vw, 2.25rem);
   --portal-fs-heading: clamp(1.25rem, 1.9vw, 1.6rem);
   --portal-fs-subheading: clamp(1.1rem, 1.7vw, 1.5rem);
