@@ -223,9 +223,6 @@ export default function OrganizerReview() {
             applications={visibleApplications}
             selectedId={selectedId}
             onSelect={setSelectedId}
-            onAccept={(applicationId) =>
-              handleDecide(applicationId, 'accepted', '')
-            }
             pendingId={pendingId}
             onDecide={handleDecide}
             onCloseDetail={() => setSelectedId(null)}
