@@ -738,6 +738,14 @@
   border-radius: 12px;
 }
 
+.portal-accepted--quiet {
+  background: #f7f6f5;
+}
+
+.portal-accepted--quiet .portal-accepted__pill {
+  color: #535361;
+}
+
 .portal-accepted .portal-dashboard__summary {
   padding-bottom: 0;
   border-bottom: none;

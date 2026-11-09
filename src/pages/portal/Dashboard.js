@@ -11,6 +11,7 @@ import {
 import PortalShell from '../../components/portal/PortalShell';
 import PortalSummary from '../../components/portal/PortalSummary';
 import AcceptedPanel from '../../components/portal/AcceptedPanel';
+import DecisionPanel from '../../components/portal/DecisionPanel';
 import { CheckIcon } from '../../components/portal/PortalIcons';
 import { DASHBOARD_MASCOTS, EVENT_DETAILS } from '../../data/portalContent';
 import '../../styles/portal/Portal.css';
@@ -96,6 +97,7 @@ export default function Dashboard() {
 
   const completedOn = submittedAt ? formatCompletedOn(submittedAt) : 'Recently';
   const accepted = isAccepted(application);
+  const hasDecision = ['waitlisted', 'rejected'].includes(application?.status);
   const steps = buildSteps(application, completedOn);
 
   return (
@@ -109,14 +111,11 @@ export default function Dashboard() {
             isWindowOpen={isConfirmationOpen(event)}
             onSetConfirmation={setConfirmation}
           />
+        ) : hasDecision ? (
+          <DecisionPanel status={application.status} />
         ) : (
           <PortalSummary mascot={DASHBOARD_MASCOTS.grad}>
             <p className="portal-dashboard__headline">Application submitted!</p>
-            {application?.status && application.status !== 'submitted' && (
-              <p className="portal-dashboard__decision">
-                Status: {STATUS_LABELS[application.status]}
-              </p>
-            )}
             <p>
               You&apos;re all set! We&apos;ll be in touch with next steps via
               email.

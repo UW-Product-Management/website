@@ -81,7 +81,7 @@ describe('Dashboard', () => {
     expect(screen.getByText('Register Page')).toBeInTheDocument();
   });
 
-  it('shows a non-accepted decision as a status line', () => {
+  it('shows a waitlist panel with no action to take', () => {
     renderDashboard({
       application: {
         id: 'app-1',
@@ -90,9 +90,30 @@ describe('Dashboard', () => {
       },
     });
 
-    expect(screen.getByText('Status: Waitlisted')).toBeInTheDocument();
+    expect(screen.getByText(/you're on the waitlist/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/if a spot opens up we'll email you/i),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /confirm acceptance/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows a rejection panel', () => {
+    renderDashboard({
+      application: {
+        id: 'app-1',
+        status: 'rejected',
+        submittedAt: '2026-10-01T14:30:00.000Z',
+      },
+    });
+
+    expect(screen.getByText(/thank you for applying/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/not able to offer you a spot/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/application submitted!/i),
     ).not.toBeInTheDocument();
   });
 
