@@ -476,7 +476,7 @@ describe('portalApi application service', () => {
       const result = await getEvent('prodcon-local');
       expect(supabase.from).toHaveBeenCalledWith('events');
       expect(mockChain.select).toHaveBeenCalledWith(
-        'id, slug, name, applications_open_at, applications_close_at',
+        'id, slug, name, applications_open_at, applications_close_at, confirm_by',
       );
       expect(mockChain.eq).toHaveBeenCalledWith('slug', 'prodcon-local');
       expect(result).toEqual({ data: mockEvent, error: null });
