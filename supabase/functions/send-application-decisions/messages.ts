@@ -1,4 +1,5 @@
 import {
+  SITE_URL,
   escapeHtml,
   renderEmailFrame,
   type Message,
@@ -8,6 +9,7 @@ export type Decision = 'accepted' | 'waitlisted' | 'rejected';
 
 export const DECISIONS: Decision[] = ['accepted', 'waitlisted', 'rejected'];
 
+const DASHBOARD_URL = `${SITE_URL}/portal/dashboard`;
 const DISCORD_INVITE_URL = 'https://discord.gg/EwkG8T9eff';
 const TEAM_FORM_URL = 'https://docs.google.com/forms/u/1/d/e/1FAIpQLScXDfyw2-SJvgZH706SxyCeifZDfYbKkZhq2NzWDM8bdWSrDg/viewform?usp=send_form';
 
@@ -39,9 +41,11 @@ const COPY: Record<Decision, Copy> = {
       `Congratulations! You're officially in for ${eventName}! 🎉 We're excited to have you join us!`,
       'Please note that ProdCon is in person this year and we will not be offering travel reimbursements.',
       'To confirm your spot and prepare for the event, please complete the following:',
-      '1. Join our Discord server',
-      `Please join the ProdCon Discord Server (${DISCORD_INVITE_URL}) to accept your invitation and stay updated on event announcements and logistics. Please set your Discord nickname as your name.`,
-      '2. Form your teams',
+      '1. Confirm your spot on the dashboard',
+      `Please head over to your ProdCon Portal Dashboard (${DASHBOARD_URL}) and click confirm so that we know that you will be attending!`,
+      '2. Join our Discord server',
+      `Please join the ProdCon Discord Server (${DISCORD_INVITE_URL}) to stay updated on event announcements and logistics. Please set your Discord nickname as your name.`,
+      '3. Form your teams',
       'Teams should consist of 4 members (teams of 3 are also acceptable, but 4 is preferred to allow for better workload distribution and collaboration).',
       `Please fill out this Team Formation Form (${TEAM_FORM_URL}) with your team details.`,
       "If you don't have a team yet, no worries! You can connect with other participants and form teams through the designated channel in our Discord server.",
@@ -62,13 +66,19 @@ const COPY: Record<Decision, Copy> = {
           'To confirm your spot and prepare for the event, please complete the following:',
         ),
         p(
-          `<strong>1. Join our Discord server</strong><br />Please join the ${link(
-            DISCORD_INVITE_URL,
-            'ProdCon Discord Server',
-          )} to accept your invitation and stay updated on event announcements and logistics. Please set your Discord nickname as your name.`,
+          `<strong>1. Confirm your spot on the dashboard</strong><br />Please head over to your ${link(
+            DASHBOARD_URL,
+            'ProdCon Portal Dashboard',
+          )} and click confirm so that we know that you will be attending!`,
         ),
         p(
-          `<strong>2. Form your teams</strong><br />Teams should consist of 4 members (teams of 3 are also acceptable, but 4 is preferred to allow for better workload distribution and collaboration).<br /><br />Please fill out this ${link(
+          `<strong>2. Join our Discord server</strong><br />Please join the ${link(
+            DISCORD_INVITE_URL,
+            'ProdCon Discord Server',
+          )} to stay updated on event announcements and logistics. Please set your Discord nickname as your name.`,
+        ),
+        p(
+          `<strong>3. Form your teams</strong><br />Teams should consist of 4 members (teams of 3 are also acceptable, but 4 is preferred to allow for better workload distribution and collaboration).<br /><br />Please fill out this ${link(
             TEAM_FORM_URL,
             'Team Formation Form',
           )} with your team details.<br /><br />If you don't have a team yet, no worries! You can connect with other participants and form teams through the designated channel in our Discord server.`,
