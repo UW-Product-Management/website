@@ -59,6 +59,26 @@ export default function OrganizerReview() {
     [applications],
   );
 
+  const filters = useMemo(() => {
+    const countOf = (status) =>
+      applications.filter((a) => a.status === status).length;
+    return [
+      { key: 'all', label: 'All Applications', count: applications.length },
+      { key: 'rejected', label: 'Not Selected', count: countOf('rejected') },
+      { key: 'waitlisted', label: 'Waitlisted', count: countOf('waitlisted') },
+      {
+        key: 'accepted',
+        label: 'Accepted Participants',
+        count: countOf('accepted'),
+      },
+      {
+        key: 'confirmed',
+        label: 'Confirmed Attending',
+        count: confirmedApplications.length,
+      },
+    ];
+  }, [applications, confirmedApplications]);
+
   const visibleApplications = useMemo(() => {
     if (statusFilter === 'all') return applications;
     if (statusFilter === 'confirmed') return confirmedApplications;
@@ -130,54 +150,24 @@ export default function OrganizerReview() {
         <ManageAdminsPanel />
 
         <div className="portal-review__actions">
-          <button
-            type="button"
-            className={`portal-button ${
-              statusFilter === 'all'
-                ? 'portal-button--primary'
-                : 'portal-button--outline'
-            }`}
-            aria-pressed={statusFilter === 'all'}
-            onClick={() => {
-              setStatusFilter('all');
-              setSelectedId(null);
-            }}
-          >
-            All Applications ({applications.length})
-          </button>
-
-          <button
-            type="button"
-            className={`portal-button ${
-              statusFilter === 'accepted'
-                ? 'portal-button--primary'
-                : 'portal-button--outline'
-            }`}
-            aria-pressed={statusFilter === 'accepted'}
-            onClick={() => {
-              setStatusFilter('accepted');
-              setSelectedId(null);
-            }}
-          >
-            Accepted Participants (
-            {applications.filter((app) => app.status === 'accepted').length})
-          </button>
-
-          <button
-            type="button"
-            className={`portal-button ${
-              statusFilter === 'confirmed'
-                ? 'portal-button--primary'
-                : 'portal-button--outline'
-            }`}
-            aria-pressed={statusFilter === 'confirmed'}
-            onClick={() => {
-              setStatusFilter('confirmed');
-              setSelectedId(null);
-            }}
-          >
-            Confirmed Attending ({confirmedApplications.length})
-          </button>
+          {filters.map((filter) => (
+            <button
+              key={filter.key}
+              type="button"
+              className={`portal-button ${
+                statusFilter === filter.key
+                  ? 'portal-button--primary'
+                  : 'portal-button--outline'
+              }`}
+              aria-pressed={statusFilter === filter.key}
+              onClick={() => {
+                setStatusFilter(filter.key);
+                setSelectedId(null);
+              }}
+            >
+              {filter.label} ({filter.count})
+            </button>
+          ))}
         </div>
 
         <div className="portal-review__toolbar">
