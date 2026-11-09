@@ -119,6 +119,17 @@
   background: rgba(240, 92, 91, 0.08);
 }
 
+.portal-review__detail-row td {
+  padding: 0;
+}
+
+.portal-review__detail-row .portal-review__panel {
+  margin: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
 .portal-review__muted {
   margin: 0;
   font-size: 0.875rem;

@@ -26,6 +26,16 @@ const applications = [
   },
   {
     id: 'app-2',
+    fullName: 'Casey Liu',
+    email: 'casey@example.com',
+    program: 'Arts',
+    yearOfStudy: '1st year',
+    favouriteProduct: 'Habit tracker',
+    status: 'submitted',
+    reviews: [],
+  },
+  {
+    id: 'app-3',
     fullName: 'Blair Ng',
     email: 'blair@example.com',
     program: 'Engineering',
@@ -35,7 +45,7 @@ const applications = [
     reviews: [
       {
         id: 'log-1',
-        applicationId: 'app-2',
+        applicationId: 'app-3',
         reviewerName: 'Olive Organizer',
         reviewerEmail: 'olive@example.com',
         previousStatus: 'submitted',
@@ -98,6 +108,54 @@ describe('OrganizerReview', () => {
 
     expect(screen.queryByText('Alex Chen')).not.toBeInTheDocument();
     expect(screen.getByText('Blair Ng')).toBeInTheDocument();
+  });
+
+  it('expands the application directly under the first, middle, and last row', async () => {
+    renderPage();
+    await screen.findByText('Alex Chen');
+
+    for (const name of ['Alex Chen', 'Casey Liu', 'Blair Ng']) {
+      fireEvent.click(screen.getByRole('button', { name: `Review ${name}` }));
+      expect(
+        screen.getByRole('complementary', { name: `Review ${name}` }),
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: `Review ${name}` }));
+      expect(
+        screen.queryByRole('complementary', { name: `Review ${name}` }),
+      ).not.toBeInTheDocument();
+    }
+  });
+
+  it('collapses the application when Review is clicked again', async () => {
+    renderPage();
+    await openReview('Alex Chen');
+
+    expect(
+      screen.getByRole('complementary', { name: 'Review Alex Chen' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review Alex Chen' }));
+
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+  });
+
+  it('only keeps one application expanded at a time', async () => {
+    renderPage();
+    await openReview('Alex Chen');
+
+    expect(
+      screen.getByRole('complementary', { name: 'Review Alex Chen' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review Casey Liu' }));
+
+    expect(
+      screen.queryByRole('complementary', { name: 'Review Alex Chen' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('complementary', { name: 'Review Casey Liu' }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole('complementary')).toHaveLength(1);
   });
 
   it('shows full answers and decision history in the detail panel', async () => {
