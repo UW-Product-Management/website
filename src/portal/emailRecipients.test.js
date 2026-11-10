@@ -50,3 +50,54 @@ describe('buildAudience', () => {
     ).toEqual(['bo@example.com', 'di@example.com']);
   });
 });
+
+describe('accepted applicants who have not confirmed', () => {
+  const people = [
+    { id: 'p1', full_name: 'Released', email: 'p1@example.com' },
+    { id: 'p2', full_name: 'Confirmed', email: 'p2@example.com' },
+    { id: 'p3', full_name: 'Withdrawn', email: 'p3@example.com' },
+    { id: 'p4', full_name: 'Unreleased', email: 'p4@example.com' },
+  ];
+  const accepted = [
+    { id: 'b1', user_id: 'p1', status: 'accepted', confirmation: 'pending' },
+    { id: 'b2', user_id: 'p2', status: 'accepted', confirmation: 'confirmed' },
+    { id: 'b3', user_id: 'p3', status: 'accepted', confirmation: 'withdrawn' },
+    { id: 'b4', user_id: 'p4', status: 'submitted', confirmation: 'pending' },
+  ];
+  const acceptedDecisions = ['b1', 'b2', 'b3', 'b4'].map((id) => ({
+    application_id: id,
+    decision: 'accepted',
+  }));
+  const now = new Date('2026-11-10T12:00:00Z');
+  const awaitingConfirmation = (confirmBy) =>
+    filterAudience(
+      buildAudience(people, accepted, acceptedDecisions, { confirmBy, now }),
+      ['accepted_unconfirmed'],
+    ).map((person) => person.email);
+
+  it('includes released acceptances still pending before the deadline', () => {
+    expect(awaitingConfirmation('2026-11-20T04:59:00Z')).toEqual([
+      'p1@example.com',
+    ]);
+  });
+
+  it('includes no one once the confirmation deadline has passed', () => {
+    expect(awaitingConfirmation('2026-11-09T04:59:00Z')).toEqual([]);
+  });
+
+  it('includes no one when the event has no confirmation deadline', () => {
+    expect(awaitingConfirmation(null)).toEqual([]);
+  });
+
+  it('keeps them in the accepted group as well', () => {
+    const audience = buildAudience(people, accepted, acceptedDecisions, {
+      confirmBy: '2026-11-20T04:59:00Z',
+      now,
+    });
+
+    expect(countByGroup(audience)).toEqual({
+      accepted: 4,
+      accepted_unconfirmed: 1,
+    });
+  });
+});

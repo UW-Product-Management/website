@@ -16,12 +16,30 @@ const MODE_NOTICES = {
 const EMAIL_SERVICE_UNAVAILABLE =
   'The email service is not reachable right now, so nothing can be sent. Refresh to try again.';
 
+// The server refuses to continue these campaigns, so offering Resume would
+// only repeat the same error.
+const UNRESUMABLE_ERRORS = new Set([
+  'run_expired',
+  'run_finished',
+  'run_not_found',
+  'mode_changed',
+]);
+
+const people = (count) => `${count} ${count === 1 ? 'person' : 'people'}`;
+
+function sentSummary(sent, failed) {
+  const summary = `Email sent to ${people(sent)}.`;
+  if (failed === 0) return summary;
+  return `${summary} ${failed} couldn't be delivered and won't be retried.`;
+}
+
 export default function EmailSendControls({
   eventId,
   recipients = [],
   subject = '',
   body = '',
   onSent,
+  onBusyChange,
 }) {
   const [mode, setMode] = useState(null);
   const [confirmation, setConfirmation] = useState('');
@@ -29,6 +47,7 @@ export default function EmailSendControls({
   const [progress, setProgress] = useState('');
   const [notice, setNotice] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [pausedCampaign, setPausedCampaign] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -44,66 +63,98 @@ export default function EmailSendControls({
     };
   }, []);
 
+  // A typed "SEND <n>" confirms one specific list; two groups can share a
+  // count, so the phrase alone cannot tell them apart.
+  useEffect(() => {
+    setConfirmation('');
+  }, [recipients]);
+
+  // Resuming continues the stored campaign, so it is only safe while the
+  // organizer is still looking at the exact email and list it was created for.
+  useEffect(() => {
+    setPausedCampaign(null);
+  }, [recipients, subject, body]);
+
   const total = recipients.length;
   const expectedPhrase = `SEND ${total}`;
   const hasContent = subject.trim() !== '' && body.trim() !== '';
+  const isReady = !isBusy && mode !== null;
   const canSend =
-    !isBusy && hasContent && total > 0 && confirmation === expectedPhrase;
+    isReady && hasContent && total > 0 && confirmation === expectedPhrase;
 
-  const handleTest = async () => {
+  const runBusy = async (work) => {
     setIsBusy(true);
+    onBusyChange?.(true);
     setErrorMessage('');
     setNotice('');
-    const { data, error } = await sendTestCustomEmail({ subject, body });
-    if (error) setErrorMessage(error.message);
-    else setNotice(`Test email sent to ${data.to}.`);
-    setIsBusy(false);
+    try {
+      await work();
+    } finally {
+      setIsBusy(false);
+      onBusyChange?.(false);
+    }
   };
 
-  const handleSend = async () => {
-    setIsBusy(true);
-    setErrorMessage('');
-    setNotice('');
+  const sendBatches = async (campaign) => {
+    let { sent, failed } = campaign;
+    setPausedCampaign(null);
 
-    const created = await createCustomEmail(eventId, {
-      subject,
-      body,
-      recipientIds: recipients.map((person) => person.userId),
-      confirmation,
-    });
-    if (created.error) {
-      setErrorMessage(created.error.message);
-      setIsBusy(false);
-      return;
-    }
-
-    const { campaignId } = created.data;
-    let sentSoFar = 0;
-    let remaining = total;
-    while (remaining > 0) {
-      const { data, error } = await sendCustomEmailBatch(campaignId);
+    for (;;) {
+      const { data, error } = await sendCustomEmailBatch(campaign.id);
       if (error) {
+        if (!UNRESUMABLE_ERRORS.has(error.code)) {
+          setPausedCampaign({ id: campaign.id, sent, failed });
+        }
         setErrorMessage(error.message);
-        break;
+        return;
       }
-      sentSoFar += data.sent;
-      remaining = data.remaining;
-      setProgress(`Sent ${sentSoFar} of ${total}`);
-      if (data.sent === 0 && remaining > 0) {
+
+      sent += data.sent;
+      failed += data.failed;
+      setProgress(`Sent ${sent} of ${total}`);
+      if (data.remaining === 0) break;
+
+      if (data.sent + data.failed === 0) {
+        setPausedCampaign({ id: campaign.id, sent, failed });
         setErrorMessage(
-          `${remaining} emails failed to send. Check the function logs before trying again.`,
+          `Sending paused with ${data.remaining} left. Resume to continue.`,
         );
-        break;
+        return;
       }
     }
 
     setConfirmation('');
-    setIsBusy(false);
-    if (remaining === 0) {
-      setNotice(`Email sent to ${sentSoFar} people.`);
-      onSent?.();
-    }
+    setNotice(sentSummary(sent, failed));
+    onSent?.();
   };
+
+  const handleTest = () =>
+    runBusy(async () => {
+      const { data, error } = await sendTestCustomEmail({ subject, body });
+      if (error) setErrorMessage(error.message);
+      else setNotice(`Test email sent to ${data.to}.`);
+    });
+
+  const handleSend = () =>
+    runBusy(async () => {
+      const created = await createCustomEmail(eventId, {
+        subject,
+        body,
+        recipientIds: recipients.map((person) => person.userId),
+        confirmation,
+      });
+      if (created.error) {
+        setErrorMessage(created.error.message);
+        return;
+      }
+      await sendBatches({ id: created.data.campaignId, sent: 0, failed: 0 });
+    });
+
+  const handleResume = () => runBusy(() => sendBatches(pausedCampaign));
+
+  const pausedRemaining = pausedCampaign
+    ? total - pausedCampaign.sent - pausedCampaign.failed
+    : 0;
 
   return (
     <div className="portal-messages__send">
@@ -117,33 +168,47 @@ export default function EmailSendControls({
         <button
           type="button"
           className="portal-button portal-button--outline"
-          disabled={isBusy || !hasContent}
+          disabled={!isReady || !hasContent}
           onClick={handleTest}
         >
           Send test to myself
         </button>
       </div>
 
-      <div className="portal-messages__row">
-        <label htmlFor="message-confirmation">
-          Type {expectedPhrase} to confirm
-          <input
-            id="message-confirmation"
-            type="text"
-            autoComplete="off"
-            value={confirmation}
-            onChange={(e) => setConfirmation(e.target.value)}
-          />
-        </label>
-        <button
-          type="button"
-          className="portal-button portal-button--primary"
-          disabled={!canSend}
-          onClick={handleSend}
-        >
-          {`Send to ${total} ${total === 1 ? 'person' : 'people'}`}
-        </button>
-      </div>
+      {pausedCampaign ? (
+        <div className="portal-messages__row">
+          <button
+            type="button"
+            className="portal-button portal-button--primary"
+            disabled={!isReady}
+            onClick={handleResume}
+          >
+            {`Resume sending (${pausedRemaining} left)`}
+          </button>
+        </div>
+      ) : (
+        <div className="portal-messages__row">
+          <label htmlFor="message-confirmation">
+            Type {expectedPhrase} to confirm
+            <input
+              id="message-confirmation"
+              type="text"
+              autoComplete="off"
+              value={confirmation}
+              disabled={isBusy}
+              onChange={(e) => setConfirmation(e.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className="portal-button portal-button--primary"
+            disabled={!canSend}
+            onClick={handleSend}
+          >
+            {`Send to ${people(total)}`}
+          </button>
+        </div>
+      )}
 
       {progress && isBusy && <p role="status">{progress}</p>}
       {notice && <p role="status">{notice}</p>}

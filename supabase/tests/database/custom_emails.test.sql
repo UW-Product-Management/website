@@ -1,5 +1,5 @@
 begin;
-select plan(4);
+select plan(6);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('11111111-1111-1111-1111-111111111111', 'alex@test.local', '{"full_name":"Alex Chen"}'),
@@ -27,6 +27,18 @@ values (
   '55555555-5555-5555-5555-555555555555',
   '11111111-1111-1111-1111-111111111111',
   'alex@test.local', 'Alex Chen'
+);
+
+select has_column(
+  'public', 'custom_email_recipients', 'failed_at',
+  'recipients record a failed delivery separately from a sent one'
+);
+
+select throws_ok(
+  $$ update public.custom_email_recipients
+     set sent_at = now(), failed_at = now() $$,
+  '23514', null,
+  'a recipient cannot be both sent and failed'
 );
 
 set local role authenticated;

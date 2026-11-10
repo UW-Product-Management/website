@@ -1,6 +1,8 @@
 -- Organizer-written emails to a chosen set of portal users. Each recipient row
 -- is stamped once its email is sent, so a retried or resumed batch never emails
--- anyone twice. Only the send-custom-email function (service role) writes here.
+-- anyone twice. A delivery that fails is stamped failed_at rather than reset,
+-- so a bad address is not retried in every batch ahead of everyone else.
+-- Only the send-custom-email function (service role) writes here.
 create table public.custom_email_campaigns (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null references public.events (id) on delete cascade,
@@ -27,7 +29,10 @@ create table public.custom_email_recipients (
   email text not null,
   full_name text not null default '',
   sent_at timestamptz,
-  primary key (campaign_id, user_id)
+  failed_at timestamptz,
+  primary key (campaign_id, user_id),
+  constraint custom_email_recipients_sent_or_failed
+    check (sent_at is null or failed_at is null)
 );
 
 create index custom_email_recipients_user_id_idx

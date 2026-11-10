@@ -1,5 +1,6 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import EmailSendControls from './EmailSendControls';
 import {
   createCustomEmail,
@@ -15,22 +16,45 @@ const recipients = [
   { userId: 'u2', email: 'bo@example.com', group: 'draft' },
 ];
 
-const renderControls = (props = {}) =>
-  render(
-    <EmailSendControls
-      eventId="evt-1"
-      recipients={recipients}
-      subject="Finish your application"
-      body="Hi {{name}}"
-      {...props}
-    />,
+const otherRecipients = [
+  { userId: 'u3', email: 'cy@example.com', group: 'rejected' },
+  { userId: 'u4', email: 'di@example.com', group: 'rejected' },
+];
+
+const controls = (props = {}) => (
+  <EmailSendControls
+    eventId="evt-1"
+    recipients={recipients}
+    subject="Finish your application"
+    body="Hi {{name}}"
+    {...props}
+  />
+);
+
+const renderControls = (props = {}) => render(controls(props));
+
+const batch = (sent, failed, remaining) => ({
+  data: { sent, failed, remaining },
+  error: null,
+});
+
+async function confirmAndSend(count = 2) {
+  await screen.findByText(/captured in mailpit/i);
+  userEvent.type(screen.getByLabelText(/to confirm/i), `SEND ${count}`);
+  userEvent.click(
+    screen.getByRole('button', { name: `Send to ${count} people` }),
   );
+}
 
 describe('EmailSendControls', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     getCustomEmailMode.mockResolvedValue({
       data: { mode: 'local' },
+      error: null,
+    });
+    createCustomEmail.mockResolvedValue({
+      data: { campaignId: 'c1', total: 2 },
       error: null,
     });
   });
@@ -53,28 +77,15 @@ describe('EmailSendControls', () => {
     );
   });
 
-  it('keeps send disabled until the exact confirmation is typed', async () => {
+  it('blocks sending while the email environment is unknown', async () => {
+    getCustomEmailMode.mockResolvedValue({
+      data: null,
+      error: { code: 'send_failed', message: 'Sending failed.' },
+    });
     renderControls();
-    const send = screen.getByRole('button', { name: 'Send to 2 people' });
-    expect(send).toBeDisabled();
+    await screen.findByRole('alert');
 
-    fireEvent.change(screen.getByLabelText(/to confirm/i), {
-      target: { value: 'SEND 1' },
-    });
-    expect(send).toBeDisabled();
-
-    fireEvent.change(screen.getByLabelText(/to confirm/i), {
-      target: { value: 'SEND 2' },
-    });
-    expect(send).toBeEnabled();
-    await screen.findByText(/captured in mailpit/i);
-  });
-
-  it('disables sending without a subject and message', async () => {
-    renderControls({ subject: ' ' });
-    fireEvent.change(screen.getByLabelText(/to confirm/i), {
-      target: { value: 'SEND 2' },
-    });
+    userEvent.type(screen.getByLabelText(/to confirm/i), 'SEND 2');
 
     expect(
       screen.getByRole('button', { name: 'Send to 2 people' }),
@@ -82,7 +93,47 @@ describe('EmailSendControls', () => {
     expect(
       screen.getByRole('button', { name: 'Send test to myself' }),
     ).toBeDisabled();
+  });
+
+  it('keeps send disabled until the exact confirmation is typed', async () => {
+    renderControls();
     await screen.findByText(/captured in mailpit/i);
+    const send = screen.getByRole('button', { name: 'Send to 2 people' });
+    const confirmation = screen.getByLabelText(/to confirm/i);
+    expect(send).toBeDisabled();
+
+    userEvent.type(confirmation, 'SEND 1');
+    expect(send).toBeDisabled();
+
+    userEvent.clear(confirmation);
+    userEvent.type(confirmation, 'SEND 2');
+    expect(send).toBeEnabled();
+  });
+
+  it('clears the confirmation when the recipients change', async () => {
+    const { rerender } = renderControls();
+    await screen.findByText(/captured in mailpit/i);
+    userEvent.type(screen.getByLabelText(/to confirm/i), 'SEND 2');
+
+    rerender(controls({ recipients: otherRecipients }));
+
+    expect(screen.getByLabelText(/to confirm/i)).toHaveValue('');
+    expect(
+      screen.getByRole('button', { name: 'Send to 2 people' }),
+    ).toBeDisabled();
+  });
+
+  it('disables sending without a subject and message', async () => {
+    renderControls({ subject: ' ' });
+    await screen.findByText(/captured in mailpit/i);
+    userEvent.type(screen.getByLabelText(/to confirm/i), 'SEND 2');
+
+    expect(
+      screen.getByRole('button', { name: 'Send to 2 people' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Send test to myself' }),
+    ).toBeDisabled();
   });
 
   it('sends a test email to the organizer', async () => {
@@ -91,8 +142,9 @@ describe('EmailSendControls', () => {
       error: null,
     });
     renderControls();
+    await screen.findByText(/captured in mailpit/i);
 
-    fireEvent.click(
+    userEvent.click(
       screen.getByRole('button', { name: 'Send test to myself' }),
     );
 
@@ -107,25 +159,12 @@ describe('EmailSendControls', () => {
 
   it('creates the email, then sends batches until none remain', async () => {
     const onSent = jest.fn();
-    createCustomEmail.mockResolvedValue({
-      data: { campaignId: 'c1', total: 2 },
-      error: null,
-    });
     sendCustomEmailBatch
-      .mockResolvedValueOnce({
-        data: { sent: 1, failed: 0, remaining: 1 },
-        error: null,
-      })
-      .mockResolvedValueOnce({
-        data: { sent: 1, failed: 0, remaining: 0 },
-        error: null,
-      });
+      .mockResolvedValueOnce(batch(1, 0, 1))
+      .mockResolvedValueOnce(batch(1, 0, 0));
     renderControls({ onSent });
 
-    fireEvent.change(screen.getByLabelText(/to confirm/i), {
-      target: { value: 'SEND 2' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Send to 2 people' }));
+    await confirmAndSend();
 
     expect(
       await screen.findByText('Email sent to 2 people.'),
@@ -140,25 +179,83 @@ describe('EmailSendControls', () => {
     expect(onSent).toHaveBeenCalled();
   });
 
-  it('stops and reports when a batch sends nothing', async () => {
-    createCustomEmail.mockResolvedValue({
-      data: { campaignId: 'c1', total: 2 },
-      error: null,
-    });
-    sendCustomEmailBatch.mockResolvedValue({
-      data: { sent: 0, failed: 2, remaining: 2 },
-      error: null,
-    });
+  it('reports recipients that could not be delivered', async () => {
+    sendCustomEmailBatch.mockResolvedValueOnce(batch(1, 1, 0));
     renderControls();
 
-    fireEvent.change(screen.getByLabelText(/to confirm/i), {
-      target: { value: 'SEND 2' },
+    await confirmAndSend();
+
+    expect(
+      await screen.findByText(
+        /email sent to 1 person\. 1 couldn't be delivered/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('resumes the same email after a send stops partway', async () => {
+    sendCustomEmailBatch
+      .mockResolvedValueOnce(batch(1, 0, 1))
+      .mockResolvedValueOnce({
+        data: null,
+        error: { code: 'send_failed', message: 'Sending failed.' },
+      })
+      .mockResolvedValueOnce(batch(1, 0, 0));
+    renderControls();
+
+    await confirmAndSend();
+    userEvent.click(
+      await screen.findByRole('button', { name: 'Resume sending (1 left)' }),
+    );
+
+    expect(
+      await screen.findByText('Email sent to 2 people.'),
+    ).toBeInTheDocument();
+    expect(createCustomEmail).toHaveBeenCalledTimes(1);
+    expect(sendCustomEmailBatch).toHaveBeenLastCalledWith('c1');
+  });
+
+  it('starts over instead of resuming once the message changes', async () => {
+    sendCustomEmailBatch.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'send_failed', message: 'Sending failed.' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Send to 2 people' }));
+    const { rerender } = renderControls();
+    await confirmAndSend();
+    await screen.findByRole('button', { name: /resume sending/i });
+
+    rerender(controls({ subject: 'A different email' }));
+
+    expect(
+      screen.queryByRole('button', { name: /resume sending/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Send to 2 people' }),
+    ).toBeInTheDocument();
+  });
+
+  it('pauses when a batch makes no progress', async () => {
+    sendCustomEmailBatch.mockResolvedValue(batch(0, 0, 2));
+    renderControls();
+
+    await confirmAndSend();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      /2 emails failed to send/i,
+      /paused with 2 left/i,
     );
-    await waitFor(() => expect(sendCustomEmailBatch).toHaveBeenCalledTimes(1));
+    expect(sendCustomEmailBatch).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole('button', { name: 'Resume sending (2 left)' }),
+    ).toBeInTheDocument();
+  });
+
+  it('tells the page while a send is in progress', async () => {
+    const onBusyChange = jest.fn();
+    sendCustomEmailBatch.mockResolvedValueOnce(batch(2, 0, 0));
+    renderControls({ onBusyChange });
+
+    await confirmAndSend();
+
+    await waitFor(() => expect(onBusyChange).toHaveBeenLastCalledWith(false));
+    expect(onBusyChange).toHaveBeenCalledWith(true);
   });
 });

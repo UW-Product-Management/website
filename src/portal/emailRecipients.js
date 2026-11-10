@@ -15,6 +15,11 @@ export const RECIPIENT_GROUPS = [
     hint: 'Waiting on a review decision',
   },
   { key: 'accepted', label: 'Accepted', hint: 'Decision is accepted' },
+  {
+    key: 'accepted_unconfirmed',
+    label: 'Accepted, not confirmed',
+    hint: 'Told they were accepted but have not confirmed their spot before the deadline',
+  },
   { key: 'waitlisted', label: 'Waitlisted', hint: 'Decision is waitlisted' },
   { key: 'rejected', label: 'Not selected', hint: 'Decision is rejected' },
 ];
@@ -33,7 +38,24 @@ export function getRecipientGroup(application, decision) {
   return KNOWN_GROUPS.has(group) ? group : null;
 }
 
-export function buildAudience(profiles, applications, decisions) {
+// Unlike the groups above, this keys off the applicant-facing status: only a
+// released acceptance can be confirmed, so reminding anyone else would point
+// them at a form they cannot use. Past the deadline the form is closed too.
+function isAwaitingConfirmation(application, confirmBy, now) {
+  return (
+    application?.status === 'accepted' &&
+    application.confirmation === 'pending' &&
+    Boolean(confirmBy) &&
+    now < new Date(confirmBy)
+  );
+}
+
+export function buildAudience(
+  profiles,
+  applications,
+  decisions,
+  { confirmBy = null, now = new Date() } = {},
+) {
   const applicationByUser = new Map(
     applications.map((application) => [application.user_id, application]),
   );
@@ -45,14 +67,19 @@ export function buildAudience(profiles, applications, decisions) {
     .filter((profile) => profile.email)
     .map((profile) => {
       const application = applicationByUser.get(profile.id);
+      const group = getRecipientGroup(
+        application,
+        application && decisionByApplication.get(application.id),
+      );
+      const groups = isAwaitingConfirmation(application, confirmBy, now)
+        ? [group, 'accepted_unconfirmed']
+        : [group];
       return {
         userId: profile.id,
         fullName: profile.full_name || '',
         email: profile.email,
-        group: getRecipientGroup(
-          application,
-          application && decisionByApplication.get(application.id),
-        ),
+        group,
+        groups,
       };
     })
     .filter((person) => person.group)
@@ -60,13 +87,15 @@ export function buildAudience(profiles, applications, decisions) {
 }
 
 export const filterAudience = (audience, selectedGroups) =>
-  audience.filter((person) => selectedGroups.includes(person.group));
+  audience.filter((person) =>
+    person.groups.some((group) => selectedGroups.includes(group)),
+  );
 
 export const countByGroup = (audience) =>
-  audience.reduce(
-    (counts, person) => ({
-      ...counts,
-      [person.group]: (counts[person.group] || 0) + 1,
-    }),
-    {},
-  );
+  audience.reduce((counts, person) => {
+    const next = { ...counts };
+    person.groups.forEach((group) => {
+      next[group] = (next[group] || 0) + 1;
+    });
+    return next;
+  }, {});

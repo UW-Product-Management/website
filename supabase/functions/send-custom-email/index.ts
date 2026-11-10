@@ -158,12 +158,21 @@ async function createCampaign(
   return json({ campaignId: campaign.id, total: recipients.length, mode });
 }
 
-async function countUnsent(campaignId: string) {
-  const { count } = await admin
+async function countRecipients(
+  campaignId: string,
+  state: 'pending' | 'sent' | 'failed',
+) {
+  let query = admin
     .from('custom_email_recipients')
     .select('user_id', { count: 'exact', head: true })
-    .eq('campaign_id', campaignId)
-    .is('sent_at', null);
+    .eq('campaign_id', campaignId);
+  if (state === 'pending') {
+    query = query.is('sent_at', null).is('failed_at', null);
+  } else {
+    query = query.not(state === 'sent' ? 'sent_at' : 'failed_at', 'is', null);
+  }
+  const { count, error } = await query;
+  if (error) throw new Error(error.message);
   return count ?? 0;
 }
 
@@ -192,6 +201,7 @@ async function sendBatch(
     .select('user_id, email, full_name')
     .eq('campaign_id', campaignId)
     .is('sent_at', null)
+    .is('failed_at', null)
     .order('user_id')
     .limit(BATCH_SIZE);
   if (error) throw new Error(error.message);
@@ -200,13 +210,16 @@ async function sendBatch(
   let failed = 0;
   for (const row of batch ?? []) {
     // Stamping before delivery claims the row, so a concurrent batch for the
-    // same campaign skips it instead of sending a duplicate.
+    // same campaign skips it instead of sending a duplicate. The trade-off: if
+    // the function dies mid-delivery the row stays stamped and that person is
+    // missed, which is preferable to emailing anyone twice.
     const { data: claimed } = await admin
       .from('custom_email_recipients')
       .update({ sent_at: new Date().toISOString() })
       .eq('campaign_id', campaignId)
       .eq('user_id', row.user_id)
       .is('sent_at', null)
+      .is('failed_at', null)
       .select('user_id');
     if (!claimed?.length) continue;
 
@@ -224,24 +237,36 @@ async function sendBatch(
     } catch (deliveryError) {
       failed += 1;
       console.error('send-custom-email failed', row.user_id, deliveryError);
+      // Not retried automatically: a timeout after Resend accepted the email
+      // would otherwise send it twice, and a rejected address would be picked
+      // first in every later batch.
       await admin
         .from('custom_email_recipients')
-        .update({ sent_at: null })
+        .update({ sent_at: null, failed_at: new Date().toISOString() })
         .eq('campaign_id', campaignId)
         .eq('user_id', row.user_id);
     }
     await sleep(SEND_INTERVAL_MS);
   }
 
-  const remaining = await countUnsent(campaignId);
+  // Counted from the recipient rows rather than added to the campaign row read
+  // above, so concurrent batches cannot overwrite each other's totals.
+  const [remaining, sentTotal, failedTotal] = await Promise.all([
+    countRecipients(campaignId, 'pending'),
+    countRecipients(campaignId, 'sent'),
+    countRecipients(campaignId, 'failed'),
+  ]);
   await admin
     .from('custom_email_campaigns')
-    .update({
-      sent_count: campaign.sent_count + sent,
-      failed_count: campaign.failed_count + failed,
-      finished_at: remaining === 0 ? new Date().toISOString() : null,
-    })
+    .update({ sent_count: sentTotal, failed_count: failedTotal })
     .eq('id', campaignId);
+  if (remaining === 0) {
+    await admin
+      .from('custom_email_campaigns')
+      .update({ finished_at: new Date().toISOString() })
+      .eq('id', campaignId)
+      .is('finished_at', null);
+  }
 
   return json({ sent, failed, remaining });
 }

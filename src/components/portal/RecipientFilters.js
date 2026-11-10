@@ -5,6 +5,7 @@ export default function RecipientFilters({
   counts = {},
   selectedGroup = '',
   onChange,
+  disabled = false,
 }) {
   const selected = RECIPIENT_GROUPS.find(
     (group) => group.key === selectedGroup,
@@ -17,6 +18,7 @@ export default function RecipientFilters({
         <select
           id="message-recipient-group"
           value={selectedGroup}
+          disabled={disabled}
           aria-describedby="message-recipient-hint"
           onChange={(e) => onChange(e.target.value)}
         >
