@@ -19,6 +19,12 @@
   margin-top: 4px;
 }
 
+.portal-review__toolbar select,
+.portal-release__row select {
+  padding: 6px 10px;
+  font: inherit;
+}
+
 .portal-review__table-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -117,6 +123,17 @@
 
 .portal-review__row--selected {
   background: rgba(240, 92, 91, 0.08);
+}
+
+.portal-review__detail-row td {
+  padding: 0;
+}
+
+.portal-review__detail-row .portal-review__panel {
+  margin: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
 }
 
 .portal-review__muted {

@@ -1,16 +1,25 @@
 import React from 'react';
 import {
+  CONFIRMATION_LABELS,
   EMAIL_STATE_LABELS,
   STATUS_LABELS,
+  getConfirmation,
   getEmailState,
+  isAccepted,
 } from '../../portal/applicationStatus';
 import { formatDateTime } from '../../portal/formatDateTime';
+import ReviewDetailPanel from './ReviewDetailPanel';
 import '../../styles/portal/PortalReview.css';
+
+const COLUMN_COUNT = 7;
 
 export default function ReviewTable({
   applications = [],
   selectedId = null,
   onSelect,
+  pendingId = null,
+  onDecide,
+  onCloseDetail,
 }) {
   return (
     <div className="portal-review__table-wrapper">
@@ -20,6 +29,7 @@ export default function ReviewTable({
             <th scope="col">Applicant</th>
             <th scope="col">Program</th>
             <th scope="col">Status</th>
+            <th scope="col">Attending</th>
             <th scope="col">Result email</th>
             <th scope="col">Last reviewed</th>
             <th scope="col">Review</th>
@@ -29,55 +39,78 @@ export default function ReviewTable({
           {applications.map((application) => {
             const latest = application.reviews?.[0];
             const label = application.fullName || application.email;
+            const isSelected = selectedId === application.id;
+            const detailRowId = `review-detail-${application.id}`;
             return (
-              <tr
-                key={application.id}
-                className={
-                  selectedId === application.id
-                    ? 'portal-review__row--selected'
-                    : undefined
-                }
-              >
-                <th scope="row">
-                  {application.fullName || '—'}
-                  <span className="portal-review__email">
-                    {application.email}
-                  </span>
-                </th>
-                <td>
-                  {application.program}
-                  <span className="portal-review__email">
-                    {application.yearOfStudy}
-                  </span>
-                </td>
-                <td>
-                  {STATUS_LABELS[application.status] || application.status}
-                </td>
-                <td>{EMAIL_STATE_LABELS[getEmailState(application)]}</td>
-                <td>
-                  {latest ? (
-                    <>
-                      {latest.reviewerName || latest.reviewerEmail || '—'}
-                      <span className="portal-review__email">
-                        {formatDateTime(latest.createdAt)}
-                      </span>
-                    </>
-                  ) : (
-                    '—'
-                  )}
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    className="portal-button portal-button--outline"
-                    aria-label={`Review ${label}`}
-                    aria-pressed={selectedId === application.id}
-                    onClick={() => onSelect(application.id)}
-                  >
-                    Review
-                  </button>
-                </td>
-              </tr>
+              <React.Fragment key={application.id}>
+                <tr
+                  className={
+                    isSelected ? 'portal-review__row--selected' : undefined
+                  }
+                >
+                  <th scope="row">
+                    {application.fullName || '—'}
+                    <span className="portal-review__email">
+                      {application.email}
+                    </span>
+                  </th>
+                  <td>
+                    {application.program}
+                    <span className="portal-review__email">
+                      {application.yearOfStudy}
+                    </span>
+                  </td>
+                  <td>
+                    {STATUS_LABELS[application.status] || application.status}
+                  </td>
+                  <td>
+                    {isAccepted(application)
+                      ? CONFIRMATION_LABELS[getConfirmation(application)]
+                      : '—'}
+                  </td>
+                  <td>{EMAIL_STATE_LABELS[getEmailState(application)]}</td>
+                  <td>
+                    {latest ? (
+                      <>
+                        {latest.reviewerName || latest.reviewerEmail || '—'}
+                        <span className="portal-review__email">
+                          {formatDateTime(latest.createdAt)}
+                        </span>
+                      </>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="portal-button portal-button--outline"
+                      aria-label={`Review ${label}`}
+                      aria-expanded={isSelected}
+                      aria-controls={isSelected ? detailRowId : undefined}
+                      onClick={() =>
+                        onSelect(isSelected ? null : application.id)
+                      }
+                    >
+                      Review
+                    </button>
+                  </td>
+                </tr>
+                {isSelected && (
+                  <tr id={detailRowId} className="portal-review__detail-row">
+                    <td colSpan={COLUMN_COUNT}>
+                      <ReviewDetailPanel
+                        application={application}
+                        isPending={pendingId === application.id}
+                        onDecide={(decision, note) =>
+                          onDecide(application.id, decision, note)
+                        }
+                        onClose={onCloseDetail}
+                      />
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             );
           })}
         </tbody>

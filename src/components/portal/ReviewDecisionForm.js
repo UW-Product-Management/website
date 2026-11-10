@@ -22,8 +22,11 @@ export default function ReviewDecisionForm({
   };
 
   const handleClick = (decision) => {
-    if (decision === 'rejected' && confirming !== 'rejected') {
-      setConfirming('rejected');
+    if (
+      ['accepted', 'rejected'].includes(decision) &&
+      confirming !== decision
+    ) {
+      setConfirming(decision);
       return;
     }
     submit(decision);
@@ -44,10 +47,11 @@ export default function ReviewDecisionForm({
           onChange={(event) => setNote(event.target.value)}
         />
       </label>
-      {confirming === 'rejected' && (
+      {confirming && (
         <p role="alert" className="portal-review__confirm">
-          This records the application as {STATUS_LABELS.rejected}. The
-          applicant is only told when results are sent. Confirm to continue.
+          {confirming === 'accepted'
+            ? 'Are you sure you want to accept this applicant? They will be marked as accepted, but no email will be sent yet.'
+            : `This records the application as ${STATUS_LABELS.rejected}. The applicant is only told when results are sent. Confirm to continue.`}
         </p>
       )}
       <div className="portal-review__actions">

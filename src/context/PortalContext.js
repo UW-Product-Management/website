@@ -14,6 +14,7 @@ import {
   saveApplicationDraft as apiSaveApplicationDraft,
   submitApplication as apiSubmitApplication,
   sendApplicationReceivedEmail,
+  setApplicationConfirmation as apiSetApplicationConfirmation,
 } from '../services/portalApi';
 
 const DEFAULT_EVENT_SLUG =
@@ -196,6 +197,27 @@ export function PortalProvider({ children, value: customValue }) {
     return result;
   }, [application?.id]);
 
+  const setConfirmation = useCallback(
+    async (confirmation, acknowledged = false) => {
+      const appId = application?.id;
+      if (!appId) {
+        return {
+          data: null,
+          error: { message: 'No application found to confirm' },
+        };
+      }
+
+      const result = await apiSetApplicationConfirmation(
+        appId,
+        confirmation,
+        acknowledged,
+      );
+      if (!result.error && result.data) setApplication(result.data);
+      return result;
+    },
+    [application?.id],
+  );
+
   const refreshPortalData = useCallback(async () => {
     if (!session?.user) return;
     try {
@@ -320,6 +342,7 @@ export function PortalProvider({ children, value: customValue }) {
     saveDraft,
     updateProfile: handleUpdateProfile,
     submitApplication: handleSubmitApplication,
+    setConfirmation,
     updateAccount,
     updateApplication,
     refreshPortalData,

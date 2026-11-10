@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import ManageAdminsPanel from '../../components/portal/ManageAdminsPanel';
 import PortalHeader from '../../components/portal/PortalHeader';
 import ReleaseResultsPanel from '../../components/portal/ReleaseResultsPanel';
-import ReviewDetailPanel from '../../components/portal/ReviewDetailPanel';
 import ReviewTable from '../../components/portal/ReviewTable';
 import { usePortal } from '../../context/PortalContext';
-import { STATUS_LABELS } from '../../portal/applicationStatus';
+import {
+  STATUS_LABELS,
+  isConfirmedAttendee,
+} from '../../portal/applicationStatus';
 import { applicationsToCsv } from '../../portal/applicationsCsv';
 import {
   listApplicationsForReview,
@@ -52,15 +54,36 @@ export default function OrganizerReview() {
     };
   }, [eventId, status]);
 
-  const visibleApplications = useMemo(
-    () =>
-      statusFilter === 'all'
-        ? applications
-        : applications.filter((a) => a.status === statusFilter),
-    [applications, statusFilter],
+  const confirmedApplications = useMemo(
+    () => applications.filter(isConfirmedAttendee),
+    [applications],
   );
 
-  const selectedApplication = applications.find((a) => a.id === selectedId);
+  const filters = useMemo(() => {
+    const countOf = (status) =>
+      applications.filter((a) => a.status === status).length;
+    return [
+      { key: 'all', label: 'All Applications', count: applications.length },
+      { key: 'rejected', label: 'Not Selected', count: countOf('rejected') },
+      { key: 'waitlisted', label: 'Waitlisted', count: countOf('waitlisted') },
+      {
+        key: 'accepted',
+        label: 'Accepted Participants',
+        count: countOf('accepted'),
+      },
+      {
+        key: 'confirmed',
+        label: 'Confirmed Attending',
+        count: confirmedApplications.length,
+      },
+    ];
+  }, [applications, confirmedApplications]);
+
+  const visibleApplications = useMemo(() => {
+    if (statusFilter === 'all') return applications;
+    if (statusFilter === 'confirmed') return confirmedApplications;
+    return applications.filter((a) => a.status === statusFilter);
+  }, [applications, confirmedApplications, statusFilter]);
 
   const handleDecide = useCallback(async (applicationId, decision, note) => {
     setPendingId(applicationId);
@@ -128,6 +151,27 @@ export default function OrganizerReview() {
 
         <ManageAdminsPanel />
 
+        <div className="portal-review__actions">
+          {filters.map((filter) => (
+            <button
+              key={filter.key}
+              type="button"
+              className={`portal-button ${
+                statusFilter === filter.key
+                  ? 'portal-button--primary'
+                  : 'portal-button--outline'
+              }`}
+              aria-pressed={statusFilter === filter.key}
+              onClick={() => {
+                setStatusFilter(filter.key);
+                setSelectedId(null);
+              }}
+            >
+              {filter.label} ({filter.count})
+            </button>
+          ))}
+        </div>
+
         <div className="portal-review__toolbar">
           <label htmlFor="review-status-filter">
             Status
@@ -137,6 +181,7 @@ export default function OrganizerReview() {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="all">All</option>
+              <option value="confirmed">Confirmed attending</option>
               {Object.entries(STATUS_LABELS)
                 .filter(([key]) => key !== 'draft')
                 .map(([key, label]) => (
@@ -170,16 +215,9 @@ export default function OrganizerReview() {
             applications={visibleApplications}
             selectedId={selectedId}
             onSelect={setSelectedId}
-          />
-        )}
-        {selectedApplication && (
-          <ReviewDetailPanel
-            application={selectedApplication}
-            isPending={pendingId === selectedApplication.id}
-            onDecide={(decision, note) =>
-              handleDecide(selectedApplication.id, decision, note)
-            }
-            onClose={() => setSelectedId(null)}
+            pendingId={pendingId}
+            onDecide={handleDecide}
+            onCloseDetail={() => setSelectedId(null)}
           />
         )}
       </section>
