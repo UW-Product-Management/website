@@ -131,6 +131,16 @@ describe('OrganizerMessages', () => {
     expect(screen.getByLabelText('Message').value).toContain('{{name}}');
   });
 
+  it('names every group a recipient falls into', async () => {
+    renderPage();
+
+    userEvent.selectOptions(await groupSelect(), 'accepted_unconfirmed');
+
+    expect(
+      screen.getByRole('cell', { name: 'Accepted · Not confirmed' }),
+    ).toBeInTheDocument();
+  });
+
   it('keeps a message the organizer already started', async () => {
     renderPage();
     userEvent.type(await screen.findByLabelText('Subject'), 'My own subject');

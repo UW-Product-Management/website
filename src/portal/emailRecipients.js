@@ -18,6 +18,7 @@ export const RECIPIENT_GROUPS = [
   {
     key: 'accepted_unconfirmed',
     label: 'Accepted, not confirmed',
+    shortLabel: 'Not confirmed',
     hint: 'Told they were accepted but have not confirmed their spot before the deadline',
   },
   { key: 'waitlisted', label: 'Waitlisted', hint: 'Decision is waitlisted' },
@@ -27,6 +28,18 @@ export const RECIPIENT_GROUPS = [
 export const GROUP_LABELS = Object.fromEntries(
   RECIPIENT_GROUPS.map((group) => [group.key, group.label]),
 );
+
+const GROUP_BADGES = Object.fromEntries(
+  RECIPIENT_GROUPS.map((group) => [group.key, group.shortLabel || group.label]),
+);
+
+// A person can sit in a decision group and a derived one at the same time, so
+// naming only the decision group would label a "not confirmed" list "Accepted".
+export const describeGroups = (groups = []) =>
+  groups
+    .map((group) => GROUP_BADGES[group])
+    .filter(Boolean)
+    .join(' · ');
 
 const KNOWN_GROUPS = new Set(RECIPIENT_GROUPS.map((group) => group.key));
 

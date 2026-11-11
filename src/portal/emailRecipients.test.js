@@ -1,4 +1,9 @@
-import { buildAudience, countByGroup, filterAudience } from './emailRecipients';
+import {
+  buildAudience,
+  countByGroup,
+  describeGroups,
+  filterAudience,
+} from './emailRecipients';
 
 const profiles = [
   { id: 'u1', full_name: 'Ada', email: 'ada@example.com' },
@@ -99,5 +104,21 @@ describe('accepted applicants who have not confirmed', () => {
       accepted: 4,
       accepted_unconfirmed: 1,
     });
+  });
+});
+
+describe('describeGroups', () => {
+  it('names a single group by its label', () => {
+    expect(describeGroups(['waitlisted'])).toBe('Waitlisted');
+  });
+
+  it('names a derived group alongside the decision it came from', () => {
+    expect(describeGroups(['accepted', 'accepted_unconfirmed'])).toBe(
+      'Accepted · Not confirmed',
+    );
+  });
+
+  it('ignores groups it does not recognise', () => {
+    expect(describeGroups(['accepted', 'mystery'])).toBe('Accepted');
   });
 });
