@@ -314,7 +314,7 @@ describe('EmailSendControls', () => {
     expect(sendCustomEmailBatch).toHaveBeenLastCalledWith('c1');
   });
 
-  it('starts over instead of resuming once the message changes', async () => {
+  it('keeps the unfinished send when the composer changes', async () => {
     sendCustomEmailBatch.mockResolvedValueOnce({
       data: null,
       error: { code: 'send_failed', message: 'Sending failed.' },
@@ -329,10 +329,7 @@ describe('EmailSendControls', () => {
     rerender(controls({ subject: 'A different email' }));
 
     expect(
-      screen.queryByRole('button', { name: /resume sending/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Send to 2 people' }),
+      screen.getByRole('button', { name: /resume sending/i }),
     ).toBeInTheDocument();
   });
 

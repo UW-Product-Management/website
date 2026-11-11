@@ -64,7 +64,7 @@ export default function EmailSendControls({
   }, []);
 
   // Read from the server rather than tracked locally, so a send stranded by a
-  // closed tab is still offered when the page is opened again.
+  // closed tab is still offered to whichever organizer opens the page next.
   const loadUnfinished = useCallback(async () => {
     if (!eventId) return null;
     const { data, error } = await getResumableCustomEmail(eventId);
@@ -82,12 +82,6 @@ export default function EmailSendControls({
   useEffect(() => {
     setConfirmation('');
   }, [recipients]);
-
-  // Resuming continues the stored campaign, so it is only safe while the
-  // organizer is still looking at the exact email and list it was created for.
-  useEffect(() => {
-    setUnfinished(null);
-  }, [recipients, subject, body]);
 
   const total = recipients.length;
   const expectedPhrase = `SEND ${total}`;
