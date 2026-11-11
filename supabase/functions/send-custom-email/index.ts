@@ -89,6 +89,8 @@ async function findUnfinished(eventId: string) {
   return data;
 }
 
+// An unfinished campaign is reported to every organizer, not just whoever
+// started it, so a send stranded by a closed laptop can still be finished.
 async function describeResumable(eventId: string, mode: EmailMode) {
   const campaign = await findUnfinished(eventId);
   if (!campaign) return json({ campaign: null });
@@ -281,20 +283,14 @@ async function storeTotals(campaignId: string, totals: Totals) {
   }
 }
 
-async function sendBatch(
-  user: { id: string },
-  campaignId: string,
-  mode: EmailMode,
-) {
+async function sendBatch(campaignId: string, mode: EmailMode) {
   const { data: campaign } = await admin
     .from('custom_email_campaigns')
     .select('*')
     .eq('id', campaignId)
     .maybeSingle();
 
-  if (!campaign || campaign.created_by !== user.id) {
-    return json({ error: 'run_not_found' }, 404);
-  }
+  if (!campaign) return json({ error: 'run_not_found' }, 404);
   if (campaign.finished_at) return json({ error: 'run_finished' }, 409);
   if (hasExpired(campaign.created_at)) {
     return json({ error: 'run_expired' }, 409);
@@ -409,7 +405,7 @@ Deno.serve(async (req) => {
         return await createCampaign(caller, body, body.eventId, mode);
       case 'send':
         if (!body.campaignId) return json({ error: 'run_required' }, 400);
-        return await sendBatch(caller, body.campaignId, mode);
+        return await sendBatch(body.campaignId, mode);
       case 'resumable':
         if (!body.eventId) return json({ error: 'event_required' }, 400);
         return await describeResumable(body.eventId, mode);
