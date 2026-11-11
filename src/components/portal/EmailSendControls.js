@@ -25,6 +25,21 @@ const MAX_BATCHES = 200;
 
 const people = (count) => `${count} ${count === 1 ? 'person' : 'people'}`;
 
+// Every recipient is accounted for: sent, failed and unconfirmed together with
+// the ones still waiting add up to the campaign's total, so the organizer is
+// never left wondering about a missing remainder.
+function unfinishedSummary({ subject, total, pending, sent, failed, dropped }) {
+  const settled = [`${sent} sent`];
+  if (failed > 0) settled.push(`${failed} undeliverable`);
+  if (dropped > 0) settled.push(`${dropped} unconfirmed`);
+
+  return (
+    `“${subject}” has ${people(pending)} of ${total} left to email ` +
+    `(${settled.join(', ')} so far). Resuming continues that email, not what ` +
+    `is in the composer.`
+  );
+}
+
 function sentSummary({ sent, failed, dropped }) {
   const parts = [`Email sent to ${people(sent)}.`];
   if (failed > 0) {
@@ -222,11 +237,7 @@ export default function EmailSendControls({
           aria-labelledby="unfinished-send-heading"
         >
           <h3 id="unfinished-send-heading">Unfinished send</h3>
-          <p>
-            {`“${unfinished.subject}” reached ${unfinished.sent} of ${unfinished.total} ` +
-              `people and has ${unfinished.pending} left. Resuming continues that ` +
-              `email, not what is in the composer.`}
-          </p>
+          <p>{unfinishedSummary(unfinished)}</p>
           {unfinished.blockedReason && (
             <p className="portal-messages__hint">
               It can no longer be resumed, so the remaining people must be

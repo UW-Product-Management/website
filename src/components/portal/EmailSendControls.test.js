@@ -241,6 +241,36 @@ describe('EmailSendControls', () => {
     expect(screen.queryByLabelText(/to confirm/i)).not.toBeInTheDocument();
   });
 
+  it('accounts for every recipient of an unfinished send', async () => {
+    getResumableCustomEmail.mockResolvedValue(
+      unfinishedCampaign({
+        total: 10,
+        pending: 1,
+        sent: 6,
+        failed: 2,
+        dropped: 1,
+      }),
+    );
+    renderControls();
+
+    expect(
+      await screen.findByText(
+        /1 person of 10 left to email \(6 sent, 2 undeliverable, 1 unconfirmed so far\)/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('names only the outcomes an unfinished send actually has', async () => {
+    getResumableCustomEmail.mockResolvedValue(
+      unfinishedCampaign({ total: 5, pending: 2, sent: 3 }),
+    );
+    renderControls();
+
+    expect(
+      await screen.findByText(/2 people of 5 left to email \(3 sent so far\)/i),
+    ).toBeInTheDocument();
+  });
+
   it('offers only discard once an unfinished send cannot be resumed', async () => {
     getResumableCustomEmail.mockResolvedValue(
       unfinishedCampaign({ resumable: false, blockedReason: 'run_expired' }),
