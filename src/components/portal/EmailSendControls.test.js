@@ -436,6 +436,27 @@ describe('EmailSendControls', () => {
     expect(sendCustomEmailBatch).toHaveBeenCalledTimes(2);
   });
 
+  it('does not invite a resume the server will refuse', async () => {
+    sendCustomEmailBatch.mockResolvedValue(batch(0, 0, 2));
+    getResumableCustomEmail
+      .mockResolvedValueOnce(noCampaign)
+      .mockResolvedValueOnce(
+        unfinishedCampaign({
+          pending: 2,
+          sent: 0,
+          resumable: false,
+          blockedReason: 'run_expired',
+        }),
+      );
+    renderControls();
+
+    await confirmAndSend();
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/paused with 2 left/i);
+    expect(alert).not.toHaveTextContent(/resume to continue/i);
+  });
+
   it('stops after too many batches instead of looping forever', async () => {
     sendCustomEmailBatch.mockResolvedValue(batch(1, 0, 500));
     getResumableCustomEmail

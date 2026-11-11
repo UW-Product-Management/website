@@ -124,6 +124,15 @@ export default function EmailSendControls({
     }
   };
 
+  // Only invites a resume once the server confirms the campaign still accepts
+  // one, so the message never points at a button that is not there.
+  const stopWith = async (reason) => {
+    const campaign = await loadUnfinished();
+    setErrorMessage(
+      campaign?.resumable ? `${reason} Resume to continue.` : reason,
+    );
+  };
+
   const sendBatches = async (campaignId, campaignTotal, startTotals) => {
     let { sent, failed, dropped } = startTotals;
 
@@ -152,16 +161,12 @@ export default function EmailSendControls({
       // just not through this loop. Pausing on them would report a concurrent
       // resume as a failure.
       if (data.sent + data.failed + (data.skipped ?? 0) === 0) {
-        setErrorMessage(
-          `Sending paused with ${data.remaining} left. Resume to continue.`,
-        );
-        await loadUnfinished();
+        await stopWith(`Sending paused with ${data.remaining} left.`);
         return;
       }
     }
 
-    setErrorMessage('Sending stopped before it finished. Resume to continue.');
-    await loadUnfinished();
+    await stopWith('Sending stopped before it finished.');
   };
 
   const handleTest = () =>
