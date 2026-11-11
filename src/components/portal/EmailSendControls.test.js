@@ -281,18 +281,58 @@ describe('EmailSendControls', () => {
     expect(
       screen.queryByRole('button', { name: /resume sending/i }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /discard/i })).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: 'Discard without sending the rest' }),
+    ).toBeEnabled();
   });
 
-  it('discards an unfinished send without emailing the rest', async () => {
+  it('asks before discarding an unfinished send', async () => {
+    getResumableCustomEmail.mockResolvedValue(unfinishedCampaign());
+    renderControls();
+
+    userEvent.click(
+      await screen.findByRole('button', {
+        name: 'Discard without sending the rest',
+      }),
+    );
+
+    expect(await screen.findByText(/cannot be undone/i)).toBeInTheDocument();
+    expect(abandonCustomEmail).not.toHaveBeenCalled();
+  });
+
+  it('keeps the unfinished send when the discard is called off', async () => {
+    getResumableCustomEmail.mockResolvedValue(unfinishedCampaign());
+    renderControls();
+    userEvent.click(
+      await screen.findByRole('button', {
+        name: 'Discard without sending the rest',
+      }),
+    );
+
+    userEvent.click(await screen.findByRole('button', { name: 'Keep it' }));
+
+    expect(
+      await screen.findByRole('button', { name: 'Resume sending (1 left)' }),
+    ).toBeInTheDocument();
+    expect(abandonCustomEmail).not.toHaveBeenCalled();
+  });
+
+  it('discards an unfinished send once confirmed', async () => {
     getResumableCustomEmail.mockResolvedValue(unfinishedCampaign());
     abandonCustomEmail.mockResolvedValue({
       data: { abandoned: true },
       error: null,
     });
     renderControls();
+    userEvent.click(
+      await screen.findByRole('button', {
+        name: 'Discard without sending the rest',
+      }),
+    );
 
-    userEvent.click(await screen.findByRole('button', { name: /discard/i }));
+    userEvent.click(
+      await screen.findByRole('button', { name: 'Yes, discard this send' }),
+    );
 
     expect(await screen.findByText(/was discarded/i)).toBeInTheDocument();
     expect(abandonCustomEmail).toHaveBeenCalledWith('c1');

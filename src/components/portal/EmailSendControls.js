@@ -68,6 +68,7 @@ export default function EmailSendControls({
   const [notice, setNotice] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [unfinished, setUnfinished] = useState(null);
+  const [isDiscarding, setIsDiscarding] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -208,6 +209,7 @@ export default function EmailSendControls({
         setErrorMessage(error.message);
         return;
       }
+      setIsDiscarding(false);
       setUnfinished(null);
       setNotice('The unfinished send was discarded. No one else was emailed.');
     });
@@ -244,26 +246,54 @@ export default function EmailSendControls({
               emailed as a new, smaller send.
             </p>
           )}
-          <div className="portal-messages__row">
-            {unfinished.resumable && (
+          {isDiscarding ? (
+            <>
+              <p className="portal-messages__hint">
+                {`Discarding closes this send for good. The ${people(
+                  unfinished.pending,
+                )} who have not been emailed will not be, and it cannot be undone.`}
+              </p>
+              <div className="portal-messages__row">
+                <button
+                  type="button"
+                  className="portal-button portal-button--primary"
+                  disabled={!isReady}
+                  onClick={handleDiscard}
+                >
+                  Yes, discard this send
+                </button>
+                <button
+                  type="button"
+                  className="portal-button portal-button--outline"
+                  disabled={!isReady}
+                  onClick={() => setIsDiscarding(false)}
+                >
+                  Keep it
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="portal-messages__row">
+              {unfinished.resumable && (
+                <button
+                  type="button"
+                  className="portal-button portal-button--primary"
+                  disabled={!isReady}
+                  onClick={handleResume}
+                >
+                  {`Resume sending (${unfinished.pending} left)`}
+                </button>
+              )}
               <button
                 type="button"
-                className="portal-button portal-button--primary"
+                className="portal-button portal-button--outline"
                 disabled={!isReady}
-                onClick={handleResume}
+                onClick={() => setIsDiscarding(true)}
               >
-                {`Resume sending (${unfinished.pending} left)`}
+                Discard without sending the rest
               </button>
-            )}
-            <button
-              type="button"
-              className="portal-button portal-button--outline"
-              disabled={!isReady}
-              onClick={handleDiscard}
-            >
-              Discard without sending the rest
-            </button>
-          </div>
+            </div>
+          )}
         </section>
       ) : (
         <div className="portal-messages__row">
