@@ -18,6 +18,11 @@ const MODE_NOTICES = {
 const EMAIL_SERVICE_UNAVAILABLE =
   'The email service is not reachable right now, so nothing can be sent. Refresh to try again.';
 
+// The server sends 20 per batch and caps a campaign at 2000 recipients, so a
+// legitimate send can never reach this. It only stops a loop that would
+// otherwise spin forever against a server that keeps reporting work left.
+const MAX_BATCHES = 200;
+
 const people = (count) => `${count} ${count === 1 ? 'person' : 'people'}`;
 
 function sentSummary({ sent, failed, dropped }) {
@@ -106,7 +111,7 @@ export default function EmailSendControls({
   const sendBatches = async (campaignId, campaignTotal, startTotals) => {
     let { sent, failed, dropped } = startTotals;
 
-    for (;;) {
+    for (let attempt = 0; attempt < MAX_BATCHES; attempt += 1) {
       const { data, error } = await sendCustomEmailBatch(campaignId);
       if (error) {
         setErrorMessage(error.message);
@@ -135,6 +140,9 @@ export default function EmailSendControls({
         return;
       }
     }
+
+    setErrorMessage('Sending stopped before it finished. Resume to continue.');
+    await loadUnfinished();
   };
 
   const handleTest = () =>

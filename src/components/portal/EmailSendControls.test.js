@@ -351,6 +351,21 @@ describe('EmailSendControls', () => {
     ).toBeInTheDocument();
   });
 
+  it('stops after too many batches instead of looping forever', async () => {
+    sendCustomEmailBatch.mockResolvedValue(batch(1, 0, 500));
+    getResumableCustomEmail
+      .mockResolvedValueOnce(noCampaign)
+      .mockResolvedValueOnce(unfinishedCampaign({ pending: 500, sent: 200 }));
+    renderControls();
+
+    await confirmAndSend();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /stopped before it finished/i,
+    );
+    expect(sendCustomEmailBatch).toHaveBeenCalledTimes(200);
+  });
+
   it('tells the page while a send is in progress', async () => {
     const onBusyChange = jest.fn();
     sendCustomEmailBatch.mockResolvedValueOnce(batch(2, 0, 0));
