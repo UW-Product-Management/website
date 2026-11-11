@@ -135,6 +135,8 @@ export default function OrganizerReview() {
         <h1>Review applications</h1>
         <p>
           <Link to="/portal/dashboard">Back to dashboard</Link>
+          {' · '}
+          <Link to="/portal/admin/messages">Email applicants</Link>
         </p>
 
         {errorMessage && (
