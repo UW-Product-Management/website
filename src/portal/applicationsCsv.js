@@ -4,6 +4,8 @@ const COLUMNS = [
   ['Program', (a) => a.program],
   ['Year of study', (a) => a.yearOfStudy],
   ['Status', (a) => a.status],
+  ['Attending', (a) => (a.status === 'accepted' ? a.confirmation : '')],
+  ['Confirmation updated at', (a) => a.confirmationUpdatedAt],
   ['Submitted at', (a) => a.submittedAt],
   [
     'Reviewed by',

@@ -21,7 +21,6 @@ import Dashboard from './pages/portal/Dashboard';
 import DashboardDetails from './pages/portal/DashboardDetails';
 import Profile from './pages/portal/Profile';
 import PortalEnvironmentBanner from './components/portal/PortalEnvironmentBanner';
-import MobileGate from './components/portal/MobileGate';
 import ApplyLayout from './components/portal/ApplyLayout';
 import RequireAuth from './components/portal/RequireAuth';
 import RequireOrganizer from './components/portal/RequireOrganizer';
@@ -31,11 +30,8 @@ import OrganizerMessages from './pages/portal/OrganizerMessages';
 function PortalLayout() {
   return (
     <PortalProvider>
-      <MobileGate />
-      <div className="portal-app-content">
-        <PortalEnvironmentBanner />
-        <Outlet />
-      </div>
+      <PortalEnvironmentBanner />
+      <Outlet />
     </PortalProvider>
   );
 }
