@@ -132,7 +132,10 @@ export default function EmailSendControls({
         return;
       }
 
-      if (data.sent + data.failed === 0) {
+      // Rows another batch claimed count as progress: the campaign is moving,
+      // just not through this loop. Pausing on them would report a concurrent
+      // resume as a failure.
+      if (data.sent + data.failed + (data.skipped ?? 0) === 0) {
         setErrorMessage(
           `Sending paused with ${data.remaining} left. Resume to continue.`,
         );

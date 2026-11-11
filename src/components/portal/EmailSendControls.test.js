@@ -35,8 +35,8 @@ const controls = (props = {}) => (
 
 const renderControls = (props = {}) => render(controls(props));
 
-const batch = (sent, failed, remaining, dropped = 0) => ({
-  data: { sent, failed, remaining, dropped },
+const batch = (sent, failed, remaining, dropped = 0, skipped = 0) => ({
+  data: { sent, failed, remaining, dropped, skipped },
   error: null,
 });
 
@@ -349,6 +349,21 @@ describe('EmailSendControls', () => {
     expect(
       screen.getByRole('button', { name: 'Resume sending (2 left)' }),
     ).toBeInTheDocument();
+  });
+
+  it('keeps going when another batch claimed the recipients first', async () => {
+    sendCustomEmailBatch
+      .mockResolvedValueOnce(batch(0, 0, 1, 0, 1))
+      .mockResolvedValueOnce(batch(0, 0, 0, 0, 1));
+    renderControls();
+
+    await confirmAndSend();
+
+    expect(
+      await screen.findByText('Email sent to 0 people.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(sendCustomEmailBatch).toHaveBeenCalledTimes(2);
   });
 
   it('stops after too many batches instead of looping forever', async () => {

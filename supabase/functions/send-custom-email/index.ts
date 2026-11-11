@@ -308,6 +308,7 @@ async function sendBatch(campaignId: string, mode: EmailMode) {
 
   let sent = 0;
   let failed = 0;
+  let skipped = 0;
   for (const row of batch ?? []) {
     // Claiming before delivery means a concurrent batch skips this row instead
     // of sending a duplicate. claimed_at is kept separate from sent_at so that
@@ -320,7 +321,14 @@ async function sendBatch(campaignId: string, mode: EmailMode) {
       .eq('user_id', row.user_id)
       .is('claimed_at', null)
       .select('user_id');
-    if (!claimed?.length) continue;
+    // Reported separately from sent and failed: another batch is working the
+    // same campaign, which is progress even though this batch made none. The
+    // caller needs to tell that apart from a campaign that has genuinely
+    // stalled.
+    if (!claimed?.length) {
+      skipped += 1;
+      continue;
+    }
 
     try {
       await deliver(
@@ -359,6 +367,7 @@ async function sendBatch(campaignId: string, mode: EmailMode) {
   return json({
     sent,
     failed,
+    skipped,
     remaining: totals.pending,
     dropped: totals.dropped,
   });
