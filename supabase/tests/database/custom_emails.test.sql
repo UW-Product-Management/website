@@ -1,5 +1,5 @@
 begin;
-select plan(6);
+select plan(8);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('11111111-1111-1111-1111-111111111111', 'alex@test.local', '{"full_name":"Alex Chen"}'),
@@ -34,11 +34,22 @@ select has_column(
   'recipients record a failed delivery separately from a sent one'
 );
 
+select has_column(
+  'public', 'custom_email_recipients', 'claimed_at',
+  'recipients record a claim separately from a confirmed delivery'
+);
+
 select throws_ok(
   $$ update public.custom_email_recipients
-     set sent_at = now(), failed_at = now() $$,
+     set claimed_at = now(), sent_at = now(), failed_at = now() $$,
   '23514', null,
   'a recipient cannot be both sent and failed'
+);
+
+select throws_ok(
+  $$ update public.custom_email_recipients set sent_at = now() $$,
+  '23514', null,
+  'a recipient cannot be sent without first being claimed'
 );
 
 set local role authenticated;

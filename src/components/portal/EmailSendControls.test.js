@@ -33,8 +33,8 @@ const controls = (props = {}) => (
 
 const renderControls = (props = {}) => render(controls(props));
 
-const batch = (sent, failed, remaining) => ({
-  data: { sent, failed, remaining },
+const batch = (sent, failed, remaining, dropped = 0) => ({
+  data: { sent, failed, remaining, dropped },
   error: null,
 });
 
@@ -189,6 +189,17 @@ describe('EmailSendControls', () => {
       await screen.findByText(
         /email sent to 1 person\. 1 couldn't be delivered/i,
       ),
+    ).toBeInTheDocument();
+  });
+
+  it('reports recipients whose delivery was never confirmed', async () => {
+    sendCustomEmailBatch.mockResolvedValueOnce(batch(1, 0, 0, 1));
+    renderControls();
+
+    await confirmAndSend();
+
+    expect(
+      await screen.findByText(/1 could not be confirmed as delivered/i),
     ).toBeInTheDocument();
   });
 

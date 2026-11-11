@@ -27,10 +27,17 @@ const UNRESUMABLE_ERRORS = new Set([
 
 const people = (count) => `${count} ${count === 1 ? 'person' : 'people'}`;
 
-function sentSummary(sent, failed) {
-  const summary = `Email sent to ${people(sent)}.`;
-  if (failed === 0) return summary;
-  return `${summary} ${failed} couldn't be delivered and won't be retried.`;
+function sentSummary({ sent, failed, dropped }) {
+  const parts = [`Email sent to ${people(sent)}.`];
+  if (failed > 0) {
+    parts.push(`${failed} couldn't be delivered and won't be retried.`);
+  }
+  if (dropped > 0) {
+    parts.push(
+      `${dropped} could not be confirmed as delivered — check with them before resending.`,
+    );
+  }
+  return parts.join(' ');
 }
 
 export default function EmailSendControls({
@@ -96,14 +103,14 @@ export default function EmailSendControls({
   };
 
   const sendBatches = async (campaign) => {
-    let { sent, failed } = campaign;
+    let { sent, failed, dropped } = campaign;
     setPausedCampaign(null);
 
     for (;;) {
       const { data, error } = await sendCustomEmailBatch(campaign.id);
       if (error) {
         if (!UNRESUMABLE_ERRORS.has(error.code)) {
-          setPausedCampaign({ id: campaign.id, sent, failed });
+          setPausedCampaign({ id: campaign.id, sent, failed, dropped });
         }
         setErrorMessage(error.message);
         return;
@@ -111,11 +118,12 @@ export default function EmailSendControls({
 
       sent += data.sent;
       failed += data.failed;
+      dropped = data.dropped ?? dropped;
       setProgress(`Sent ${sent} of ${total}`);
       if (data.remaining === 0) break;
 
       if (data.sent + data.failed === 0) {
-        setPausedCampaign({ id: campaign.id, sent, failed });
+        setPausedCampaign({ id: campaign.id, sent, failed, dropped });
         setErrorMessage(
           `Sending paused with ${data.remaining} left. Resume to continue.`,
         );
@@ -124,7 +132,7 @@ export default function EmailSendControls({
     }
 
     setConfirmation('');
-    setNotice(sentSummary(sent, failed));
+    setNotice(sentSummary({ sent, failed, dropped }));
     onSent?.();
   };
 
@@ -147,7 +155,12 @@ export default function EmailSendControls({
         setErrorMessage(created.error.message);
         return;
       }
-      await sendBatches({ id: created.data.campaignId, sent: 0, failed: 0 });
+      await sendBatches({
+        id: created.data.campaignId,
+        sent: 0,
+        failed: 0,
+        dropped: 0,
+      });
     });
 
   const handleResume = () => runBusy(() => sendBatches(pausedCampaign));

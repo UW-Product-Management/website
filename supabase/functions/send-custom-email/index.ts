@@ -35,6 +35,13 @@ interface Recipient {
   full_name: string;
 }
 
+interface Totals {
+  pending: number;
+  sent: number;
+  failed: number;
+  dropped: number;
+}
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const admin = createClient(
@@ -160,20 +167,57 @@ async function createCampaign(
 
 async function countRecipients(
   campaignId: string,
-  state: 'pending' | 'sent' | 'failed',
-) {
+  state: keyof Totals,
+): Promise<number> {
   let query = admin
     .from('custom_email_recipients')
     .select('user_id', { count: 'exact', head: true })
     .eq('campaign_id', campaignId);
-  if (state === 'pending') {
-    query = query.is('sent_at', null).is('failed_at', null);
-  } else {
-    query = query.not(state === 'sent' ? 'sent_at' : 'failed_at', 'is', null);
+
+  if (state === 'pending') query = query.is('claimed_at', null);
+  else if (state === 'sent') query = query.not('sent_at', 'is', null);
+  else if (state === 'failed') query = query.not('failed_at', 'is', null);
+  else {
+    query = query
+      .not('claimed_at', 'is', null)
+      .is('sent_at', null)
+      .is('failed_at', null);
   }
+
   const { count, error } = await query;
   if (error) throw new Error(error.message);
   return count ?? 0;
+}
+
+async function campaignTotals(campaignId: string): Promise<Totals> {
+  const [pending, sent, failed, dropped] = await Promise.all([
+    countRecipients(campaignId, 'pending'),
+    countRecipients(campaignId, 'sent'),
+    countRecipients(campaignId, 'failed'),
+    countRecipients(campaignId, 'dropped'),
+  ]);
+  return { pending, sent, failed, dropped };
+}
+
+// Counted from the recipient rows rather than added to a campaign row read
+// earlier, so concurrent batches cannot overwrite each other's totals.
+async function storeTotals(campaignId: string, totals: Totals) {
+  await admin
+    .from('custom_email_campaigns')
+    .update({
+      sent_count: totals.sent,
+      failed_count: totals.failed,
+      dropped_count: totals.dropped,
+    })
+    .eq('id', campaignId);
+
+  if (totals.pending === 0) {
+    await admin
+      .from('custom_email_campaigns')
+      .update({ finished_at: new Date().toISOString() })
+      .eq('id', campaignId)
+      .is('finished_at', null);
+  }
 }
 
 async function sendBatch(
@@ -200,8 +244,7 @@ async function sendBatch(
     .from('custom_email_recipients')
     .select('user_id, email, full_name')
     .eq('campaign_id', campaignId)
-    .is('sent_at', null)
-    .is('failed_at', null)
+    .is('claimed_at', null)
     .order('user_id')
     .limit(BATCH_SIZE);
   if (error) throw new Error(error.message);
@@ -209,17 +252,16 @@ async function sendBatch(
   let sent = 0;
   let failed = 0;
   for (const row of batch ?? []) {
-    // Stamping before delivery claims the row, so a concurrent batch for the
-    // same campaign skips it instead of sending a duplicate. The trade-off: if
-    // the function dies mid-delivery the row stays stamped and that person is
-    // missed, which is preferable to emailing anyone twice.
+    // Claiming before delivery means a concurrent batch skips this row instead
+    // of sending a duplicate. claimed_at is kept separate from sent_at so that
+    // a function death mid-delivery leaves the row provably unresolved rather
+    // than counted as delivered.
     const { data: claimed } = await admin
       .from('custom_email_recipients')
-      .update({ sent_at: new Date().toISOString() })
+      .update({ claimed_at: new Date().toISOString() })
       .eq('campaign_id', campaignId)
       .eq('user_id', row.user_id)
-      .is('sent_at', null)
-      .is('failed_at', null)
+      .is('claimed_at', null)
       .select('user_id');
     if (!claimed?.length) continue;
 
@@ -233,6 +275,11 @@ async function sendBatch(
         ),
         mode,
       );
+      await admin
+        .from('custom_email_recipients')
+        .update({ sent_at: new Date().toISOString() })
+        .eq('campaign_id', campaignId)
+        .eq('user_id', row.user_id);
       sent += 1;
     } catch (deliveryError) {
       failed += 1;
@@ -242,33 +289,22 @@ async function sendBatch(
       // first in every later batch.
       await admin
         .from('custom_email_recipients')
-        .update({ sent_at: null, failed_at: new Date().toISOString() })
+        .update({ failed_at: new Date().toISOString() })
         .eq('campaign_id', campaignId)
         .eq('user_id', row.user_id);
     }
     await sleep(SEND_INTERVAL_MS);
   }
 
-  // Counted from the recipient rows rather than added to the campaign row read
-  // above, so concurrent batches cannot overwrite each other's totals.
-  const [remaining, sentTotal, failedTotal] = await Promise.all([
-    countRecipients(campaignId, 'pending'),
-    countRecipients(campaignId, 'sent'),
-    countRecipients(campaignId, 'failed'),
-  ]);
-  await admin
-    .from('custom_email_campaigns')
-    .update({ sent_count: sentTotal, failed_count: failedTotal })
-    .eq('id', campaignId);
-  if (remaining === 0) {
-    await admin
-      .from('custom_email_campaigns')
-      .update({ finished_at: new Date().toISOString() })
-      .eq('id', campaignId)
-      .is('finished_at', null);
-  }
+  const totals = await campaignTotals(campaignId);
+  await storeTotals(campaignId, totals);
 
-  return json({ sent, failed, remaining });
+  return json({
+    sent,
+    failed,
+    remaining: totals.pending,
+    dropped: totals.dropped,
+  });
 }
 
 Deno.serve(async (req) => {
