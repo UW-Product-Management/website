@@ -98,6 +98,12 @@ export default function EmailSendControls({
     loadUnfinished();
   }, [loadUnfinished]);
 
+  // Tied to the campaign it was opened for, so a different send never inherits
+  // a pending confirmation and offer to discard itself unprompted.
+  useEffect(() => {
+    setIsDiscarding(false);
+  }, [unfinished?.id]);
+
   // A typed "SEND <n>" confirms one specific list; two groups can share a
   // count, so the phrase alone cannot tell them apart.
   useEffect(() => {
@@ -202,7 +208,6 @@ export default function EmailSendControls({
         setErrorMessage(error.message);
         return;
       }
-      setIsDiscarding(false);
       setUnfinished(null);
       setNotice('The unfinished send was discarded. No one else was emailed.');
     });

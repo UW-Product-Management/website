@@ -334,6 +334,28 @@ describe('EmailSendControls', () => {
     expect(abandonCustomEmail).not.toHaveBeenCalled();
   });
 
+  it('does not carry a pending discard over to a different send', async () => {
+    getResumableCustomEmail
+      .mockResolvedValueOnce(unfinishedCampaign({ id: 'c1' }))
+      .mockResolvedValueOnce(unfinishedCampaign({ id: 'c2' }));
+    const { rerender } = renderControls();
+    userEvent.click(
+      await screen.findByRole('button', {
+        name: 'Discard without sending the rest',
+      }),
+    );
+    await screen.findByText(/cannot be undone/i);
+
+    rerender(controls({ eventId: 'evt-2' }));
+
+    expect(
+      await screen.findByRole('button', {
+        name: 'Discard without sending the rest',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/cannot be undone/i)).not.toBeInTheDocument();
+  });
+
   it('discards an unfinished send once confirmed', async () => {
     getResumableCustomEmail.mockResolvedValue(unfinishedCampaign());
     abandonCustomEmail.mockResolvedValue({
