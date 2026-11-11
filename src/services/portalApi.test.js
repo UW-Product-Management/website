@@ -1095,6 +1095,8 @@ describe('custom email service', () => {
     const chain = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
+      not: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
       order: jest.fn().mockReturnThis(),
       range: jest.fn(() => Promise.resolve(result)),
     };
@@ -1185,6 +1187,19 @@ describe('custom email service', () => {
       'id, user_id, status, confirmation',
     );
     expect(result.data[0].groups).toEqual(['accepted', 'accepted_unconfirmed']);
+  });
+
+  it('leaves accounts without an email address out of the query', async () => {
+    const profiles = pagedResult({ data: [], error: null });
+    supabase.from
+      .mockReturnValueOnce(profiles)
+      .mockReturnValueOnce(pagedResult({ data: [], error: null }))
+      .mockReturnValueOnce(pagedResult({ data: [], error: null }));
+
+    await listEmailAudience('evt-1');
+
+    expect(profiles.not).toHaveBeenCalledWith('email', 'is', null);
+    expect(profiles.neq).toHaveBeenCalledWith('email', '');
   });
 
   it('returns the error when a table cannot be read', async () => {

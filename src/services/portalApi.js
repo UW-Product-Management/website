@@ -641,8 +641,15 @@ async function selectAll(buildQuery) {
 
 export async function listEmailAudience(eventId, { confirmBy = null } = {}) {
   const [profiles, applications, decisions] = await Promise.all([
+    // An account with no email address can never be a recipient, so it is
+    // filtered in Postgres rather than shipped to the browser to be dropped.
     selectAll(() =>
-      supabase.from('profiles').select('id, full_name, email').order('id'),
+      supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .not('email', 'is', null)
+        .neq('email', '')
+        .order('id'),
     ),
     selectAll(() =>
       supabase
