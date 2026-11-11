@@ -1,5 +1,5 @@
 import React from 'react';
-import { RECIPIENT_GROUPS } from '../../portal/emailRecipients';
+import { GROUP_LABELS, RECIPIENT_GROUPS } from '../../portal/emailRecipients';
 
 export default function RecipientFilters({
   counts = {},
@@ -33,6 +33,13 @@ export default function RecipientFilters({
       <p id="message-recipient-hint" className="portal-messages__hint">
         {selected ? selected.hint : 'Pick who this email is for.'}
       </p>
+      {selected?.alsoCountedIn && (
+        <p className="portal-messages__hint">
+          {`These people are counted under ${
+            GROUP_LABELS[selected.alsoCountedIn]
+          } as well, so the counts above overlap.`}
+        </p>
+      )}
     </div>
   );
 }

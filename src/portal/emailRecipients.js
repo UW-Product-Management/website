@@ -20,6 +20,7 @@ export const RECIPIENT_GROUPS = [
     label: 'Accepted, not confirmed',
     shortLabel: 'Not confirmed',
     hint: 'Told they were accepted but have not confirmed their spot before the deadline',
+    alsoCountedIn: 'accepted',
   },
   { key: 'waitlisted', label: 'Waitlisted', hint: 'Decision is waitlisted' },
   { key: 'rejected', label: 'Not selected', hint: 'Decision is rejected' },

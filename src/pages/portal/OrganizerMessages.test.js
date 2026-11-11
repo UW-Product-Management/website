@@ -141,6 +141,16 @@ describe('OrganizerMessages', () => {
     ).toBeInTheDocument();
   });
 
+  it('warns that a derived group overlaps another count', async () => {
+    renderPage();
+
+    userEvent.selectOptions(await groupSelect(), 'accepted_unconfirmed');
+
+    expect(
+      screen.getByText(/counted under Accepted as well/i),
+    ).toBeInTheDocument();
+  });
+
   it('keeps a message the organizer already started', async () => {
     renderPage();
     userEvent.type(await screen.findByLabelText('Subject'), 'My own subject');
