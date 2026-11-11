@@ -364,12 +364,20 @@ async function sendBatch(campaignId: string, mode: EmailMode) {
   const totals = await campaignTotals(campaignId);
   await storeTotals(campaignId, totals);
 
+  // sent/failed/skipped describe this batch only, so the caller can tell a
+  // stalled campaign from one another batch is working. totals describe the
+  // whole campaign, because rows this batch skipped were still delivered by
+  // whoever claimed them and belong in what the organizer is told.
   return json({
     sent,
     failed,
     skipped,
     remaining: totals.pending,
-    dropped: totals.dropped,
+    totals: {
+      sent: totals.sent,
+      failed: totals.failed,
+      dropped: totals.dropped,
+    },
   });
 }
 

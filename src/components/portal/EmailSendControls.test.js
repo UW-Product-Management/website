@@ -36,9 +36,22 @@ const controls = (props = {}) => (
 const renderControls = (props = {}) => render(controls(props));
 
 const batch = (sent, failed, remaining, dropped = 0, skipped = 0) => ({
-  data: { sent, failed, remaining, dropped, skipped },
+  data: {
+    sent,
+    failed,
+    remaining,
+    skipped,
+    totals: { sent, failed, dropped },
+  },
   error: null,
 });
+
+const batchWithTotals = (thisBatch, campaignTotals, remaining) => ({
+  data: { ...thisBatch, remaining, totals: campaignTotals },
+  error: null,
+});
+
+const totals = (sent, failed = 0, dropped = 0) => ({ sent, failed, dropped });
 
 const noCampaign = { data: { campaign: null }, error: null };
 
@@ -185,8 +198,12 @@ describe('EmailSendControls', () => {
   it('creates the email, then sends batches until none remain', async () => {
     const onSent = jest.fn();
     sendCustomEmailBatch
-      .mockResolvedValueOnce(batch(1, 0, 1))
-      .mockResolvedValueOnce(batch(1, 0, 0));
+      .mockResolvedValueOnce(
+        batchWithTotals({ sent: 1, failed: 0, skipped: 0 }, totals(1), 1),
+      )
+      .mockResolvedValueOnce(
+        batchWithTotals({ sent: 1, failed: 0, skipped: 0 }, totals(2), 0),
+      );
     renderControls({ onSent });
 
     await confirmAndSend();
@@ -366,7 +383,9 @@ describe('EmailSendControls', () => {
         data: null,
         error: { code: 'send_failed', message: 'Sending failed.' },
       })
-      .mockResolvedValueOnce(batch(1, 0, 0));
+      .mockResolvedValueOnce(
+        batchWithTotals({ sent: 1, failed: 0, skipped: 0 }, totals(2), 0),
+      );
     getResumableCustomEmail
       .mockResolvedValueOnce(noCampaign)
       .mockResolvedValueOnce(unfinishedCampaign());
@@ -423,14 +442,18 @@ describe('EmailSendControls', () => {
 
   it('keeps going when another batch claimed the recipients first', async () => {
     sendCustomEmailBatch
-      .mockResolvedValueOnce(batch(0, 0, 1, 0, 1))
-      .mockResolvedValueOnce(batch(0, 0, 0, 0, 1));
+      .mockResolvedValueOnce(
+        batchWithTotals({ sent: 0, failed: 0, skipped: 1 }, totals(1), 1),
+      )
+      .mockResolvedValueOnce(
+        batchWithTotals({ sent: 0, failed: 0, skipped: 1 }, totals(2), 0),
+      );
     renderControls();
 
     await confirmAndSend();
 
     expect(
-      await screen.findByText('Email sent to 0 people.'),
+      await screen.findByText('Email sent to 2 people.'),
     ).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(sendCustomEmailBatch).toHaveBeenCalledTimes(2);

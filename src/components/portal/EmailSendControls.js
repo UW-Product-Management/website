@@ -133,9 +133,7 @@ export default function EmailSendControls({
     );
   };
 
-  const sendBatches = async (campaignId, campaignTotal, startTotals) => {
-    let { sent, failed, dropped } = startTotals;
-
+  const sendBatches = async (campaignId, campaignTotal) => {
     for (let attempt = 0; attempt < MAX_BATCHES; attempt += 1) {
       const { data, error } = await sendCustomEmailBatch(campaignId);
       if (error) {
@@ -144,15 +142,15 @@ export default function EmailSendControls({
         return;
       }
 
-      sent += data.sent;
-      failed += data.failed;
-      dropped = data.dropped ?? dropped;
-      setProgress(`Sent ${sent} of ${campaignTotal}`);
+      // Campaign-wide rather than accumulated locally: a concurrent batch may
+      // have delivered rows this loop only skipped, and those still count.
+      const totals = data.totals ?? { sent: 0, failed: 0, dropped: 0 };
+      setProgress(`Sent ${totals.sent} of ${campaignTotal}`);
 
       if (data.remaining === 0) {
         setConfirmation('');
         setUnfinished(null);
-        setNotice(sentSummary({ sent, failed, dropped }));
+        setNotice(sentSummary(totals));
         onSent?.();
         return;
       }
@@ -191,21 +189,11 @@ export default function EmailSendControls({
         }
         return;
       }
-      await sendBatches(created.data.campaignId, total, {
-        sent: 0,
-        failed: 0,
-        dropped: 0,
-      });
+      await sendBatches(created.data.campaignId, total);
     });
 
   const handleResume = () =>
-    runBusy(() =>
-      sendBatches(unfinished.id, unfinished.total, {
-        sent: unfinished.sent,
-        failed: unfinished.failed,
-        dropped: unfinished.dropped,
-      }),
-    );
+    runBusy(() => sendBatches(unfinished.id, unfinished.total));
 
   const handleDiscard = () =>
     runBusy(async () => {
