@@ -29,6 +29,9 @@ import {
   previewDecisionEmails,
   listEmailAudience,
   createCustomEmail,
+  sendCustomEmailBatch,
+  getResumableCustomEmail,
+  abandonCustomEmail,
   CUSTOM_EMAIL_ERRORS,
 } from './portalApi';
 
@@ -1092,6 +1095,8 @@ describe('custom email service', () => {
     const chain = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
+      not: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
       order: jest.fn().mockReturnThis(),
       range: jest.fn(() => Promise.resolve(result)),
     };
@@ -1135,14 +1140,66 @@ describe('custom email service', () => {
         fullName: 'Ada',
         email: 'ada@example.com',
         group: 'no_application',
+        groups: ['no_application'],
       },
       {
         userId: 'u2',
         fullName: 'Bo',
         email: 'bo@example.com',
         group: 'waitlisted',
+        groups: ['waitlisted'],
       },
     ]);
+  });
+
+  it('reads confirmation state so unconfirmed acceptances can be reminded', async () => {
+    const applications = pagedResult({
+      data: [
+        {
+          id: 'a1',
+          user_id: 'u1',
+          status: 'accepted',
+          confirmation: 'pending',
+        },
+      ],
+      error: null,
+    });
+    supabase.from
+      .mockReturnValueOnce(
+        pagedResult({
+          data: [{ id: 'u1', full_name: 'Ada', email: 'ada@example.com' }],
+          error: null,
+        }),
+      )
+      .mockReturnValueOnce(applications)
+      .mockReturnValueOnce(
+        pagedResult({
+          data: [{ application_id: 'a1', decision: 'accepted' }],
+          error: null,
+        }),
+      );
+
+    const result = await listEmailAudience('evt-1', {
+      confirmBy: '2999-01-01T00:00:00Z',
+    });
+
+    expect(applications.select).toHaveBeenCalledWith(
+      'id, user_id, status, confirmation',
+    );
+    expect(result.data[0].groups).toEqual(['accepted', 'accepted_unconfirmed']);
+  });
+
+  it('leaves accounts without an email address out of the query', async () => {
+    const profiles = pagedResult({ data: [], error: null });
+    supabase.from
+      .mockReturnValueOnce(profiles)
+      .mockReturnValueOnce(pagedResult({ data: [], error: null }))
+      .mockReturnValueOnce(pagedResult({ data: [], error: null }));
+
+    await listEmailAudience('evt-1');
+
+    expect(profiles.not).toHaveBeenCalledWith('email', 'is', null);
+    expect(profiles.neq).toHaveBeenCalledWith('email', '');
   });
 
   it('returns the error when a table cannot be read', async () => {
@@ -1192,5 +1249,61 @@ describe('custom email service', () => {
       code: 'recipients_changed',
       message: CUSTOM_EMAIL_ERRORS.recipients_changed,
     });
+  });
+
+  it('asks the function for an unfinished send for the event', async () => {
+    supabase.functions.invoke.mockResolvedValueOnce({
+      data: { campaign: null },
+      error: null,
+    });
+
+    const result = await getResumableCustomEmail('evt-1');
+
+    expect(supabase.functions.invoke).toHaveBeenCalledWith(
+      'send-custom-email',
+      { body: { action: 'resumable', eventId: 'evt-1' } },
+    );
+    expect(result.data).toEqual({ campaign: null });
+  });
+
+  it('abandons an unfinished send by its campaign id', async () => {
+    supabase.functions.invoke.mockResolvedValueOnce({
+      data: { abandoned: true },
+      error: null,
+    });
+
+    const result = await abandonCustomEmail('c1');
+
+    expect(supabase.functions.invoke).toHaveBeenCalledWith(
+      'send-custom-email',
+      { body: { action: 'abandon', campaignId: 'c1' } },
+    );
+    expect(result.error).toBeNull();
+  });
+
+  it.each([
+    'unauthorized',
+    'not_organizer',
+    'method_not_allowed',
+    'invalid_action',
+    'event_required',
+    'event_not_found',
+    'run_required',
+    'run_not_found',
+    'run_failed',
+    'run_finished',
+    'run_expired',
+    'mode_changed',
+    'unfinished_campaign',
+  ])('has its own message for the %s error', async (code) => {
+    supabase.functions.invoke.mockResolvedValueOnce({
+      data: null,
+      error: { context: { json: () => Promise.resolve({ error: code }) } },
+    });
+
+    const result = await sendCustomEmailBatch('c1');
+
+    expect(result.error.code).toBe(code);
+    expect(result.error.message).not.toBe(CUSTOM_EMAIL_ERRORS.send_failed);
   });
 });

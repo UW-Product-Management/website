@@ -1,5 +1,5 @@
 import React from 'react';
-import { GROUP_LABELS } from '../../portal/emailRecipients';
+import { describeGroups } from '../../portal/emailRecipients';
 
 export default function RecipientPreview({ recipients = [] }) {
   return (
@@ -31,7 +31,7 @@ export default function RecipientPreview({ recipients = [] }) {
                 <tr key={person.userId}>
                   <td>{person.fullName || '—'}</td>
                   <td>{person.email}</td>
-                  <td>{GROUP_LABELS[person.group]}</td>
+                  <td>{describeGroups(person.groups)}</td>
                 </tr>
               ))}
             </tbody>

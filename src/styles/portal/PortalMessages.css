@@ -198,6 +198,27 @@
   background: #fde2e1;
 }
 
+.portal-messages__unfinished {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #f3c9c8;
+  border-radius: 12px;
+  background: #fdf3f2;
+}
+
+.portal-messages__unfinished h3 {
+  margin: 0;
+  font-size: 1.0625rem;
+}
+
+.portal-messages__unfinished p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
 .portal-messages__row {
   display: flex;
   flex-wrap: wrap;

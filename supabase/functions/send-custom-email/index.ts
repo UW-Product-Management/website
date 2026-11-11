@@ -20,7 +20,7 @@ const MAX_BODY = 10000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface RequestBody {
-  action?: 'mode' | 'test' | 'create' | 'send';
+  action?: 'mode' | 'test' | 'create' | 'send' | 'resumable' | 'abandon';
   eventId?: string;
   subject?: string;
   body?: string;
@@ -35,6 +35,13 @@ interface Recipient {
   full_name: string;
 }
 
+interface Totals {
+  pending: number;
+  sent: number;
+  failed: number;
+  dropped: number;
+}
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const admin = createClient(
@@ -42,6 +49,9 @@ const admin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   { auth: { persistSession: false, autoRefreshToken: false } },
 );
+
+const hasExpired = (createdAt: string) =>
+  Date.now() - new Date(createdAt).getTime() > RUN_VALID_MS;
 
 function validateContent(body: RequestBody) {
   const subject = body.subject?.trim() ?? '';
@@ -64,6 +74,58 @@ async function loadRecipients(ids: string[]): Promise<Recipient[]> {
     rows.push(...((data ?? []) as Recipient[]));
   }
   return rows.filter((row) => row.email);
+}
+
+async function findUnfinished(eventId: string) {
+  const { data, error } = await admin
+    .from('custom_email_campaigns')
+    .select('id, subject, mode, recipient_count, created_at')
+    .eq('event_id', eventId)
+    .is('finished_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// An unfinished campaign is reported to every organizer, not just whoever
+// started it, so a send stranded by a closed laptop can still be finished.
+async function describeResumable(eventId: string, mode: EmailMode) {
+  const campaign = await findUnfinished(eventId);
+  if (!campaign) return json({ campaign: null });
+
+  const totals = await campaignTotals(campaign.id);
+  const blocked = hasExpired(campaign.created_at)
+    ? 'run_expired'
+    : campaign.mode !== mode
+      ? 'mode_changed'
+      : null;
+
+  return json({
+    campaign: {
+      id: campaign.id,
+      subject: campaign.subject,
+      mode: campaign.mode,
+      total: campaign.recipient_count,
+      createdAt: campaign.created_at,
+      resumable: blocked === null,
+      blockedReason: blocked,
+      ...totals,
+    },
+  });
+}
+
+async function abandonCampaign(campaignId: string) {
+  const { data, error } = await admin
+    .from('custom_email_campaigns')
+    .update({ finished_at: new Date().toISOString() })
+    .eq('id', campaignId)
+    .is('finished_at', null)
+    .select('id');
+  if (error) return json({ error: 'run_failed' }, 500);
+  if (!data?.length) return json({ error: 'run_not_found' }, 404);
+  return json({ abandoned: true });
 }
 
 async function sendTest(
@@ -118,6 +180,14 @@ async function createCampaign(
     .maybeSingle();
   if (!event) return json({ error: 'event_not_found' }, 404);
 
+  // Starting a second campaign while one is still resumable is how a partially
+  // sent group gets emailed twice: the stranded one must be finished or
+  // abandoned first.
+  const unfinished = await findUnfinished(eventId);
+  if (unfinished && !hasExpired(unfinished.created_at)) {
+    return json({ error: 'unfinished_campaign' }, 409);
+  }
+
   const recipients = await loadRecipients(ids);
   if (recipients.length !== ids.length) {
     return json({ error: 'recipients_changed', count: recipients.length }, 409);
@@ -158,31 +228,71 @@ async function createCampaign(
   return json({ campaignId: campaign.id, total: recipients.length, mode });
 }
 
-async function countUnsent(campaignId: string) {
-  const { count } = await admin
+async function countRecipients(
+  campaignId: string,
+  state: keyof Totals,
+): Promise<number> {
+  let query = admin
     .from('custom_email_recipients')
     .select('user_id', { count: 'exact', head: true })
-    .eq('campaign_id', campaignId)
-    .is('sent_at', null);
+    .eq('campaign_id', campaignId);
+
+  if (state === 'pending') query = query.is('claimed_at', null);
+  else if (state === 'sent') query = query.not('sent_at', 'is', null);
+  else if (state === 'failed') query = query.not('failed_at', 'is', null);
+  else {
+    query = query
+      .not('claimed_at', 'is', null)
+      .is('sent_at', null)
+      .is('failed_at', null);
+  }
+
+  const { count, error } = await query;
+  if (error) throw new Error(error.message);
   return count ?? 0;
 }
 
-async function sendBatch(
-  user: { id: string },
-  campaignId: string,
-  mode: EmailMode,
-) {
+async function campaignTotals(campaignId: string): Promise<Totals> {
+  const [pending, sent, failed, dropped] = await Promise.all([
+    countRecipients(campaignId, 'pending'),
+    countRecipients(campaignId, 'sent'),
+    countRecipients(campaignId, 'failed'),
+    countRecipients(campaignId, 'dropped'),
+  ]);
+  return { pending, sent, failed, dropped };
+}
+
+// Counted from the recipient rows rather than added to a campaign row read
+// earlier, so concurrent batches cannot overwrite each other's totals.
+async function storeTotals(campaignId: string, totals: Totals) {
+  await admin
+    .from('custom_email_campaigns')
+    .update({
+      sent_count: totals.sent,
+      failed_count: totals.failed,
+      dropped_count: totals.dropped,
+    })
+    .eq('id', campaignId);
+
+  if (totals.pending === 0) {
+    await admin
+      .from('custom_email_campaigns')
+      .update({ finished_at: new Date().toISOString() })
+      .eq('id', campaignId)
+      .is('finished_at', null);
+  }
+}
+
+async function sendBatch(campaignId: string, mode: EmailMode) {
   const { data: campaign } = await admin
     .from('custom_email_campaigns')
     .select('*')
     .eq('id', campaignId)
     .maybeSingle();
 
-  if (!campaign || campaign.created_by !== user.id) {
-    return json({ error: 'run_not_found' }, 404);
-  }
+  if (!campaign) return json({ error: 'run_not_found' }, 404);
   if (campaign.finished_at) return json({ error: 'run_finished' }, 409);
-  if (Date.now() - new Date(campaign.created_at).getTime() > RUN_VALID_MS) {
+  if (hasExpired(campaign.created_at)) {
     return json({ error: 'run_expired' }, 409);
   }
   if (campaign.mode !== mode) return json({ error: 'mode_changed' }, 409);
@@ -191,24 +301,34 @@ async function sendBatch(
     .from('custom_email_recipients')
     .select('user_id, email, full_name')
     .eq('campaign_id', campaignId)
-    .is('sent_at', null)
+    .is('claimed_at', null)
     .order('user_id')
     .limit(BATCH_SIZE);
   if (error) throw new Error(error.message);
 
   let sent = 0;
   let failed = 0;
+  let skipped = 0;
   for (const row of batch ?? []) {
-    // Stamping before delivery claims the row, so a concurrent batch for the
-    // same campaign skips it instead of sending a duplicate.
+    // Claiming before delivery means a concurrent batch skips this row instead
+    // of sending a duplicate. claimed_at is kept separate from sent_at so that
+    // a function death mid-delivery leaves the row provably unresolved rather
+    // than counted as delivered.
     const { data: claimed } = await admin
       .from('custom_email_recipients')
-      .update({ sent_at: new Date().toISOString() })
+      .update({ claimed_at: new Date().toISOString() })
       .eq('campaign_id', campaignId)
       .eq('user_id', row.user_id)
-      .is('sent_at', null)
+      .is('claimed_at', null)
       .select('user_id');
-    if (!claimed?.length) continue;
+    // Reported separately from sent and failed: another batch is working the
+    // same campaign, which is progress even though this batch made none. The
+    // caller needs to tell that apart from a campaign that has genuinely
+    // stalled.
+    if (!claimed?.length) {
+      skipped += 1;
+      continue;
+    }
 
     try {
       await deliver(
@@ -220,30 +340,45 @@ async function sendBatch(
         ),
         mode,
       );
+      await admin
+        .from('custom_email_recipients')
+        .update({ sent_at: new Date().toISOString() })
+        .eq('campaign_id', campaignId)
+        .eq('user_id', row.user_id);
       sent += 1;
     } catch (deliveryError) {
       failed += 1;
       console.error('send-custom-email failed', row.user_id, deliveryError);
+      // Not retried automatically: a timeout after Resend accepted the email
+      // would otherwise send it twice, and a rejected address would be picked
+      // first in every later batch.
       await admin
         .from('custom_email_recipients')
-        .update({ sent_at: null })
+        .update({ failed_at: new Date().toISOString() })
         .eq('campaign_id', campaignId)
         .eq('user_id', row.user_id);
     }
     await sleep(SEND_INTERVAL_MS);
   }
 
-  const remaining = await countUnsent(campaignId);
-  await admin
-    .from('custom_email_campaigns')
-    .update({
-      sent_count: campaign.sent_count + sent,
-      failed_count: campaign.failed_count + failed,
-      finished_at: remaining === 0 ? new Date().toISOString() : null,
-    })
-    .eq('id', campaignId);
+  const totals = await campaignTotals(campaignId);
+  await storeTotals(campaignId, totals);
 
-  return json({ sent, failed, remaining });
+  // sent/failed/skipped describe this batch only, so the caller can tell a
+  // stalled campaign from one another batch is working. totals describe the
+  // whole campaign, because rows this batch skipped were still delivered by
+  // whoever claimed them and belong in what the organizer is told.
+  return json({
+    sent,
+    failed,
+    skipped,
+    remaining: totals.pending,
+    totals: {
+      sent: totals.sent,
+      failed: totals.failed,
+      dropped: totals.dropped,
+    },
+  });
 }
 
 Deno.serve(async (req) => {
@@ -287,7 +422,13 @@ Deno.serve(async (req) => {
         return await createCampaign(caller, body, body.eventId, mode);
       case 'send':
         if (!body.campaignId) return json({ error: 'run_required' }, 400);
-        return await sendBatch(caller, body.campaignId, mode);
+        return await sendBatch(body.campaignId, mode);
+      case 'resumable':
+        if (!body.eventId) return json({ error: 'event_required' }, 400);
+        return await describeResumable(body.eventId, mode);
+      case 'abandon':
+        if (!body.campaignId) return json({ error: 'run_required' }, 400);
+        return await abandonCampaign(body.campaignId);
       default:
         return json({ error: 'invalid_action' }, 400);
     }

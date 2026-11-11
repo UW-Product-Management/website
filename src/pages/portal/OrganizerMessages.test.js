@@ -1,38 +1,56 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import OrganizerMessages from './OrganizerMessages';
 import { PortalContext } from '../../context/PortalContext';
 import { listEmailAudience } from '../../services/portalApi';
 
 jest.mock('../../services/portalApi');
-jest.mock('../../components/portal/EmailSendControls', () => () => null);
+jest.mock('../../components/portal/EmailSendControls', () => {
+  const React = require('react');
+  return function MockEmailSendControls({ onBusyChange }) {
+    return React.createElement(
+      'button',
+      { type: 'button', onClick: () => onBusyChange(true) },
+      'Start sending',
+    );
+  };
+});
+
+const event = {
+  id: 'evt-1',
+  name: 'ProdCon 2026',
+  confirm_by: '2026-11-20T04:59:00Z',
+};
+
+const person = (userId, fullName, group, groups = [group]) => ({
+  userId,
+  fullName,
+  email: `${fullName.toLowerCase()}@example.com`,
+  group,
+  groups,
+});
 
 const audience = [
-  { userId: 'u1', fullName: 'Ada', email: 'ada@example.com', group: 'draft' },
-  {
-    userId: 'u2',
-    fullName: 'Bo',
-    email: 'bo@example.com',
-    group: 'submitted',
-  },
-  {
-    userId: 'u3',
-    fullName: 'Cy',
-    email: 'cy@example.com',
-    group: 'no_application',
-  },
+  person('u1', 'Ada', 'draft'),
+  person('u2', 'Bo', 'submitted'),
+  person('u3', 'Cy', 'no_application'),
+  person('u4', 'Di', 'accepted', ['accepted', 'accepted_unconfirmed']),
 ];
 
 function renderPage() {
   return render(
-    <PortalContext.Provider value={{ event: { id: 'evt-1' } }}>
+    <PortalContext.Provider value={{ event }}>
       <MemoryRouter>
         <OrganizerMessages />
       </MemoryRouter>
     </PortalContext.Provider>,
   );
 }
+
+const groupSelect = () =>
+  screen.findByRole('combobox', { name: /who should get this email/i });
 
 describe('OrganizerMessages', () => {
   beforeEach(() => {
@@ -46,24 +64,19 @@ describe('OrganizerMessages', () => {
     expect(
       await screen.findByRole('option', { name: 'Draft, not submitted (1)' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('combobox', { name: /who should get this email/i }),
-    ).toHaveValue('');
+    expect(await groupSelect()).toHaveValue('');
     expect(
       screen.getByRole('heading', { name: '0 recipients' }),
     ).toBeInTheDocument();
-    expect(listEmailAudience).toHaveBeenCalledWith('evt-1');
+    expect(listEmailAudience).toHaveBeenCalledWith('evt-1', {
+      confirmBy: '2026-11-20T04:59:00Z',
+    });
   });
 
   it('previews the people in the chosen group', async () => {
     renderPage();
 
-    fireEvent.change(
-      await screen.findByRole('combobox', {
-        name: /who should get this email/i,
-      }),
-      { target: { value: 'draft' } },
-    );
+    userEvent.selectOptions(await groupSelect(), 'draft');
 
     expect(
       screen.getByRole('heading', { name: '1 recipient' }),
@@ -88,14 +101,63 @@ describe('OrganizerMessages', () => {
   it('lets the organizer write a subject and message', async () => {
     renderPage();
 
-    fireEvent.change(await screen.findByLabelText('Subject'), {
-      target: { value: 'Reminder' },
-    });
-    fireEvent.change(screen.getByLabelText('Message'), {
-      target: { value: 'Hi {{name}}' },
-    });
+    userEvent.type(await screen.findByLabelText('Subject'), 'Reminder');
+    userEvent.paste(screen.getByLabelText('Message'), 'Hi {{name}}');
 
     expect(screen.getByLabelText('Subject')).toHaveValue('Reminder');
     expect(screen.getByLabelText('Message')).toHaveValue('Hi {{name}}');
+  });
+
+  it('locks the group and message while emails are sending', async () => {
+    renderPage();
+    userEvent.selectOptions(await groupSelect(), 'draft');
+
+    userEvent.click(screen.getByRole('button', { name: 'Start sending' }));
+
+    expect(await groupSelect()).toBeDisabled();
+    expect(screen.getByLabelText('Subject')).toBeDisabled();
+    expect(screen.getByLabelText('Message')).toBeDisabled();
+  });
+
+  it('fills in a confirmation reminder for accepted applicants who have not confirmed', async () => {
+    renderPage();
+
+    userEvent.selectOptions(await groupSelect(), 'accepted_unconfirmed');
+
+    expect(screen.getByText('di@example.com')).toBeInTheDocument();
+    expect(screen.getByLabelText('Subject').value).toMatch(
+      /confirm your spot/i,
+    );
+    expect(screen.getByLabelText('Message').value).toContain('{{name}}');
+  });
+
+  it('names every group a recipient falls into', async () => {
+    renderPage();
+
+    userEvent.selectOptions(await groupSelect(), 'accepted_unconfirmed');
+
+    expect(
+      screen.getByRole('cell', { name: 'Accepted · Not confirmed' }),
+    ).toBeInTheDocument();
+  });
+
+  it('warns that a derived group overlaps another count', async () => {
+    renderPage();
+
+    userEvent.selectOptions(await groupSelect(), 'accepted_unconfirmed');
+
+    expect(
+      screen.getByText(/counted under Accepted as well/i),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps a message the organizer already started', async () => {
+    renderPage();
+    userEvent.type(await screen.findByLabelText('Subject'), 'My own subject');
+
+    userEvent.selectOptions(await groupSelect(), 'accepted_unconfirmed');
+
+    expect(screen.getByLabelText('Subject')).toHaveValue('My own subject');
+    expect(screen.getByLabelText('Message')).toHaveValue('');
   });
 });

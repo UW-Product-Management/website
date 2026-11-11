@@ -72,13 +72,27 @@ export const CUSTOM_EMAIL_ERRORS = {
   recipients_changed:
     'Some recipients no longer have an account. Refresh the list and confirm again.',
   confirmation_mismatch: 'The confirmation text does not match.',
-  run_expired: 'This send expired. Confirm and send again.',
+  unfinished_campaign:
+    'An earlier send to this event has not finished. Resume or discard it before starting a new one.',
+  run_expired:
+    'This send expired after 2 hours. Sending again emails the whole group, including anyone who already got it.',
   run_finished: 'This email has already been sent to everyone.',
-  mode_changed: 'The email environment changed. Confirm and send again.',
+  mode_changed:
+    'The email environment changed mid-send. Sending again emails the whole group, including anyone who already got it.',
+  run_failed: 'The send could not be started. No one was emailed; try again.',
+  run_not_found: 'This send could not be found. Refresh before trying again.',
+  run_required: 'This send could not be found. Refresh before trying again.',
+  event_required: 'The event could not be found. Refresh and try again.',
+  event_not_found: 'The event could not be found. Refresh and try again.',
+  unauthorized: 'Your session has expired. Sign in again to send emails.',
+  invalid_action: 'The email service rejected the request. Refresh the page.',
+  method_not_allowed:
+    'The email service rejected the request. Refresh the page.',
   email_environment_not_configured:
     'Email is not configured for this environment (set EMAIL_ENV or EMAIL_SANDBOX_REDIRECT).',
   no_email_transport_configured: 'No email provider is configured.',
-  send_failed: 'Sending failed. Nothing was lost; try again.',
+  send_failed:
+    'Sending failed. Anyone who already got this email will not get it twice.',
 };
 
 export const DRAFT_ERRORS = {
@@ -625,15 +639,22 @@ async function selectAll(buildQuery) {
   }
 }
 
-export async function listEmailAudience(eventId) {
+export async function listEmailAudience(eventId, { confirmBy = null } = {}) {
   const [profiles, applications, decisions] = await Promise.all([
+    // An account with no email address can never be a recipient, so it is
+    // filtered in Postgres rather than shipped to the browser to be dropped.
     selectAll(() =>
-      supabase.from('profiles').select('id, full_name, email').order('id'),
+      supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .not('email', 'is', null)
+        .neq('email', '')
+        .order('id'),
     ),
     selectAll(() =>
       supabase
         .from('applications')
-        .select('id, user_id, status')
+        .select('id, user_id, status, confirmation')
         .eq('event_id', eventId)
         .order('id'),
     ),
@@ -649,7 +670,9 @@ export async function listEmailAudience(eventId) {
   const error = profiles.error || applications.error || decisions.error;
   if (error) return { data: [], error };
   return {
-    data: buildAudience(profiles.data, applications.data, decisions.data),
+    data: buildAudience(profiles.data, applications.data, decisions.data, {
+      confirmBy,
+    }),
     error: null,
   };
 }
@@ -681,3 +704,9 @@ export const createCustomEmail = (eventId, options) =>
 
 export const sendCustomEmailBatch = (campaignId) =>
   invokeCustomEmail({ action: 'send', campaignId });
+
+export const getResumableCustomEmail = (eventId) =>
+  invokeCustomEmail({ action: 'resumable', eventId });
+
+export const abandonCustomEmail = (campaignId) =>
+  invokeCustomEmail({ action: 'abandon', campaignId });
