@@ -30,6 +30,8 @@ import {
   listEmailAudience,
   createCustomEmail,
   sendCustomEmailBatch,
+  getResumableCustomEmail,
+  abandonCustomEmail,
   CUSTOM_EMAIL_ERRORS,
 } from './portalApi';
 
@@ -1234,6 +1236,36 @@ describe('custom email service', () => {
     });
   });
 
+  it('asks the function for an unfinished send for the event', async () => {
+    supabase.functions.invoke.mockResolvedValueOnce({
+      data: { campaign: null },
+      error: null,
+    });
+
+    const result = await getResumableCustomEmail('evt-1');
+
+    expect(supabase.functions.invoke).toHaveBeenCalledWith(
+      'send-custom-email',
+      { body: { action: 'resumable', eventId: 'evt-1' } },
+    );
+    expect(result.data).toEqual({ campaign: null });
+  });
+
+  it('abandons an unfinished send by its campaign id', async () => {
+    supabase.functions.invoke.mockResolvedValueOnce({
+      data: { abandoned: true },
+      error: null,
+    });
+
+    const result = await abandonCustomEmail('c1');
+
+    expect(supabase.functions.invoke).toHaveBeenCalledWith(
+      'send-custom-email',
+      { body: { action: 'abandon', campaignId: 'c1' } },
+    );
+    expect(result.error).toBeNull();
+  });
+
   it.each([
     'unauthorized',
     'not_organizer',
@@ -1247,6 +1279,7 @@ describe('custom email service', () => {
     'run_finished',
     'run_expired',
     'mode_changed',
+    'unfinished_campaign',
   ])('has its own message for the %s error', async (code) => {
     supabase.functions.invoke.mockResolvedValueOnce({
       data: null,

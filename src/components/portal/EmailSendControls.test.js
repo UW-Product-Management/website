@@ -3,8 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import EmailSendControls from './EmailSendControls';
 import {
+  abandonCustomEmail,
   createCustomEmail,
   getCustomEmailMode,
+  getResumableCustomEmail,
   sendCustomEmailBatch,
   sendTestCustomEmail,
 } from '../../services/portalApi';
@@ -38,6 +40,28 @@ const batch = (sent, failed, remaining, dropped = 0) => ({
   error: null,
 });
 
+const noCampaign = { data: { campaign: null }, error: null };
+
+const unfinishedCampaign = (overrides = {}) => ({
+  data: {
+    campaign: {
+      id: 'c1',
+      subject: 'Finish your application',
+      mode: 'local',
+      total: 2,
+      pending: 1,
+      sent: 1,
+      failed: 0,
+      dropped: 0,
+      createdAt: '2026-11-10T09:00:00Z',
+      resumable: true,
+      blockedReason: null,
+      ...overrides,
+    },
+  },
+  error: null,
+});
+
 async function confirmAndSend(count = 2) {
   await screen.findByText(/captured in mailpit/i);
   userEvent.type(screen.getByLabelText(/to confirm/i), `SEND ${count}`);
@@ -53,6 +77,7 @@ describe('EmailSendControls', () => {
       data: { mode: 'local' },
       error: null,
     });
+    getResumableCustomEmail.mockResolvedValue(noCampaign);
     createCustomEmail.mockResolvedValue({
       data: { campaignId: 'c1', total: 2 },
       error: null,
@@ -203,7 +228,68 @@ describe('EmailSendControls', () => {
     ).toBeInTheDocument();
   });
 
-  it('resumes the same email after a send stops partway', async () => {
+  it('offers an unfinished send left behind by an earlier visit', async () => {
+    getResumableCustomEmail.mockResolvedValue(unfinishedCampaign());
+    renderControls();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Unfinished send' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Resume sending (1 left)' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/to confirm/i)).not.toBeInTheDocument();
+  });
+
+  it('offers only discard once an unfinished send cannot be resumed', async () => {
+    getResumableCustomEmail.mockResolvedValue(
+      unfinishedCampaign({ resumable: false, blockedReason: 'run_expired' }),
+    );
+    renderControls();
+    await screen.findByRole('heading', { name: 'Unfinished send' });
+
+    expect(
+      screen.queryByRole('button', { name: /resume sending/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /discard/i })).toBeEnabled();
+  });
+
+  it('discards an unfinished send without emailing the rest', async () => {
+    getResumableCustomEmail.mockResolvedValue(unfinishedCampaign());
+    abandonCustomEmail.mockResolvedValue({
+      data: { abandoned: true },
+      error: null,
+    });
+    renderControls();
+
+    userEvent.click(await screen.findByRole('button', { name: /discard/i }));
+
+    expect(await screen.findByText(/was discarded/i)).toBeInTheDocument();
+    expect(abandonCustomEmail).toHaveBeenCalledWith('c1');
+  });
+
+  it('surfaces the unfinished send when a new one is refused', async () => {
+    createCustomEmail.mockResolvedValue({
+      data: null,
+      error: {
+        code: 'unfinished_campaign',
+        message: 'An earlier send to this event has not finished.',
+      },
+    });
+    getResumableCustomEmail
+      .mockResolvedValueOnce(noCampaign)
+      .mockResolvedValueOnce(unfinishedCampaign());
+    renderControls();
+
+    await confirmAndSend();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Unfinished send' }),
+    ).toBeInTheDocument();
+    expect(sendCustomEmailBatch).not.toHaveBeenCalled();
+  });
+
+  it('resumes the unfinished send after one stops partway', async () => {
     sendCustomEmailBatch
       .mockResolvedValueOnce(batch(1, 0, 1))
       .mockResolvedValueOnce({
@@ -211,6 +297,9 @@ describe('EmailSendControls', () => {
         error: { code: 'send_failed', message: 'Sending failed.' },
       })
       .mockResolvedValueOnce(batch(1, 0, 0));
+    getResumableCustomEmail
+      .mockResolvedValueOnce(noCampaign)
+      .mockResolvedValueOnce(unfinishedCampaign());
     renderControls();
 
     await confirmAndSend();
@@ -230,6 +319,9 @@ describe('EmailSendControls', () => {
       data: null,
       error: { code: 'send_failed', message: 'Sending failed.' },
     });
+    getResumableCustomEmail
+      .mockResolvedValueOnce(noCampaign)
+      .mockResolvedValueOnce(unfinishedCampaign());
     const { rerender } = renderControls();
     await confirmAndSend();
     await screen.findByRole('button', { name: /resume sending/i });
@@ -246,6 +338,9 @@ describe('EmailSendControls', () => {
 
   it('pauses when a batch makes no progress', async () => {
     sendCustomEmailBatch.mockResolvedValue(batch(0, 0, 2));
+    getResumableCustomEmail
+      .mockResolvedValueOnce(noCampaign)
+      .mockResolvedValueOnce(unfinishedCampaign({ pending: 2, sent: 0 }));
     renderControls();
 
     await confirmAndSend();

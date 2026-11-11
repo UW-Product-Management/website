@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  abandonCustomEmail,
   createCustomEmail,
   getCustomEmailMode,
+  getResumableCustomEmail,
   sendCustomEmailBatch,
   sendTestCustomEmail,
 } from '../../services/portalApi';
@@ -15,15 +17,6 @@ const MODE_NOTICES = {
 
 const EMAIL_SERVICE_UNAVAILABLE =
   'The email service is not reachable right now, so nothing can be sent. Refresh to try again.';
-
-// The server refuses to continue these campaigns, so offering Resume would
-// only repeat the same error.
-const UNRESUMABLE_ERRORS = new Set([
-  'run_expired',
-  'run_finished',
-  'run_not_found',
-  'mode_changed',
-]);
 
 const people = (count) => `${count} ${count === 1 ? 'person' : 'people'}`;
 
@@ -54,7 +47,7 @@ export default function EmailSendControls({
   const [progress, setProgress] = useState('');
   const [notice, setNotice] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [pausedCampaign, setPausedCampaign] = useState(null);
+  const [unfinished, setUnfinished] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -70,6 +63,20 @@ export default function EmailSendControls({
     };
   }, []);
 
+  // Read from the server rather than tracked locally, so a send stranded by a
+  // closed tab is still offered when the page is opened again.
+  const loadUnfinished = useCallback(async () => {
+    if (!eventId) return null;
+    const { data, error } = await getResumableCustomEmail(eventId);
+    if (error) return null;
+    setUnfinished(data.campaign);
+    return data.campaign;
+  }, [eventId]);
+
+  useEffect(() => {
+    loadUnfinished();
+  }, [loadUnfinished]);
+
   // A typed "SEND <n>" confirms one specific list; two groups can share a
   // count, so the phrase alone cannot tell them apart.
   useEffect(() => {
@@ -79,7 +86,7 @@ export default function EmailSendControls({
   // Resuming continues the stored campaign, so it is only safe while the
   // organizer is still looking at the exact email and list it was created for.
   useEffect(() => {
-    setPausedCampaign(null);
+    setUnfinished(null);
   }, [recipients, subject, body]);
 
   const total = recipients.length;
@@ -102,38 +109,38 @@ export default function EmailSendControls({
     }
   };
 
-  const sendBatches = async (campaign) => {
-    let { sent, failed, dropped } = campaign;
-    setPausedCampaign(null);
+  const sendBatches = async (campaignId, campaignTotal, startTotals) => {
+    let { sent, failed, dropped } = startTotals;
 
     for (;;) {
-      const { data, error } = await sendCustomEmailBatch(campaign.id);
+      const { data, error } = await sendCustomEmailBatch(campaignId);
       if (error) {
-        if (!UNRESUMABLE_ERRORS.has(error.code)) {
-          setPausedCampaign({ id: campaign.id, sent, failed, dropped });
-        }
         setErrorMessage(error.message);
+        await loadUnfinished();
         return;
       }
 
       sent += data.sent;
       failed += data.failed;
       dropped = data.dropped ?? dropped;
-      setProgress(`Sent ${sent} of ${total}`);
-      if (data.remaining === 0) break;
+      setProgress(`Sent ${sent} of ${campaignTotal}`);
+
+      if (data.remaining === 0) {
+        setConfirmation('');
+        setUnfinished(null);
+        setNotice(sentSummary({ sent, failed, dropped }));
+        onSent?.();
+        return;
+      }
 
       if (data.sent + data.failed === 0) {
-        setPausedCampaign({ id: campaign.id, sent, failed, dropped });
         setErrorMessage(
           `Sending paused with ${data.remaining} left. Resume to continue.`,
         );
+        await loadUnfinished();
         return;
       }
     }
-
-    setConfirmation('');
-    setNotice(sentSummary({ sent, failed, dropped }));
-    onSent?.();
   };
 
   const handleTest = () =>
@@ -153,21 +160,37 @@ export default function EmailSendControls({
       });
       if (created.error) {
         setErrorMessage(created.error.message);
+        if (created.error.code === 'unfinished_campaign') {
+          await loadUnfinished();
+        }
         return;
       }
-      await sendBatches({
-        id: created.data.campaignId,
+      await sendBatches(created.data.campaignId, total, {
         sent: 0,
         failed: 0,
         dropped: 0,
       });
     });
 
-  const handleResume = () => runBusy(() => sendBatches(pausedCampaign));
+  const handleResume = () =>
+    runBusy(() =>
+      sendBatches(unfinished.id, unfinished.total, {
+        sent: unfinished.sent,
+        failed: unfinished.failed,
+        dropped: unfinished.dropped,
+      }),
+    );
 
-  const pausedRemaining = pausedCampaign
-    ? total - pausedCampaign.sent - pausedCampaign.failed
-    : 0;
+  const handleDiscard = () =>
+    runBusy(async () => {
+      const { error } = await abandonCustomEmail(unfinished.id);
+      if (error) {
+        setErrorMessage(error.message);
+        return;
+      }
+      setUnfinished(null);
+      setNotice('The unfinished send was discarded. No one else was emailed.');
+    });
 
   return (
     <div className="portal-messages__send">
@@ -188,17 +211,44 @@ export default function EmailSendControls({
         </button>
       </div>
 
-      {pausedCampaign ? (
-        <div className="portal-messages__row">
-          <button
-            type="button"
-            className="portal-button portal-button--primary"
-            disabled={!isReady}
-            onClick={handleResume}
-          >
-            {`Resume sending (${pausedRemaining} left)`}
-          </button>
-        </div>
+      {unfinished ? (
+        <section
+          className="portal-messages__unfinished"
+          aria-labelledby="unfinished-send-heading"
+        >
+          <h3 id="unfinished-send-heading">Unfinished send</h3>
+          <p>
+            {`“${unfinished.subject}” reached ${unfinished.sent} of ${unfinished.total} ` +
+              `people and has ${unfinished.pending} left. Resuming continues that ` +
+              `email, not what is in the composer.`}
+          </p>
+          {unfinished.blockedReason && (
+            <p className="portal-messages__hint">
+              It can no longer be resumed, so the remaining people must be
+              emailed as a new, smaller send.
+            </p>
+          )}
+          <div className="portal-messages__row">
+            {unfinished.resumable && (
+              <button
+                type="button"
+                className="portal-button portal-button--primary"
+                disabled={!isReady}
+                onClick={handleResume}
+              >
+                {`Resume sending (${unfinished.pending} left)`}
+              </button>
+            )}
+            <button
+              type="button"
+              className="portal-button portal-button--outline"
+              disabled={!isReady}
+              onClick={handleDiscard}
+            >
+              Discard without sending the rest
+            </button>
+          </div>
+        </section>
       ) : (
         <div className="portal-messages__row">
           <label htmlFor="message-confirmation">

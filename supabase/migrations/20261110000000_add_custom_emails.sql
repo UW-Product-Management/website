@@ -26,6 +26,9 @@ create index custom_email_campaigns_event_id_idx
   on public.custom_email_campaigns (event_id);
 create index custom_email_campaigns_created_by_idx
   on public.custom_email_campaigns (created_by);
+create index custom_email_campaigns_unfinished_idx
+  on public.custom_email_campaigns (event_id, created_at desc)
+  where finished_at is null;
 
 create table public.custom_email_recipients (
   campaign_id uuid not null

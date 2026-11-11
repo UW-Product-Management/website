@@ -72,6 +72,8 @@ export const CUSTOM_EMAIL_ERRORS = {
   recipients_changed:
     'Some recipients no longer have an account. Refresh the list and confirm again.',
   confirmation_mismatch: 'The confirmation text does not match.',
+  unfinished_campaign:
+    'An earlier send to this event has not finished. Resume or discard it before starting a new one.',
   run_expired:
     'This send expired after 2 hours. Sending again emails the whole group, including anyone who already got it.',
   run_finished: 'This email has already been sent to everyone.',
@@ -695,3 +697,9 @@ export const createCustomEmail = (eventId, options) =>
 
 export const sendCustomEmailBatch = (campaignId) =>
   invokeCustomEmail({ action: 'send', campaignId });
+
+export const getResumableCustomEmail = (eventId) =>
+  invokeCustomEmail({ action: 'resumable', eventId });
+
+export const abandonCustomEmail = (campaignId) =>
+  invokeCustomEmail({ action: 'abandon', campaignId });
