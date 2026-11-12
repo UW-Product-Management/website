@@ -22,6 +22,13 @@ export const RECIPIENT_GROUPS = [
     hint: 'Told they were accepted but have not confirmed their spot before the deadline',
     alsoCountedIn: 'accepted',
   },
+  {
+    key: 'accepted_confirmed',
+    label: 'Accepted, confirmed',
+    shortLabel: 'Confirmed',
+    hint: 'Told they were accepted and have confirmed their spot',
+    alsoCountedIn: 'accepted',
+  },
   { key: 'waitlisted', label: 'Waitlisted', hint: 'Decision is waitlisted' },
   { key: 'rejected', label: 'Not selected', hint: 'Decision is rejected' },
 ];
@@ -64,6 +71,20 @@ function isAwaitingConfirmation(application, confirmBy, now) {
   );
 }
 
+// Only a released acceptance can be confirmed, so this also keys off the
+// applicant-facing status. A confirmed spot stays confirmed past the deadline.
+const hasConfirmed = (application) =>
+  application?.status === 'accepted' &&
+  application.confirmation === 'confirmed';
+
+function derivedGroups(application, confirmBy, now) {
+  if (isAwaitingConfirmation(application, confirmBy, now)) {
+    return ['accepted_unconfirmed'];
+  }
+  if (hasConfirmed(application)) return ['accepted_confirmed'];
+  return [];
+}
+
 export function buildAudience(
   profiles,
   applications,
@@ -85,9 +106,7 @@ export function buildAudience(
         application,
         application && decisionByApplication.get(application.id),
       );
-      const groups = isAwaitingConfirmation(application, confirmBy, now)
-        ? [group, 'accepted_unconfirmed']
-        : [group];
+      const groups = [group, ...derivedGroups(application, confirmBy, now)];
       return {
         userId: profile.id,
         fullName: profile.full_name || '',
