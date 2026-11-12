@@ -56,7 +56,7 @@ describe('buildAudience', () => {
   });
 });
 
-describe('accepted applicants who have not confirmed', () => {
+describe('accepted applicants and their confirmation', () => {
   const people = [
     { id: 'p1', full_name: 'Released', email: 'p1@example.com' },
     { id: 'p2', full_name: 'Confirmed', email: 'p2@example.com' },
@@ -103,6 +103,27 @@ describe('accepted applicants who have not confirmed', () => {
     expect(countByGroup(audience)).toEqual({
       accepted: 4,
       accepted_unconfirmed: 1,
+      accepted_confirmed: 1,
+    });
+  });
+
+  describe('accepted applicants who have confirmed', () => {
+    const confirmedSpots = (confirmBy) =>
+      filterAudience(
+        buildAudience(people, accepted, acceptedDecisions, { confirmBy, now }),
+        ['accepted_confirmed'],
+      ).map((person) => person.email);
+
+    it('includes only released acceptances that were confirmed', () => {
+      expect(confirmedSpots('2026-11-20T04:59:00Z')).toEqual([
+        'p2@example.com',
+      ]);
+    });
+
+    it('still includes them after the confirmation deadline', () => {
+      expect(confirmedSpots('2026-11-09T04:59:00Z')).toEqual([
+        'p2@example.com',
+      ]);
     });
   });
 });
@@ -115,6 +136,9 @@ describe('describeGroups', () => {
   it('names a derived group alongside the decision it came from', () => {
     expect(describeGroups(['accepted', 'accepted_unconfirmed'])).toBe(
       'Accepted · Not confirmed',
+    );
+    expect(describeGroups(['accepted', 'accepted_confirmed'])).toBe(
+      'Accepted · Confirmed',
     );
   });
 
